@@ -1,0 +1,20 @@
+<?php
+
+class {{ migrationClass }} extends AbstractMigration
+{
+    public function up()
+    {
+        ${{ table }} = $this->table('{{ table }}');
+
+        {{#each columns}}
+        ${{ this.table }}->addColumn('{{ this.name }}', '{{ this.type }}');
+        {{/each}}
+
+        ${{ table }}->save();
+    }
+
+    public function down()
+    {
+        $this->dropTable('{{ table }}');
+    }
+}

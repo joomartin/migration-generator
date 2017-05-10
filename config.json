@@ -1,0 +1,8 @@
+{
+    "host": "localhost",
+    "port": 8889,
+    "user": "root",
+    "password": "root",
+    "migration-lib": "phinx",
+    "excludedTables": ["migrations"]
+}

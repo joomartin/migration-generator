@@ -1,0 +1,23 @@
+{
+  "name": "migration-generator",
+  "version": "1.0.0",
+  "description": "Migration generator for MySQL databases",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha tests/**/*.test.js",
+    "test-watch": "nodemon --exec \"npm test\""
+  },
+  "author": "Joó Martin",
+  "license": "ISC",
+  "dependencies": {
+    "handlebars": "^4.0.8",
+    "hbs": "^4.0.1",
+    "mysql": "^2.13.0",
+    "yargs": "^8.0.1"
+  },
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "mocha": "^3.3.0",
+    "nodemon": "^1.11.0"
+  }
+}
