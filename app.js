@@ -52,21 +52,18 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
             if (err) throw err;
 
             const fieldsData = fields.map(f => {
-                console.log(getType(f['Type']));
+                const options = getOptions(f);  
                 return {
                     name: f['Field'],
                     type: getType(f['Type']),
-                    table
+                    table, options
                 };
             });
 
-            //console.log(fieldsData);
             const html = template({
                 migrationClass, table,
                 columns: fieldsData
             });
-
-            //console.log(html);
         });
         
     });
@@ -79,14 +76,37 @@ const TYPES = [
     {native: 'int', mapped: 'integer'},
     {native: 'bigint', mapped: 'biginteger'},
     {native: 'tinyint', mapped: 'integer'},
-    {native: 'decimal', mapped: 'decimal'},
+    {native: 'decimal', mapped: 'decimal'}
 ];
 
-function mapType(type) {
+function mapNativeType(type) {
     return TYPES
         .filter(t => t.native.includes(type))
         .map(t => t.mapped)
-        .shift() || type;
+        .shift() || type.toLowerCase();
+}
+
+function getOptions(field) {
+
+    /**
+     * @todo UDEGEN KULCSOK
+     */
+
+    let options = {};
+
+    if (field['Null'] === 'NO') {
+        options['null'] = false;
+    }
+
+    if (field['Default']) {
+        options['default'] = field['Default'];
+    }
+
+    if (field['Key'] === 'UNI') {
+        options['unique'] = true;
+    }
+
+    return options;
 }
 
 function getType(type) {
@@ -95,25 +115,34 @@ function getType(type) {
     let decimals = null;
     let options = {};
 
-    
-
+    // DECIMAL (10,2)
     if (parts[1] && parts[1].includes(',')) {
         let lengthParts = parts[1].split(',');
         length = lengthParts[0];
         decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
-    } else if(parts[1]) {
+    } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
+        let optionsParts = parts[1].split(' ');
+        options.unsigned = (optionsParts[1] === 'unsigned');
+
+        length = optionsParts[0].slice(0, optionsParts[0].length - 1);
+    } else if(parts[1]) {   // INT (10)
         length = parts[1].slice(0, parts[1].length - 1);
     }
 
-    if (parts[1] && parts[1].includes(' ')) {
-        let optionsParts = parts[1].split(' ');
-        options.unsigned = (optionsParts[1] === 'unsigned');
+    /**
+     * @todo DECIMAL(10, 2) UNSIGNED
+     */
+
+    if (length) {
+        options.length = length;        
+    }
+
+    if (decimals) {
+        options.decimals = decimals;
     }
 
     return {
-        type: mapType(parts[0]),
-        length: length && 1, 
-        decimals: decimals && 1,
+        type: mapNativeType(parts[0]),
         options
     };
 }
