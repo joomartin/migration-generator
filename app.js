@@ -13,7 +13,7 @@ const argv = yargs
     .options({
         d: {
             alias: 'database',
-            describe: 'Database to get column informations',
+            describe: 'Database to get tables information from',
             string: true,
             demand: true
         },
