@@ -60,10 +60,16 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
                 };
             });
 
+            /**
+             * @todo table valtozo neve camelCase legyen
+             */
+
             const html = template({
                 migrationClass, table,
                 columns: fieldsData
             });
+
+            console.log(html);
         });
         
     });

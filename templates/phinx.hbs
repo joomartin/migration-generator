@@ -7,7 +7,12 @@ class {{ migrationClass }} extends AbstractMigration
         ${{ table }} = $this->table('{{ table }}');
 
         {{#each columns}}
-        ${{ this.table }}->addColumn('{{ this.name }}', '{{ this.type }}');
+        ${{ this.table }}->addColumn('{{ this.name }}', '{{ this.type.type }}' {{#if this.options}}, [
+            {{#each this.options}}
+                '{{@key}}' => {{this}}
+            {{/each}}
+        ]{{/if}});
+
         {{/each}}
 
         ${{ table }}->save();
