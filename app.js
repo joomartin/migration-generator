@@ -39,6 +39,7 @@ const connection = mysql.createConnection({
 
 connection.connect();
 const tableKey = `Tables_in_${argv.database}`;
+let migrations = {};
 
 connection.query('SHOW TABLES', (err, tablesRaw) => {
     if (err) throw err;
@@ -48,6 +49,8 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
 
     tables.forEach(function(element) {
         const table = element[tableKey];
+        migrations[table] = {};
+
         const tableParts = table.split('_');
         const tablePartsUpper = tableParts
             .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
@@ -55,7 +58,7 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
         const query = `SHOW FULL COLUMNS FROM ${table}`;
         const migrationClass = `Create${tablePartsUpper.join('')}Table`;  
 
-        const dependeciesQuery = `
+        const dependenciesQuery = `
             SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
             LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
             ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
@@ -65,10 +68,12 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
                 INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME = '${table}';
         `;
 
-        connection.query(dependeciesQuery, (err, results) => {
+        connection.query(dependenciesQuery, (err, results) => {
             if (err) throw err;
-            let dependencies = results.map(r => {
+
+            migrations[table].incomingDependencies = results.map(r => {
                 return {
+                    sourceTable: r['TABLE_NAME'],
                     sourceColumn: r['COLUMN_NAME'],
                     referencedTable: r['REFERENCED_TABLE_NAME'], 
                     referencedColumn: r['REFERENCED_COLUMN_NAME'],
@@ -77,45 +82,44 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
                     
                 };
             });
-            console.log(dependencies);
         });
 
-        // connection.query(query, (err, fields) => {
-        //     if (err) throw err;
+        connection.query(query, (err, fields) => {
+            if (err) throw err;
 
-        //     const variableName = _.camelCase(table);            
-        //     let primaryKey = null;
+            const variableName = _.camelCase(table);            
+            let primaryKey = null;
 
-        //     const fieldsData = fields.map(f => {            
-        //         const options = getOptions(f);  
+            const fieldsData = fields.map(f => {            
+                const options = getOptions(f);  
                 
-        //         if (isPrimaryKey(f)) {
-        //             primaryKey = f['Field'];
-        //         }
+                if (isPrimaryKey(f)) {
+                    primaryKey = f['Field'];
+                }
 
-        //         return {
-        //             name: f['Field'],
-        //             type: getType(f['Type']),
-        //             table, options, variableName
-        //         };
-        //     });
+                return {
+                    name: f['Field'],
+                    type: getType(f['Type']),
+                    table, options, variableName
+                };
+            });
 
-        //     const html = template({
-        //         migrationClass, table,
-        //         columns: fieldsData,
-        //         variableName, primaryKey
-        //     });
+            migrations[table].html = template({
+                migrationClass, table,
+                columns: fieldsData,
+                variableName, primaryKey
+            });
 
-        //     const fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
+            migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
 
-        //     fs.writeFile(fileName, html, err => {
-        //         if (err) throw err;
+            // fs.writeFile(fileName, html, err => {
+            //     if (err) throw err;
 
-        //         console.log(`${fileName} was generated`);
-        //     });
-        // });
+            //     console.log(`${fileName} was generated`);
+            // });
+        });
         
-    });
+    });    
 
     connection.end();
 });
