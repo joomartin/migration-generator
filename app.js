@@ -51,26 +51,69 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
         connection.query(query, (err, fields) => {
             if (err) throw err;
 
-            const filedsData = fields.map(f => {
-                /**
-                 * @todo tipus mappeles
-                 */
+            const fieldsData = fields.map(f => {
+                console.log(getType(f['Type']));
                 return {
                     name: f['Field'],
-                    type: f['Type'],
+                    type: getType(f['Type']),
                     table
                 };
             });
 
+            //console.log(fieldsData);
             const html = template({
                 migrationClass, table,
-                columns: filedsData
+                columns: fieldsData
             });
 
-            console.log(html);
+            //console.log(html);
         });
         
     });
 
     connection.end();
 });
+
+const TYPES = [
+    {native: 'varchar', mapped: 'string'},
+    {native: 'int', mapped: 'integer'},
+    {native: 'bigint', mapped: 'biginteger'},
+    {native: 'tinyint', mapped: 'integer'},
+    {native: 'decimal', mapped: 'decimal'},
+];
+
+function mapType(type) {
+    return TYPES
+        .filter(t => t.native.includes(type))
+        .map(t => t.mapped)
+        .shift() || type;
+}
+
+function getType(type) {
+    let parts = type.split('(');
+    let length = null;
+    let decimals = null;
+    let options = {};
+
+    
+
+    if (parts[1] && parts[1].includes(',')) {
+        let lengthParts = parts[1].split(',');
+        length = lengthParts[0];
+        decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
+    } else if(parts[1]) {
+        length = parts[1].slice(0, parts[1].length - 1);
+    }
+
+    if (parts[1] && parts[1].includes(' ')) {
+        let optionsParts = parts[1].split(' ');
+        options.unsigned = (optionsParts[1] === 'unsigned');
+    }
+
+    return {
+        type: mapType(parts[0]),
+        length: length && 1, 
+        decimals: decimals && 1,
+        options
+    };
+}
