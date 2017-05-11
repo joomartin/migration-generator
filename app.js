@@ -16,6 +16,12 @@ const argv = yargs
             describe: 'Database to get column informations',
             string: true,
             demand: true
+        },
+        o: {
+            alias: 'output',
+            describe: 'Output path where files being generated',
+            string: true,
+            demand: true
         }
     })
     .help()
@@ -58,9 +64,6 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
             const fieldsData = fields.map(f => {            
                 const options = getOptions(f);  
                 
-                /*if (options && options.primary) {
-                    primaryKey = f['Field'];
-                }*/
                 if (isPrimaryKey(f)) {
                     primaryKey = f['Field'];
                 }
@@ -78,7 +81,13 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
                 variableName, primaryKey
             });
 
-            console.log(html);
+            const fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
+
+            fs.writeFile(fileName, html, err => {
+                if (err) throw err;
+
+                console.log(`${fileName} was generated`);
+            });
         });
         
     });
