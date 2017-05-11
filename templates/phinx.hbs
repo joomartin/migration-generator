@@ -4,17 +4,17 @@ class {{ migrationClass }} extends AbstractMigration
 {
     public function up()
     {
-        ${{ table }} = $this->table('{{ table }}');
+        ${{ variableName }} = $this->table('{{ table }}');
 
         {{#each columns}}
-        ${{ this.table }}->addColumn('{{ this.name }}', '{{ this.type.type }}'{{#if this.options}}, [
+        ${{ variableName }}->addColumn('{{ this.name }}', '{{ this.type.type }}'{{#if this.options}}, [
             {{#each this.options}}
                 '{{@key}}' => {{this}}
             {{/each}}
         ]{{/if}});
         {{/each}}
 
-        ${{ table }}->save();
+        ${{ variableName }}->save();
     }
 
     public function down()

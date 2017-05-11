@@ -52,22 +52,24 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
         connection.query(query, (err, fields) => {
             if (err) throw err;
 
+            const variableName = _.camelCase(table);            
+
             const fieldsData = fields.map(f => {
                 const options = getOptions(f);  
                 return {
                     name: f['Field'],
                     type: getType(f['Type']),
-                    table, options
+                    table, options, variableName
                 };
             });
 
             /**
              * @todo table valtozo neve camelCase legyen
              */
-
             const html = template({
                 migrationClass, table,
-                columns: fieldsData
+                columns: fieldsData,
+                variableName
             });
 
             console.log(html);
