@@ -12,6 +12,7 @@
   "dependencies": {
     "handlebars": "^4.0.8",
     "hbs": "^4.0.1",
+    "lodash": "^4.17.4",
     "mysql": "^2.13.0",
     "yargs": "^8.0.1"
   },

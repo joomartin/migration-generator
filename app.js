@@ -1,6 +1,7 @@
 const fs = require('fs');
 const yargs = require('yargs');
 const Handlebars = require('handlebars');
+const _ = require('lodash');
 
 const config = require('./config.json');
 
@@ -111,8 +112,8 @@ function getOptions(field) {
     if (field['Key'] === 'UNI') {
         options['unique'] = true;
     }
-
-    return options;
+    
+    return (_.isEmpty(options)) ? null : options;
 }
 
 function getType(type) {
