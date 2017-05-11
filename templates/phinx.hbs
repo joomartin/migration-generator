@@ -4,7 +4,7 @@ class {{ migrationClass }} extends AbstractMigration
 {
     public function up()
     {
-        ${{ variableName }} = $this->table('{{ table }}');
+        ${{ variableName }} = $this->table('{{ table }}', ['primary_key' => '{{ primaryKey }}']);
 
         {{#each columns}}
         ${{ variableName }}->addColumn('{{ this.name }}', '{{ this.type.type }}'{{#if this.options}}, [

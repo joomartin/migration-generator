@@ -53,9 +53,18 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
             if (err) throw err;
 
             const variableName = _.camelCase(table);            
+            let primaryKey = null;
 
-            const fieldsData = fields.map(f => {
+            const fieldsData = fields.map(f => {            
                 const options = getOptions(f);  
+                
+                /*if (options && options.primary) {
+                    primaryKey = f['Field'];
+                }*/
+                if (isPrimaryKey(f)) {
+                    primaryKey = f['Field'];
+                }
+
                 return {
                     name: f['Field'],
                     type: getType(f['Type']),
@@ -63,13 +72,10 @@ connection.query('SHOW TABLES', (err, tablesRaw) => {
                 };
             });
 
-            /**
-             * @todo table valtozo neve camelCase legyen
-             */
             const html = template({
                 migrationClass, table,
                 columns: fieldsData,
-                variableName
+                variableName, primaryKey
             });
 
             console.log(html);
@@ -98,7 +104,7 @@ function mapNativeType(type) {
 function getOptions(field) {
 
     /**
-     * @todo UDEGEN KULCSOK
+     * @todo IDEGEN KULCSOK
      */
 
     let options = {};
@@ -116,6 +122,10 @@ function getOptions(field) {
     }
     
     return (_.isEmpty(options)) ? null : options;
+}
+
+function isPrimaryKey(field) {
+    return field['Key'] === 'PRI';
 }
 
 function getType(type) {
