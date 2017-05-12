@@ -41,88 +41,115 @@ connection.connect();
 const tableKey = `Tables_in_${argv.database}`;
 let migrations = {};
 
-connection.query('SHOW TABLES', (err, tablesRaw) => {
-    if (err) throw err;
+function getMigrations() {
+    return new Promise((resolve, reject) => {
+        connection.query('SHOW TABLES', (err, tablesRaw) => {
+            if (err) return reject(err);
 
-    const tables = tablesRaw
-        .filter(t => !config.excludedTables.includes(t[tableKey]));
+            const tables = tablesRaw
+                .filter(t => !config.excludedTables.includes(t[tableKey]));
 
-    tables.forEach(function(element) {
-        const table = element[tableKey];
-        migrations[table] = {};
+            tables.forEach(function(element, index) {
+                const table = element[tableKey];
+                migrations[table] = {
+                    generated: false
+                };
 
-        const tableParts = table.split('_');
-        const tablePartsUpper = tableParts
-            .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
+                const tableParts = table.split('_');
+                const tablePartsUpper = tableParts
+                    .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
 
-        const query = `SHOW FULL COLUMNS FROM ${table}`;
-        const migrationClass = `Create${tablePartsUpper.join('')}Table`;  
+                const query = `SHOW FULL COLUMNS FROM ${table}`;
+                const migrationClass = `Create${tablePartsUpper.join('')}Table`;  
 
-        const dependenciesQuery = `
-            SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
-            LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-            ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
-            
-            WHERE
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${argv.database}' AND
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME = '${table}';
-        `;
-
-        connection.query(dependenciesQuery, (err, results) => {
-            if (err) throw err;
-
-            migrations[table].incomingDependencies = results.map(r => {
-                return {
-                    sourceTable: r['TABLE_NAME'],
-                    sourceColumn: r['COLUMN_NAME'],
-                    referencedTable: r['REFERENCED_TABLE_NAME'], 
-                    referencedColumn: r['REFERENCED_COLUMN_NAME'],
-                    updateRule: r['UPDATE_RULE'],
-                    deleteRule: r['DELETE_RULE']
+                const dependenciesQuery = `
+                    SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
+                    LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+                    ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
                     
-                };
-            });
-        });
+                    WHERE
+                        INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${argv.database}' AND
+                        INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
+                `;
 
-        connection.query(query, (err, fields) => {
+                connection.query(dependenciesQuery, (err, results) => {
+                    if (err) return reject(err);
+
+                    migrations[table].dependencies = results.map(r => {
+                        return {
+                            sourceTable: r['TABLE_NAME'],
+                            sourceColumn: r['COLUMN_NAME'],
+                            referencedTable: r['REFERENCED_TABLE_NAME'], 
+                            referencedColumn: r['REFERENCED_COLUMN_NAME'],
+                            updateRule: r['UPDATE_RULE'],
+                            deleteRule: r['DELETE_RULE']
+                        };
+                    });
+                });
+
+                connection.query(query, (err, fields) => {
+                    if (err) return reject(err)
+
+                    const variableName = _.camelCase(table);            
+                    let primaryKey = null;
+
+                    const fieldsData = fields.map(f => {            
+                        const options = getOptions(f);  
+                        
+                        if (isPrimaryKey(f)) {
+                            primaryKey = f['Field'];
+                        }
+
+                        return {
+                            name: f['Field'],
+                            type: getType(f['Type']),
+                            table, options, variableName
+                        };
+                    });
+
+                    migrations[table].html = template({
+                        migrationClass, table,
+                        columns: fieldsData,
+                        variableName, primaryKey
+                    });
+
+                    migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
+
+                    if (index === tables.length - 1) {
+                        resolve(migrations);
+                    }
+                });        
+            });    
+
+            connection.end();
+        });
+    });   
+}
+
+getMigrations()
+    .then(res => (generateFiles(res)))
+    .catch(err => (console.log(err)));
+
+function generateFiles(migrations) {
+    for (table in migrations) {
+        _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+            generateOneFile(dependency.referencedTable, migrations);
+        });
+    }
+}
+
+function generateOneFile(table, migrations) {
+    if (!migrations[table].dependencies.length) {
+        fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
             if (err) throw err;
-
-            const variableName = _.camelCase(table);            
-            let primaryKey = null;
-
-            const fieldsData = fields.map(f => {            
-                const options = getOptions(f);  
-                
-                if (isPrimaryKey(f)) {
-                    primaryKey = f['Field'];
-                }
-
-                return {
-                    name: f['Field'],
-                    type: getType(f['Type']),
-                    table, options, variableName
-                };
-            });
-
-            migrations[table].html = template({
-                migrationClass, table,
-                columns: fieldsData,
-                variableName, primaryKey
-            });
-
-            migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
-
-            // fs.writeFile(fileName, html, err => {
-            //     if (err) throw err;
-
-            //     console.log(`${fileName} was generated`);
-            // });
+            
+            migrations[table].generated = true;        
+            console.log(`${migrations[table].fileName} was generated successfully`);
         });
-        
-    });    
 
-    connection.end();
-});
+    }
+}
+
 
 const TYPES = [
     {native: 'varchar', mapped: 'string'},
@@ -140,11 +167,6 @@ function mapNativeType(type) {
 }
 
 function getOptions(field) {
-
-    /**
-     * @todo IDEGEN KULCSOK
-     */
-
     let options = {};
 
     if (field['Null'] === 'NO') {
