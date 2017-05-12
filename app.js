@@ -137,27 +137,32 @@ function generateFiles(migrations) {
             return new Promise((resolve, reject) => {
                 _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
                     generateOneFile(dependency.referencedTable, migrations)
-                        .then(res => (console.log(res)))
-                        .catch(err => (console.log(err)));
+                        .then(res => (resolve(res)))
+                        .catch(err => (reject(err)));
                 });
             });
         };
 
         generateDependencies()
-            .then(res => (console.log(res)))
+            .then(res => {
+                generateOneFile(table, migrations)
+                    .then(res => (console.log(res)))
+                    .catch(err => (console.log(res)));
+            })
             .catch(err => (console.log(err)));
 
     }
 }
 
 function generateOneFile(table, migrations) {
+    console.log(table);
     return new Promise((resolve, reject) => {
-        if (!migrations[table].dependencies.length) {
+        if (!migrations[table].dependencies.length || allDependencyGenerated(table, migrations)) {
             fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
                 if (err) return reject(err);
 
                 migrations[table].generated = true;
-                console.log(`${migrations[table].fileName} was generated successfully`);
+                //console.log(`${migrations[table].fileName} was generated successfully`);
                 resolve(table);
             });
         }
