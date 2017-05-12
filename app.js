@@ -32,7 +32,7 @@ const mysql = require('mysql');
 const connection = mysql.createConnection({
     host: config.host,
     port: config.port || 3306,
-    user: config.user || 'root',
+    user: config.user ||  'root',
     password: config.password || 'root',
     database: argv.database
 });
@@ -49,7 +49,7 @@ function getMigrations() {
             const tables = tablesRaw
                 .filter(t => !config.excludedTables.includes(t[tableKey]));
 
-            tables.forEach(function(element, index) {
+            tables.forEach(function (element, index) {
                 const table = element[tableKey];
                 migrations[table] = {
                     generated: false
@@ -60,7 +60,7 @@ function getMigrations() {
                     .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
 
                 const query = `SHOW FULL COLUMNS FROM ${table}`;
-                const migrationClass = `Create${tablePartsUpper.join('')}Table`;  
+                const migrationClass = `Create${tablePartsUpper.join('')}Table`;
 
                 const dependenciesQuery = `
                     SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
@@ -79,7 +79,7 @@ function getMigrations() {
                         return {
                             sourceTable: r['TABLE_NAME'],
                             sourceColumn: r['COLUMN_NAME'],
-                            referencedTable: r['REFERENCED_TABLE_NAME'], 
+                            referencedTable: r['REFERENCED_TABLE_NAME'],
                             referencedColumn: r['REFERENCED_COLUMN_NAME'],
                             updateRule: r['UPDATE_RULE'],
                             deleteRule: r['DELETE_RULE']
@@ -90,12 +90,12 @@ function getMigrations() {
                 connection.query(query, (err, fields) => {
                     if (err) return reject(err)
 
-                    const variableName = _.camelCase(table);            
+                    const variableName = _.camelCase(table);
                     let primaryKey = null;
 
-                    const fieldsData = fields.map(f => {            
-                        const options = getOptions(f);  
-                        
+                    const fieldsData = fields.map(f => {
+                        const options = getOptions(f);
+
                         if (isPrimaryKey(f)) {
                             primaryKey = f['Field'];
                         }
@@ -118,12 +118,12 @@ function getMigrations() {
                     if (index === tables.length - 1) {
                         resolve(migrations);
                     }
-                });        
-            });    
+                });
+            });
 
             connection.end();
         });
-    });   
+    });
 }
 
 getMigrations()
@@ -132,38 +132,64 @@ getMigrations()
 
 function generateFiles(migrations) {
     for (table in migrations) {
-        _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
-            generateOneFile(dependency.referencedTable, migrations);
-        });
+
+        let generateDependencies = () => {
+            return new Promise((resolve, reject) => {
+                _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+                    generateOneFile(dependency.referencedTable, migrations)
+                        .then(res => (console.log(res)))
+                        .catch(err => (console.log(err)));
+                });
+            });
+        };
+
+        generateDependencies()
+            .then(res => (console.log(res)))
+            .catch(err => (console.log(err)));
+
     }
 }
 
 function generateOneFile(table, migrations) {
-    if (!migrations[table].dependencies.length) {
-        fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
-            if (err) throw err;
-            
-            migrations[table].generated = true;        
-            console.log(`${migrations[table].fileName} was generated successfully`);
-        });
+    return new Promise((resolve, reject) => {
+        if (!migrations[table].dependencies.length) {
+            fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
+                if (err) return reject(err);
 
-    }
+                migrations[table].generated = true;
+                console.log(`${migrations[table].fileName} was generated successfully`);
+                resolve(table);
+            });
+        }
+    });
+
+
+}
+
+function allDependencyGenerated(table, migrations) {
+    table.dependencies.forEach(d =>  {
+        if (!migrations[d.referencedTable].generated) {
+            return false;
+        }
+    });
+
+    return true;
 }
 
 
 const TYPES = [
-    {native: 'varchar', mapped: 'string'},
-    {native: 'int', mapped: 'integer'},
-    {native: 'bigint', mapped: 'biginteger'},
-    {native: 'tinyint', mapped: 'integer'},
-    {native: 'decimal', mapped: 'decimal'}
+    { native: 'varchar', mapped: 'string' },
+    { native: 'int', mapped: 'integer' },
+    { native: 'bigint', mapped: 'biginteger' },
+    { native: 'tinyint', mapped: 'integer' },
+    { native: 'decimal', mapped: 'decimal' }
 ];
 
 function mapNativeType(type) {
     return TYPES
         .filter(t => t.native.includes(type))
-        .map(t => t.mapped)
-        .shift() || type.toLowerCase();
+        .map(t =>  t.mapped)
+        .shift() ||  type.toLowerCase();
 }
 
 function getOptions(field) {
@@ -180,7 +206,7 @@ function getOptions(field) {
     if (field['Key'] === 'UNI') {
         options['unique'] = true;
     }
-    
+
     return (_.isEmpty(options)) ? null : options;
 }
 
@@ -199,12 +225,12 @@ function getType(type) {
         let lengthParts = parts[1].split(',');
         length = lengthParts[0];
         decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
-    } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
+    } else if (parts[1] &&  parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
         options.unsigned = (optionsParts[1] === 'unsigned');
 
         length = optionsParts[0].slice(0, optionsParts[0].length - 1);
-    } else if(parts[1]) {   // INT (10)
+    } else if (parts[1]) {   // INT (10)
         length = parts[1].slice(0, parts[1].length - 1);
     }
 
@@ -213,7 +239,7 @@ function getType(type) {
      */
 
     if (length) {
-        options.length = length;        
+        options.length = length;
     }
 
     if (decimals) {
