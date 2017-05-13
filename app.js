@@ -130,56 +130,71 @@ getMigrations()
     .then(res => (generateFiles(res)))
     .catch(err => (console.log(err)));
 
-function generateFiles(migrations) {
-    for (table in migrations) {
+function getOrderedMigrations(migrations) {
+    // Fuggoseg szerint sorrendben adja vissza
 
-        let generateDependencies = () => {
-            return new Promise((resolve, reject) => {
-                _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
-                    generateOneFile(dependency.referencedTable, migrations)
-                        .then(res => (resolve(res)))
-                        .catch(err => (reject(err)));
-                });
-            });
-        };
+    // Veg kell menni egy tabla fuggosegein, tobb szint melyen, admig olyan tablahoz erunk, aminek mar nincsen fuggosege
+    // Es folyamatosan eipteni kell a sorrendet
 
-        generateDependencies()
-            .then(res => {
-                generateOneFile(table, migrations)
-                    .then(res => (console.log(res)))
-                    .catch(err => (console.log(res)));
-            })
-            .catch(err => (console.log(err)));
+    // Pl.:
+    // todos -> categories -> users
 
-    }
+    // todos bekerul elso helyre, elindulunk a fuggosegein
+    // Megtalaljuk a categories fuggoseget, ez bekerul a todo ele
+    // Elindulunk a categories fuggosegein
+    // Megtalaljuk a users fuggoseget, az bekerul a categories ele
+
+    // users -> categories -> todos
 }
 
-function generateOneFile(table, migrations) {
-    console.log(table);
-    return new Promise((resolve, reject) => {
-        if (!migrations[table].dependencies.length || allDependencyGenerated(table, migrations)) {
-            fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
-                if (err) return reject(err);
+// function generateFiles(migrations) {
+//     for (table in migrations) {
 
-                migrations[table].generated = true;
-                //console.log(`${migrations[table].fileName} was generated successfully`);
-                resolve(table);
-            });
-        }
-    });
+//         let generateDependencies = () => {
+//             return new Promise((resolve, reject) => {
+//                 _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+//                     generateOneFile(dependency.referencedTable, migrations)
+//                         .then(res => (resolve(res)))
+//                         .catch(err => (reject(err)));
+//                 });
+//             });
+//         };
 
+//         generateDependencies()
+//             .then(res => {
+//                 generateOneFile(table, migrations)
+//                     .then(res => (console.log(res)))
+//                     .catch(err => (console.log(res)));
+//             })
+//             .catch(err => (console.log(err)));
 
-}
+//     }
+// }
 
-function allDependencyGenerated(table, migrations) {
-    table.dependencies.forEach(d =>  {
-        if (!migrations[d.referencedTable].generated) {
-            return false;
-        }
-    });
+// function generateOneFile(table, migrations) {
+//     console.log(table);
+//     return new Promise((resolve, reject) => {
+//         if (!migrations[table].dependencies.length || allDependencyGenerated(table, migrations)) {
+//             fs.writeFile(migrations[table].fileName, migrations[table].html, err => {
+//                 if (err) return reject(err);
 
-    return true;
-}
+//                 migrations[table].generated = true;
+//                 //console.log(`${migrations[table].fileName} was generated successfully`);
+//                 resolve(table);
+//             });
+//         }
+//     });
+// }
+
+// function allDependencyGenerated(table, migrations) {
+//     table.dependencies.forEach(d =>  {
+//         if (!migrations[d.referencedTable].generated) {
+//             return false;
+//         }
+//     });
+
+//     return true;
+// }
 
 
 const TYPES = [
