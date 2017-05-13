@@ -32,7 +32,7 @@ const mysql = require('mysql');
 const connection = mysql.createConnection({
     host: config.host,
     port: config.port || 3306,
-    user: config.user ||  'root',
+    user: config.user || 'root',
     password: config.password || 'root',
     database: argv.database
 });
@@ -52,7 +52,8 @@ function getMigrations() {
             tables.forEach(function (element, index) {
                 const table = element[tableKey];
                 migrations[table] = {
-                    generated: false
+                    table,
+                    allDependencyOrdered: false
                 };
 
                 const tableParts = table.split('_');
@@ -115,6 +116,10 @@ function getMigrations() {
 
                     migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
 
+                    if (migrations[table].dependencies.length === 0) {
+                        migrations[table].allDependencyOrdered = true;
+                    }
+
                     if (index === tables.length - 1) {
                         resolve(migrations);
                     }
@@ -127,7 +132,7 @@ function getMigrations() {
 }
 
 getMigrations()
-    .then(res => (generateFiles(res)))
+    .then(res => (getOrderedMigrations(res)))
     .catch(err => (console.log(err)));
 
 function getOrderedMigrations(migrations) {
@@ -145,6 +150,30 @@ function getOrderedMigrations(migrations) {
     // Megtalaljuk a users fuggoseget, az bekerul a categories ele
 
     // users -> categories -> todos
+
+    /**
+     * @todo meg kell csinalni rekurzivan. Kell egy olyan funcito, ami csak egy table -vel foglalkozik
+     */
+
+    let orderedMigrations = [];
+    for (table in migrations) {
+        if (!hasTable(orderedMigrations, table)) {
+            console.log('TAB: ', table);
+            //orderedMigrations.push(migrations[table]);
+        }
+        _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+            if (!hasTable(orderedMigrations, table)) {
+                console.log('DEP: ', table);
+                orderedMigrations.unshift(migrations[dependency.referencedTable]);
+            }
+        });
+    }
+
+    console.log(orderedMigrations);
+}
+
+function hasTable(migrations, table) {
+    return migrations.some((m) => m.table === table);
 }
 
 // function generateFiles(migrations) {
@@ -208,8 +237,8 @@ const TYPES = [
 function mapNativeType(type) {
     return TYPES
         .filter(t => t.native.includes(type))
-        .map(t =>  t.mapped)
-        .shift() ||  type.toLowerCase();
+        .map(t => t.mapped)
+        .shift() || type.toLowerCase();
 }
 
 function getOptions(field) {
@@ -245,7 +274,7 @@ function getType(type) {
         let lengthParts = parts[1].split(',');
         length = lengthParts[0];
         decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
-    } else if (parts[1] &&  parts[1].includes(' ')) {    // INT (10) UNSIGNED
+    } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
         options.unsigned = (optionsParts[1] === 'unsigned');
 
