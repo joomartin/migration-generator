@@ -6,18 +6,6 @@ const _ = require('lodash');
 
 const config = require('./config.json');
 
-// Handlebars.registerHelper('eq', function(v1, v2, options) {
-//   if(v1 === v2) {
-//     return options.fn(this);
-//   }
-
-//   return options.inverse(this);
-// });
-
-// const template = Handlebars.compile(
-//     fs.readFileSync(`./templates/${config['migration-lib']}.hbs`)
-//         .toString());
-
 const argv = yargs
     .options({
         d: {
@@ -130,8 +118,6 @@ function getMigrations() {
                         
                         migrations[table].html = html; 
                     });
-
-                    // migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
 
                     if (migrations[table].dependencies.length === 0) {
                         migrations[table].allDependencyOrdered = true;
@@ -250,8 +236,16 @@ function getType(type) {
     // DECIMAL (10,2)
     if (parts[1] && parts[1].includes(',')) {
         let lengthParts = parts[1].split(',');
-        length = lengthParts[0];
-        decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
+
+        if (lengthParts[1] && lengthParts[1].includes(')')) {   // DECIMAL (10, 2) UNSIGNED
+            let decimalParts = lengthParts[1].split(')');
+            decimals = decimalParts[0];
+            options.unsigned = (decimalParts.length > 1);
+        } else {
+            length = lengthParts[0];
+            decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
+        }
+
     } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
         options.unsigned = (optionsParts[1] === 'unsigned');
@@ -260,10 +254,6 @@ function getType(type) {
     } else if (parts[1]) {   // INT (10)
         length = parts[1].slice(0, parts[1].length - 1);
     }
-
-    /**
-     * @todo DECIMAL(10, 2) UNSIGNED
-     */
 
     if (length) {
         options.length = length;
