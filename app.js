@@ -108,6 +108,8 @@ function getMigrations() {
                         };
                     });
 
+                    console.log(table);
+                    console.log(fieldsData);
                     ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
                         migrationClass, table,
                         columns: fieldsData,
@@ -238,10 +240,11 @@ function getType(type) {
         let lengthParts = parts[1].split(',');
 
         if (lengthParts[1] && lengthParts[1].includes(')')) {   // DECIMAL (10, 2) UNSIGNED
+            length = lengthParts[0];
             let decimalParts = lengthParts[1].split(')');
             decimals = decimalParts[0];
             options.unsigned = (decimalParts.length > 1);
-        } else {
+        } else {                                                // DECIMAL (10,2)
             length = lengthParts[0];
             decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
         }
@@ -264,7 +267,7 @@ function getType(type) {
     }
 
     return {
-        type: mapNativeType(parts[0]),
+        name: mapNativeType(parts[0]),
         options
     };
 }

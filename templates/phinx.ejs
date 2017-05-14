@@ -7,9 +7,11 @@ class <%= migrationClass %> extends AbstractMigration
         $<%= variableName %> = $this->table('<%= table %>', ['primary_key' => '<%= primaryKey %>']);
 
         <% columns.forEach(c => { %>
-        $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.type %>'<% if (c.options) { %>, [
+        $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.name %>'<% if (c.options) { %>, [
             <% for (option in c.options) { %>
-            '<%= option %>' => <%= c.options[option] %>
+            '<%= option %>' => <%= c.options[option] %>,
+            <% } %> <% for (option in c.type.options) { %>
+            '<%= option %>' => <%= c.type.options[option] %>,
             <% } %>
         ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %><% if (columnDependencies.length === 0) { %>;
             <% } else { %>
