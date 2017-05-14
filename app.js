@@ -1,8 +1,10 @@
 const fs = require('fs');
 const yargs = require('yargs');
-const Handlebars = require('handlebars');
 const ejs = require('ejs');
 const _ = require('lodash');
+
+const createColumnInfo = require('./database/column-info/factory');
+//const ColumnInfo = require('./database/column-info');
 
 const config = require('./config.json');
 
@@ -95,20 +97,22 @@ function getMigrations() {
                     let primaryKey = null;
 
                     const fieldsData = fields.map(f => {
-                        const options = getOptions(f);
+                        // const info = new ColumnInfo(f);
+                        const info = createColumnInfo(config.migrationLib, f);
+                        const options = info.getOptions();
 
-                        if (isPrimaryKey(f)) {
+                        if (info.isPrimaryKey()) {
                             primaryKey = f['Field'];
                         }
 
                         return {
                             name: f['Field'],
-                            type: getType(f['Type']),
+                            type: info.getType(),
                             table, options, variableName
                         };
                     });
 
-                    ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
+                    ejs.renderFile(`./templates/${config['migrationLib']}.ejs`, {
                         migrationClass, table,
                         columns: fieldsData,
                         variableName, primaryKey,

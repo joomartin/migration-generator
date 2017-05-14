@@ -11,8 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "ejs": "^2.5.6",
-    "handlebars": "^4.0.8",
-    "handlebars-helper-equal": "^1.0.0",
     "hbs": "^4.0.1",
     "lodash": "^4.17.4",
     "mysql": "^2.13.0",
