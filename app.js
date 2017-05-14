@@ -151,29 +151,49 @@ function getOrderedMigrations(migrations) {
 
     // users -> categories -> todos
 
+    let orderedMigrations = [];
+
     /**
-     * @todo meg kell csinalni rekurzivan. Kell egy olyan funcito, ami csak egy table -vel foglalkozik
+     * @todo ezt kell beletenni egy while ciklusba, ami addig megy, amig a migrations -ben minden elem
+     * allDependencyOrdered flag -je true nem lesz
      */
 
-    let orderedMigrations = [];
-    for (table in migrations) {
-        if (!hasTable(orderedMigrations, table)) {
-            console.log('TAB: ', table);
-            //orderedMigrations.push(migrations[table]);
-        }
-        _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
-            if (!hasTable(orderedMigrations, table)) {
-                console.log('DEP: ', table);
-                orderedMigrations.unshift(migrations[dependency.referencedTable]);
+    while (!allTablesOrdered(migrations)) {
+        for (table in migrations) {
+            if (!hasTable(orderedMigrations, table) && migrations[table].allDependencyOrdered) {
+                orderedMigrations.push(migrations[table]);
             }
-        });
+
+            _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+                if (!hasTable(orderedMigrations, table)) {
+                    if (!hasTable(orderedMigrations, dependency.referencedTable)) {
+                        orderedMigrations.unshift(migrations[dependency.referencedTable]);
+                    }
+                }
+
+                migrations[table].allDependencyOrdered = true;
+                if (!hasTable(orderedMigrations, table)) {
+                    orderedMigrations.push(migrations[table]);
+                }
+            });
+        }
     }
 
     console.log(orderedMigrations);
 }
 
+function allTablesOrdered(migrations) {
+    for (table in migrations) {
+        if (!migrations[table].allDependencyOrdered) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function hasTable(migrations, table) {
-    return migrations.some((m) => m.table === table);
+    return migrations.some(m => m.table === table);
 }
 
 // function generateFiles(migrations) {
