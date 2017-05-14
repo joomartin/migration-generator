@@ -109,7 +109,7 @@ function getMigrations() {
                     });
 
                     console.log(table);
-                    console.log(fieldsData);
+                    console.log(JSON.stringify(fieldsData, null, 2));
                     ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
                         migrationClass, table,
                         columns: fieldsData,
