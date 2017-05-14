@@ -17,6 +17,7 @@
     "yargs": "^8.0.1"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "expect": "^1.20.2",
     "mocha": "^3.3.0",
     "nodemon": "^1.11.0"
