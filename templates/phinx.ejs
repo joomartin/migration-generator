@@ -14,10 +14,10 @@ class <%= migrationClass %> extends AbstractMigration
         ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %><% if (columnDependencies.length === 0) { %>;
             <% } else { %>
                 <% columnDependencies
-                    .forEach(d => { %>
+                    .forEach(cd => { %>
             ->addForeignKey(
-                '<%= d.sourceColumn %>', '<%= d.referencedTable %>', '<%= d.referencedColumn %>', 
-                ['delete' => '<%= d.deleteRule %>', 'update' => '<%= d.updateRule %>']
+                '<%= cd.sourceColumn %>', '<%= cd.referencedTable %>', '<%= cd.referencedColumn %>', 
+                ['delete' => '<%= cd.deleteRule %>', 'update' => '<%= cd.updateRule %>']
             );
                 <% }); %>
             <% } %>

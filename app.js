@@ -79,23 +79,12 @@ function getMigrations() {
                     
                     WHERE
                         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${argv.database}' AND
+                        INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${argv.database}' AND
                         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
                 `;
 
                 connection.query(dependenciesQuery, (err, results) => {
                     if (err) return reject(err);
-                    
-                    // migrations[table].dependencies = new Set;
-                    // results.forEach(r => {
-                    //     migrations[table].dependencies.add({
-                    //         sourceTable: r['TABLE_NAME'],
-                    //         sourceColumn: r['COLUMN_NAME'],
-                    //         referencedTable: r['REFERENCED_TABLE_NAME'],
-                    //         referencedColumn: r['REFERENCED_COLUMN_NAME'],
-                    //         updateRule: r['UPDATE_RULE'],
-                    //         deleteRule: r['DELETE_RULE']
-                    //     });
-                    // });
 
                     dependencies = results.map(r => {
                         return {
@@ -164,10 +153,12 @@ getMigrations()
         let orderedMigrations = getOrderedMigrations(res);
 
         orderedMigrations.forEach(m => {
-            let fileName = `${argv.output}/${(new Date).getTime()}_create_${m.table}_table.php`;
-            console.log(fileName);
-            fs.writeFile(fileName, m.html, err => {
+            let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
+            let path = `${argv.output}/${fileName}`;
+            
+            fs.writeFile(path, m.html, err => {
                 if (err) throw err;
+                console.log(`${fileName} was generated successfully`);
             });
         });
     })
