@@ -1,13 +1,22 @@
 const fs = require('fs');
 const yargs = require('yargs');
 const Handlebars = require('handlebars');
+const ejs = require('ejs');
 const _ = require('lodash');
 
 const config = require('./config.json');
 
-const template = Handlebars.compile(
-    fs.readFileSync(`./templates/${config['migration-lib']}.hbs`)
-        .toString());
+// Handlebars.registerHelper('eq', function(v1, v2, options) {
+//   if(v1 === v2) {
+//     return options.fn(this);
+//   }
+
+//   return options.inverse(this);
+// });
+
+// const template = Handlebars.compile(
+//     fs.readFileSync(`./templates/${config['migration-lib']}.hbs`)
+//         .toString());
 
 const argv = yargs
     .options({
@@ -108,11 +117,29 @@ function getMigrations() {
                         };
                     });
 
-                    migrations[table].html = template({
+                    // console.log(table);
+                    // console.log(migrations[table].dependencies);
+
+                    migrations[table].html = ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
                         migrationClass, table,
                         columns: fieldsData,
-                        variableName, primaryKey
+                        variableName, primaryKey,
+                        dependencies: migrations[table].dependencies
+                    }, null, (err, str) => {
+                        if (err) throw err;
+                        
+                        console.log('render');
+                        console.log(str);
                     });
+
+                    return false;
+
+                    // migrations[table].html = template({
+                    //     migrationClass, table,
+                    //     columns: fieldsData,
+                    //     variableName, primaryKey,
+                    //     dependencies: migrations[table].dependencies
+                    // });
 
                     migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
 
@@ -133,8 +160,18 @@ function getMigrations() {
 
 getMigrations()
     .then(res => {
+        //console.log(res);
         let orderedMigrations = getOrderedMigrations(res);
-        console.log(orderedMigrations);
+        // console.log(orderedMigrations);
+
+        /**
+         * @todo fileName -ben nem jo a sorrendbe allitas elotti timestamp
+         */
+        orderedMigrations.forEach(m => {
+            fs.writeFile(m.fileName, m.html, err => {
+                if (err) throw err;
+            });
+        });
     })
     .catch(err => (console.log(err)));
 

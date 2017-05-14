@@ -1,0 +1,37 @@
+<?php
+
+class <%= migrationClass %> extends AbstractMigration
+{
+    public function up()
+    {
+        $<%= variableName %> = $this->table('<%= table %>', ['primary_key' => '<%= primaryKey %>']);
+
+        <% columns.forEach(c => { %>
+        $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.type %>'<% if (c.options) { %>, [
+            <% for (option in c.options) { %>
+                '<%= option %>' => <%= c.options[option] %>
+            <% } %>
+        ]<% } %>)
+            <% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %>
+
+            <% if (columnDependencies.length === 0) { %>
+                ;
+            <% } else { %>
+                <% columnDependencies
+                    .forEach(d => { %>
+                    ->addForeignKey(
+                        '<%= d.sourceColumn %>', '<%= d.referencedTable %>', '<%= d.referencedColumn %>', 
+                        ['delete' => '<%= d.deleteRule %>', 'update' => '<%= d.updateRule %>']
+                    );
+                <% }); %>
+            <% } %>
+        <% }); %>
+
+        $<%= variableName %>->save();
+    }
+
+    public function down()
+    {
+        $this->dropTable('<%= table %>');
+    }
+}

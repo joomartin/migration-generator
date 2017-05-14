@@ -11,7 +11,16 @@ class {{ migrationClass }} extends AbstractMigration
             {{#each this.options}}
                 '{{@key}}' => {{this}}
             {{/each}}
-        ]{{/if}});
+        ]{{/if}})
+            {{#each dependencies}}
+                {{#eq this.sourceColumn @root.father.name }}
+                FUUUUUUUUUUCK
+                ->addForeignKey(
+                    {{this.sourceColumn}}, {{this.referencedTable}}, {{this.referencedColumn}}, 
+                    ['delete' => {{this.deleteRule}}, 'update' => {{this.updateRule}}]
+                );
+                {{/eq}}
+            {{/each}}
         {{/each}}
 
         ${{ variableName }}->save();
