@@ -84,8 +84,20 @@ function getMigrations() {
 
                 connection.query(dependenciesQuery, (err, results) => {
                     if (err) return reject(err);
+                    
+                    // migrations[table].dependencies = new Set;
+                    // results.forEach(r => {
+                    //     migrations[table].dependencies.add({
+                    //         sourceTable: r['TABLE_NAME'],
+                    //         sourceColumn: r['COLUMN_NAME'],
+                    //         referencedTable: r['REFERENCED_TABLE_NAME'],
+                    //         referencedColumn: r['REFERENCED_COLUMN_NAME'],
+                    //         updateRule: r['UPDATE_RULE'],
+                    //         deleteRule: r['DELETE_RULE']
+                    //     });
+                    // });
 
-                    migrations[table].dependencies = results.map(r => {
+                    dependencies = results.map(r => {
                         return {
                             sourceTable: r['TABLE_NAME'],
                             sourceColumn: r['COLUMN_NAME'],
@@ -95,6 +107,8 @@ function getMigrations() {
                             deleteRule: r['DELETE_RULE']
                         };
                     });
+
+                    migrations[table].dependencies = _.uniqBy(dependencies, 'sourceColumn');
                 });
 
                 connection.query(query, (err, fields) => {
@@ -117,31 +131,18 @@ function getMigrations() {
                         };
                     });
 
-                    // console.log(table);
-                    // console.log(migrations[table].dependencies);
-
-                    migrations[table].html = ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
+                    ejs.renderFile(`./templates/${config['migration-lib']}.ejs`, {
                         migrationClass, table,
                         columns: fieldsData,
                         variableName, primaryKey,
                         dependencies: migrations[table].dependencies
-                    }, null, (err, str) => {
+                    }, null, (err, html) => {
                         if (err) throw err;
                         
-                        console.log('render');
-                        console.log(str);
+                        migrations[table].html = html; 
                     });
 
-                    return false;
-
-                    // migrations[table].html = template({
-                    //     migrationClass, table,
-                    //     columns: fieldsData,
-                    //     variableName, primaryKey,
-                    //     dependencies: migrations[table].dependencies
-                    // });
-
-                    migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
+                    // migrations[table].fileName = `${argv.output}/${(new Date).getTime()}_create_${table}_table.php`;
 
                     if (migrations[table].dependencies.length === 0) {
                         migrations[table].allDependencyOrdered = true;
@@ -160,15 +161,12 @@ function getMigrations() {
 
 getMigrations()
     .then(res => {
-        //console.log(res);
         let orderedMigrations = getOrderedMigrations(res);
-        // console.log(orderedMigrations);
 
-        /**
-         * @todo fileName -ben nem jo a sorrendbe allitas elotti timestamp
-         */
         orderedMigrations.forEach(m => {
-            fs.writeFile(m.fileName, m.html, err => {
+            let fileName = `${argv.output}/${(new Date).getTime()}_create_${m.table}_table.php`;
+            console.log(fileName);
+            fs.writeFile(fileName, m.html, err => {
                 if (err) throw err;
             });
         });
