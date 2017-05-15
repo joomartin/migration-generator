@@ -32,7 +32,7 @@ ColumnInfo.prototype.getType = function () {
 
     } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
-        options.unsigned = (optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');
+        options.signed = !(optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');
 
         length = optionsParts[0].slice(0, optionsParts[0].length - 1);
     } else if (parts[1]) {   // INT (10)

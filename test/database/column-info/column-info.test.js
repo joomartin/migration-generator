@@ -98,7 +98,7 @@ describe('ColumnInfo', () => {
             expect(type.name).to.be.equal('LONGTEXT');
         });
 
-        it('should return int type with length and unsigned', () => {
+        it('should return int type with length and signed', () => {
             // INT (10) UNSIGNED
             let type = (new ColumnInfo({
                 Type: 'INT (11) UNSIGNED'
@@ -106,7 +106,7 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('INT');
             expect(type.options.length).to.be.equal(11);
-            expect(type.options.unsigned).to.be.true;
+            expect(type.options.signed).to.be.false;
         });
 
         it('should return decimal type with length and precision', () => {
