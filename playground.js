@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getDependencies(connection, 'todos', config)
+query.getContent(connection, 'todos')
     .then(res => {
         console.log(res);
 

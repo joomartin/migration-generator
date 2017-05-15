@@ -27,6 +27,20 @@ class <%= migrationClass %> extends AbstractMigration
             <% } %>
         <% }); %>
         $<%= variableName %>->save();
+
+        <% if (content) { %>
+        $rows = [
+        <% content.forEach((item, index) => { %>
+            [
+            <% for (column in item) { %>
+            '<%= column %>' => '<%= item[column] %>',
+            <% } %>
+            ]<% if (index !== content.length - 1){%>,<% } %>
+        <% }); %>            
+        ];
+
+        $this->insert('<%= table %>', $rows);
+        <% } %>
     }
 
     public function down()

@@ -36,6 +36,7 @@ let getTemplate = (table, typeMapper, config, createColumnInfo) => {
             migrationClass,
             table: table.table,
             columns: fieldsData,
+            content: table.content,
             variableName, primaryKey,
             dependencies: table.dependencies
         }, null, (err, html) => {
