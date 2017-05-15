@@ -117,7 +117,8 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('DECIMAL');
             expect(type.options.length).to.be.equal(10);
-            expect(type.options.decimals).to.be.equal(2);
+            expect(type.options.precision).to.be.equal(2);
+            expect(type.options.signed).to.be.false;
         });
 
         it('should return decimal type with length, precision and unsigned', () => {
@@ -128,8 +129,8 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('DECIMAL');
             expect(type.options.length).to.be.equal(12);
-            expect(type.options.decimals).to.be.equal(4);
-            expect(type.options.unsigned).to.be.true;
+            expect(type.options.precision).to.be.equal(4);
+            expect(type.options.signed).to.be.false;
         });
 
         it('should return tinyint with length', () => {

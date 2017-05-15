@@ -13,7 +13,7 @@ function ColumnInfo(field) {
 ColumnInfo.prototype.getType = function () {
     let parts = this.field['Type'].split('(');
     let length = null;
-    let decimals = null;
+    let precision = null;
     let options = {};
 
     // DECIMAL (10,2)
@@ -23,11 +23,11 @@ ColumnInfo.prototype.getType = function () {
         if (lengthParts[1] && lengthParts[1].includes(')')) {   // DECIMAL (10, 2) UNSIGNED
             length = lengthParts[0];
             let decimalParts = lengthParts[1].split(')');
-            decimals = decimalParts[0];
-            options.unsigned = (decimalParts.length > 1);
+            precision = decimalParts[0];
+            options.signed = !(decimalParts.length > 1);
         } else {                                                // DECIMAL (10,2)
             length = lengthParts[0];
-            decimals = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
+            precision = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
         }
 
     } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
@@ -43,8 +43,8 @@ ColumnInfo.prototype.getType = function () {
         options.length = parseInt(length);
     }
 
-    if (decimals) {
-        options.decimals = parseInt(decimals);
+    if (precision) {
+        options.precision = parseInt(precision);
     }
 
     return {
