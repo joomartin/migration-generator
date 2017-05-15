@@ -62,6 +62,50 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
+let getTableData = (connection, query, config) => {
+    return new Promise((resolve, reject) => {
+        let migrations = {};
+        const tableKey = `Tables_in_${config.database}`;
+
+        query.getTables(connection, config)
+            .then(tables => {
+                tables.forEach((tableRaw, index) => {
+                    const table = tableRaw[tableKey];
+
+                    let columnsPromise = query.getColumns(connection, table);
+                    /*.then(columns => {
+                        migrations[table] = {
+                            table,
+                            allDependencyOrdered: false,
+                            columns
+                        };
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });*/
+
+                    let dependenciesPromise = query.getDependencies(connection, table, config);
+                    /*.then(dependencies => {
+                        migrations[table].dependencies = dependencies;
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });*/
+
+                    Promise.all([columnsPromise, dependenciesPromise])
+                        .then(values => {
+                            console.log(values);
+                        })
+                });
+
+
+            })
+            .catch(err => {
+                reject(err);
+            });
+    });
+}
+
 /**
  * @param tablesRaw Array
  * @param config Object
@@ -77,5 +121,6 @@ module.exports = {
     getTables,
     getColumns,
     getDependencies,
+    getTableData,
     filterExcludedTables
 }

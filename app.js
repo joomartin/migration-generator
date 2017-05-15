@@ -6,12 +6,13 @@ const mysql = require('mysql');
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
 const migration = require('./database/migration');
+const query = require('./database/query');
 
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
 
 const connection = mysql.createConnection({
-    host: config.host || 'localhost',
+    host: config.host || 'localhost',
     port: config.port || 3306,
     user: config.user || 'root',
     password: config.password || 'root',
@@ -21,7 +22,14 @@ const connection = mysql.createConnection({
 connection.connect();
 
 const tableKey = `Tables_in_${config.database}`;
-let migrations = {};
+
+let getMigrationNew = () => {
+    query.getTableData(connection, query, config)
+        .then(tables => console.log(tables))
+        .catch(err => console.log(err))
+}
+
+getMigrationNew();
 
 function getMigrations() {
     return new Promise((resolve, reject) => {
@@ -123,25 +131,25 @@ function getMigrations() {
     });
 }
 
-getMigrations()
-    .then(res => {
-        let orderedMigrations = migration.getOrderedMigrations(res);
-        let tables = orderedMigrations.map(o => o.table);
+// getMigrations()
+//     .then(res => {
+//         let orderedMigrations = migration.getOrderedMigrations(res);
+//         let tables = orderedMigrations.map(o => o.table);
 
-        /**
-         * @todo wtf
-         */
-        orderedMigrations
-            .filter(m => m !== undefined)
-            .forEach(m => {
-                let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
-                let path = `${config.output}/${fileName}`;
+//         /**
+//          * @todo wtf
+//          */
+//         orderedMigrations
+//             .filter(m => m !== undefined)
+//             .forEach(m => {
+//                 let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
+//                 let path = `${config.output}/${fileName}`;
 
-                fs.writeFileSync(path, m.html);            
-                console.log(`${fileName} was generated successfully`);                
-            });
-    })
-    .catch(err => {
-        console.log(err);
-        process.exit(-1);
-    });
+//                 fs.writeFileSync(path, m.html);            
+//                 console.log(`${fileName} was generated successfully`);                
+//             });
+//     })
+//     .catch(err => {
+//         console.log(err);
+//         process.exit(-1);
+//     });
