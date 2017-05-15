@@ -60,7 +60,7 @@ function getMigrations() {
                 const tablePartsUpper = tableParts
                     .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
 
-                const query = `SHOW FULL COLUMNS FROM ${table}`;
+                const columnsQuery = `SHOW FULL COLUMNS FROM ${table}`;
                 const migrationClass = `Create${tablePartsUpper.join('')}Table`;
 
                 const dependenciesQuery = `
@@ -91,7 +91,7 @@ function getMigrations() {
                     migrations[table].dependencies = _.uniqBy(dependencies, 'sourceColumn');
                 });
 
-                connection.query(query, (err, fields) => {
+                connection.query(columnsQuery, (err, fields) => {
                     if (err) return reject(err)
 
                     const variableName = _.camelCase(table);
@@ -107,7 +107,7 @@ function getMigrations() {
 
                         let typeObj = columnInfo.getType();
                         typeObj.name = typeMapper.map(typeObj.name);
-                        
+
                         return {
                             name: f['Field'],
                             type: typeObj,
@@ -156,6 +156,9 @@ getMigrations()
         });
     })
     .catch(err => {
+        console.log('ERROR');
+        console.log(err);
+        process.exit(-1);
         throw err;
     });
 
@@ -163,7 +166,9 @@ function getOrderedMigrations(migrations) {
     let orderedMigrations = [];
     while (!allTablesOrdered(migrations)) {
         for (table in migrations) {
-            if (!hasTable(orderedMigrations, table) && migrations[table].allDependencyOrdered) {
+            if (!hasTable(orderedMigrations, table) 
+                && _.get(migrations, table, {allDependencyOrdered: false}).allDependencyOrdered) {
+
                 orderedMigrations.push(migrations[table]);
             }
 
@@ -187,7 +192,7 @@ function getOrderedMigrations(migrations) {
 
 function allTablesOrdered(migrations) {
     for (table in migrations) {
-        if (!migrations[table].allDependencyOrdered) {
+        if ( !_.get(migrations, table, {allDependencyOrdered: false}).allDependencyOrdered) {
             return false;
         }
     }
@@ -196,5 +201,5 @@ function allTablesOrdered(migrations) {
 }
 
 function hasTable(migrations, table) {
-    return migrations.some(m => m.table === table);
+    return migrations.some(m => _.get(m, table, null) === table);
 }
