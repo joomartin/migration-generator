@@ -8,13 +8,6 @@ function ColumnInfo(field) {
 }
 
 /**
- * @param type String
- */
-ColumnInfo.prototype.mapNativeType = function (type) {
-    throw 'Abstract method. Must be implemented';
-}
-
-/**
  * @return Object
  */
 ColumnInfo.prototype.getType = function () {
@@ -55,7 +48,6 @@ ColumnInfo.prototype.getType = function () {
     }
 
     return {
-        // name: this.mapNativeType(parts[0]),
         name: parts[0].trim(),
         options
     };

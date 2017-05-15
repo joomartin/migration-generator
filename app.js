@@ -144,11 +144,8 @@ function getMigrations() {
 
 getMigrations()
     .then(res => {
-        console.log(res);
         let orderedMigrations = migration.getOrderedMigrations(res);
-
         let tables = orderedMigrations.map(o => o.table);
-        console.log(tables);
 
         /**
          * @todo wtf
@@ -159,10 +156,8 @@ getMigrations()
                 let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
                 let path = `${argv.output}/${fileName}`;
 
-                fs.writeFile(path, m.html, err => {
-                    if (err) throw err;
-                    console.log(`${fileName} was generated successfully`);
-                });
+                fs.writeFileSync(path, m.html);            
+                console.log(`${fileName} was generated successfully`);                
             });
     })
     .catch(err => {

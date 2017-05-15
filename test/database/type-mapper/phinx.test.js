@@ -45,5 +45,13 @@ describe('TypeMapperPhinx', () => {
             type = mapper.map('decimal');
             expect(type).to.be.equal('decimal');
         });
+
+        it('should not map unknown type', () => {
+            let type = mapper.map('UNKNOWN');
+            expect(type).to.be.equal('unknown');
+
+            type = mapper.map('unknown');
+            expect(type).to.be.equal('unknown');
+        });
     });
 });

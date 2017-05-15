@@ -4,8 +4,9 @@
   "description": "Migration generator for MySQL databases",
   "main": "app.js",
   "scripts": {
-    "test": "mocha --recursive",
-    "test-watch": "nodemon --exec \"npm test\""
+    "test": "./node_modules/mocha/bin/mocha --recursive",
+    "test-watch": "./node_modules/nodemon/bin/nodemon.js --exec \"npm test\"",
+    "coverage": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha ./test/**/*.test.js ./test/**/**/*.test.js"
   },
   "author": "Joó Martin",
   "license": "ISC",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "expect": "^1.20.2",
+    "istanbul": "^0.4.5",
     "mocha": "^3.3.0",
     "nodemon": "^1.11.0"
   }
