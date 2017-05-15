@@ -1,6 +1,12 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
+/**
+ * @param table Object
+ * @param typeMapper Object
+ * @param config Object
+ * @param createColumnInfo Function
+ */
 let getTemplate = (table, typeMapper, config, createColumnInfo) => {
     return new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
@@ -44,6 +50,8 @@ let getTemplate = (table, typeMapper, config, createColumnInfo) => {
  * @param content String
  * @param tableName String
  * @param config Object
+ * @param fs Object
+ * @param timestamp int
  * @return String
  */
 let generateFile = (content, tableName, config, fs, timestamp) => {
@@ -54,6 +62,10 @@ let generateFile = (content, tableName, config, fs, timestamp) => {
     return fileName;
 }
 
+/**
+ * @param tableName String
+ * @return String
+ */
 let getClassName = (tableName) => {
     const tablePartsUpper = tableName.split('_')
         .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
@@ -61,6 +73,10 @@ let getClassName = (tableName) => {
     return `Create${tablePartsUpper.join('')}Table`;
 }
 
+/**
+ * @param tableName String
+ * @return String
+ */
 let getVariableName = (tableName) => {
     return _.camelCase(tableName);
 }
