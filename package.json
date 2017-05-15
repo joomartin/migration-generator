@@ -4,22 +4,23 @@
   "description": "Migration generator for MySQL databases",
   "main": "app.js",
   "scripts": {
-    "test": "mocha tests/**/*.test.js",
-    "test-watch": "nodemon --exec \"npm test\""
+    "test": "./node_modules/mocha/bin/mocha --recursive",
+    "test-watch": "./node_modules/nodemon/bin/nodemon.js --exec \"npm test\"",
+    "coverage": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha ./test/**/*.test.js ./test/**/**/*.test.js"
   },
   "author": "Joó Martin",
   "license": "ISC",
   "dependencies": {
     "ejs": "^2.5.6",
-    "handlebars": "^4.0.8",
-    "handlebars-helper-equal": "^1.0.0",
     "hbs": "^4.0.1",
     "lodash": "^4.17.4",
     "mysql": "^2.13.0",
     "yargs": "^8.0.1"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "expect": "^1.20.2",
+    "istanbul": "^0.4.5",
     "mocha": "^3.3.0",
     "nodemon": "^1.11.0"
   }

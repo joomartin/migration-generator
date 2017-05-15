@@ -3,6 +3,6 @@
     "port": 8889,
     "user": "root",
     "password": "root",
-    "migration-lib": "phinx",
+    "migrationLib": "phinx",
     "excludedTables": ["migrations"]
 }

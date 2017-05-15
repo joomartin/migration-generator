@@ -1,5 +1,7 @@
 <?php
 
+use \Phinx\Migration\AbstractMigration;
+
 class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
@@ -9,9 +11,9 @@ class <%= migrationClass %> extends AbstractMigration
         <% columns.forEach(c => { %>
         $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.name %>'<% if (c.options || c.type.options) { %>, [
             <% for (option in c.options) { %>
-            '<%= option %>' => <%= c.options[option] %>,
-            <% } %> <% for (typeOption in c.type.options) { %>
-            '<%= typeOption %>' => <%= c.type.options[typeOption] %>,
+            '<%= option %>' => <% if (typeof c.options[option] === 'string' && isNaN(c.options[option])) { %>'<%= c.options[option] %>'<% } else {%><%= c.options[option] %><% } %>,
+            <% } %> <% for (option in c.type.options) { %>
+            '<%= option %>' => <% if (typeof c.type.options[option] === 'string' && isNaN(c.type.options[option])) { %>'<%= c.type.options[option] %>'<% } else {%><%= c.type.options[option] %><% } %>,
             <% } %>
         ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %><% if (columnDependencies.length === 0) { %>;
             <% } else { %>
