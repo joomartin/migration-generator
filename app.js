@@ -7,6 +7,7 @@ const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
 const migration = require('./database/migration');
 const query = require('./database/query');
+const file = require('./file/file');
 
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
@@ -25,7 +26,15 @@ const tableKey = `Tables_in_${config.database}`;
 
 let getMigrationNew = () => {
     query.getTableData(connection, query, config)
-        .then(tables => console.log(tables))
+        .then(tables => {
+            for (table in tables) {
+                file.foo(tables[table], typeMapper, config);
+            }
+            
+            connection.end();
+
+
+        })
         .catch(err => console.log(err))
 }
 

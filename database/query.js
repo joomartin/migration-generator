@@ -85,16 +85,13 @@ let getTableData = (connection, query, config) => {
                     let columnsPromise = query.getColumns(connection, table);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
                     /**
-                     * @todo ststic data promise
+                     * @todo static data promise
                      */
 
-                    /**
-                     * @todo a then tobbszor hivodik meg
-                     */
                     Promise.all([columnsPromise, dependenciesPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (v.Field) {
+                                if (_.get(v, [0, 'Field'], null)) {                                    
                                     tableData[table].columns = v;
                                 } else {
                                     tableData[table].dependencies = v;
