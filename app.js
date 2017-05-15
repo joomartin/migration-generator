@@ -28,7 +28,7 @@ let getMigrationNew = () => {
     query.getTableData(connection, query, config)
         .then(tables => {
             for (table in tables) {
-                file.foo(tables[table], typeMapper, config);
+                file.generateFile(tables[table], typeMapper, config, createColumnInfo);
             }
             
             connection.end();

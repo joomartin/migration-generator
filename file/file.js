@@ -1,15 +1,10 @@
 const _ = require('lodash');
+const ejs = require('ejs');
 
-let foo = (table, typeMapper, config) => {
-    console.log(table);
-    return false;
-    const tableParts = table.table.split('_');
-    const tablePartsUpper = tableParts
-        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
+let generateFile = (table, typeMapper, config, createColumnInfo) => {
+    const variableName = getVariableName(table.table);
+    const migrationClass = getClassName(table.table);
 
-    const variableName = _.camelCase(table.table);
-
-    const migrationClass = `Create${tablePartsUpper.join('')}Table`;
     let primaryKey = null;
 
     const fieldsData = table.columns.map(f => {
@@ -34,20 +29,20 @@ let foo = (table, typeMapper, config) => {
         migrationClass, table,
         columns: fieldsData,
         variableName, primaryKey,
-        dependencies: migrations[table].dependencies
+        dependencies: table.dependencies
     }, null, (err, html) => {
         if (err) throw err;
 
-        migrations[table].html = html;
+        table.html = html;
     });
 
-    if (migrations[table].dependencies.length === 0) {
-        migrations[table].allDependencyOrdered = true;
+    if (table.dependencies.length === 0) {
+        table.allDependencyOrdered = true;
     }
 
-    if (index === tables.length - 1) {
+    // if (index === tables.length - 1) {
         //resolve(migrations);
-    }
+    // }
 }
 
 let getClassName = (tableName) => {
@@ -62,7 +57,7 @@ let getVariableName = (tableName) => {
 }
 
 module.exports = {
-    foo,
+    generateFile,
     getClassName,
     getVariableName
 }
