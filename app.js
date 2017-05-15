@@ -11,7 +11,7 @@ const typeMapper = createTypeMapper(config.migrationLib);
 
 const mysql = require('mysql');
 const connection = mysql.createConnection({
-    host: config.host,
+    host: config.host || 'localhost',
     port: config.port || 3306,
     user: config.user || 'root',
     password: config.password || 'root',
@@ -19,6 +19,7 @@ const connection = mysql.createConnection({
 });
 
 connection.connect();
+
 const tableKey = `Tables_in_${config.database}`;
 let migrations = {};
 
