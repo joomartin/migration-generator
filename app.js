@@ -1,5 +1,4 @@
 const fs = require('fs');
-const yargs = require('yargs');
 const ejs = require('ejs');
 const _ = require('lodash');
 
@@ -10,36 +9,17 @@ const migration = require('./database/migration');
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
 
-const argv = yargs
-    .options({
-        d: {
-            alias: 'database',
-            describe: 'Database to get tables information from',
-            string: true,
-            demand: true
-        },
-        o: {
-            alias: 'output',
-            describe: 'Output path where files being generated',
-            string: true,
-            demand: true
-        }
-    })
-    .help()
-    .alias('help', 'h')
-    .argv;
-
 const mysql = require('mysql');
 const connection = mysql.createConnection({
     host: config.host,
     port: config.port || 3306,
     user: config.user || 'root',
     password: config.password || 'root',
-    database: argv.database
+    database: config.database
 });
 
 connection.connect();
-const tableKey = `Tables_in_${argv.database}`;
+const tableKey = `Tables_in_${config.database}`;
 let migrations = {};
 
 function getMigrations() {
@@ -70,8 +50,8 @@ function getMigrations() {
                     ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
                     
                     WHERE
-                        INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${argv.database}' AND
-                        INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${argv.database}' AND
+                        INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${config.database}' AND
+                        INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${config.database}' AND
                         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
                 `;
 
@@ -154,7 +134,7 @@ getMigrations()
             .filter(m => m !== undefined)
             .forEach(m => {
                 let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
-                let path = `${argv.output}/${fileName}`;
+                let path = `${config.output}/${fileName}`;
 
                 fs.writeFileSync(path, m.html);            
                 console.log(`${fileName} was generated successfully`);                
