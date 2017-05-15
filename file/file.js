@@ -26,7 +26,8 @@ let generateFile = (table, typeMapper, config, createColumnInfo) => {
     });
 
     ejs.renderFile(`./templates/${config['migrationLib']}.ejs`, {
-        migrationClass, table,
+        migrationClass, 
+        table: table.table,
         columns: fieldsData,
         variableName, primaryKey,
         dependencies: table.dependencies
@@ -34,6 +35,7 @@ let generateFile = (table, typeMapper, config, createColumnInfo) => {
         if (err) throw err;
 
         table.html = html;
+        console.log(html);
     });
 
     if (table.dependencies.length === 0) {
