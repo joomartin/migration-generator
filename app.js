@@ -1,6 +1,7 @@
 const fs = require('fs');
 const ejs = require('ejs');
 const _ = require('lodash');
+const mysql = require('mysql');
 
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
@@ -9,7 +10,6 @@ const migration = require('./database/migration');
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
 
-const mysql = require('mysql');
 const connection = mysql.createConnection({
     host: config.host || 'localhost',
     port: config.port || 3306,
