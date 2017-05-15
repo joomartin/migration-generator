@@ -109,27 +109,27 @@ describe('ColumnInfo', () => {
             expect(type.options.signed).to.be.false;
         });
 
-        it('should return decimal type with length and precision', () => {
+        it('should return decimal type with precision and scale', () => {
             // DECIMAL (10, 2)
             let type = (new ColumnInfo({
                 Type: 'DECIMAL (10, 2)'
             })).getType();
 
             expect(type.name).to.be.equal('DECIMAL');
-            expect(type.options.length).to.be.equal(10);
-            expect(type.options.precision).to.be.equal(2);
+            expect(type.options.precision).to.be.equal(10);
+            expect(type.options.scale).to.be.equal(2);
             expect(type.options.signed).to.be.false;
         });
 
-        it('should return decimal type with length, precision and unsigned', () => {
+        it('should return decimal type with precision, scale and unsigned', () => {
             // DECIMAL (10, 2) UNSIGNED
             let type = (new ColumnInfo({
                 Type: 'DECIMAL (12, 4) UNSIGNED'
             })).getType();
 
             expect(type.name).to.be.equal('DECIMAL');
-            expect(type.options.length).to.be.equal(12);
-            expect(type.options.precision).to.be.equal(4);
+            expect(type.options.precision).to.be.equal(12);
+            expect(type.options.scale).to.be.equal(4);
             expect(type.options.signed).to.be.false;
         });
 
