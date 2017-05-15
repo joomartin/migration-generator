@@ -40,8 +40,34 @@ describe('Migration', () => {
             let hasTodos = migration.hasTable(tables, 'todos');
             expect(hasTodos).to.be.true;
 
+            let hasUsers = migration.hasTable(tables, 'users');
+            expect(hasUsers).to.be.true;
+        });
+
+        it('should return false when a table is missing from migrations', () => {
+            let tables = [{todos: 'todos'}, {users: 'users'}, {categories: 'users'}, {}];
+
             let hasDocuments = migration.hasTable(tables, 'documents');
             expect(hasDocuments).to.be.false;
+        });
+    });
+
+    describe('#allTablesOrdered()', () => {
+        it('should return true when all tables are ordered', () => {
+            let migrations = createMigrationData();
+            for (table in migrations) {
+                migrations[table].allDependencyOrdered = true;
+            }
+
+            let allOrdered = migration.allTablesOrdered(migrations);
+
+            expect(allOrdered).to.be.true;
+        });
+
+        it('should return false when not all tables are ordered', () => {
+            let allOrdered = migration.allTablesOrdered(createMigrationData());
+
+            expect(allOrdered).to.be.false;
         });
     });
 });
