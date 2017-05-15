@@ -1,20 +1,4 @@
-let migrations = {
-    todos: {
-        allDependencyOrdered: false
-    },
-    users: {
-        allDependencyOrdered: true
-    }
-}
+const createTypeMapper = require('./database/type-mapper/factory');
 
-console.log(allTablesOrdered(migrations));
-
-function allTablesOrdered(migrations) {
-    for (table in migrations) {
-        if (!migrations[table].allDependencyOrdered) {
-            return false;
-        }
-    }
-
-    return true;
-}
+let mapper = createTypeMapper('phinx');
+console.log(mapper.map('varchar'));
