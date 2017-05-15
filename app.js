@@ -5,6 +5,7 @@ const _ = require('lodash');
 
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
+const migration = require('./database/migration');
 
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
@@ -122,8 +123,8 @@ function getMigrations() {
                         dependencies: migrations[table].dependencies
                     }, null, (err, html) => {
                         if (err) throw err;
-                        
-                        migrations[table].html = html; 
+
+                        migrations[table].html = html;
                     });
 
                     if (migrations[table].dependencies.length === 0) {
@@ -143,77 +144,79 @@ function getMigrations() {
 
 getMigrations()
     .then(res => {
-        // let orderedMigrations = getOrderedMigrations(res);
+        console.log(res);
+        let orderedMigrations = migration.getOrderedMigrations(res);
 
-        for (table in res) {
-            let fileName = `${(new Date).getTime()}_create_${res[table].table}_table.php`;
-            let path = `${argv.output}/${fileName}`;
-            
-            fs.writeFile(path, res[table].html, err => {
-                if (err) throw err;
-                console.log(`${fileName} was generated successfully`);
-            });
-        }
+        let tables = orderedMigrations.map(o => o.table);
+        console.log(tables);
 
         /**
          * @todo wtf
          */
-        // orderedMigrations
-        //     .filter(m => m !== undefined)
-        //     .forEach(m => {
-        //         let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
-        //         let path = `${argv.output}/${fileName}`;
-                
-        //         fs.writeFile(path, m.html, err => {
-        //             if (err) throw err;
-        //             console.log(`${fileName} was generated successfully`);
-        //         });
-        //     });
+        orderedMigrations
+            .filter(m => m !== undefined)
+            .forEach(m => {
+                let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
+                let path = `${argv.output}/${fileName}`;
+
+                fs.writeFile(path, m.html, err => {
+                    if (err) throw err;
+                    console.log(`${fileName} was generated successfully`);
+                });
+            });
     })
     .catch(err => {
         console.log(err);
         process.exit(-1);
     });
 
-function getOrderedMigrations(migrations) {
-    let orderedMigrations = [];
-    while (!allTablesOrdered(migrations)) {
-        for (table in migrations) {
-            if (!hasTable(orderedMigrations, table) 
-                && _.get(migrations, table, {allDependencyOrdered: false}).allDependencyOrdered) {
+/**
+ * @param migrations Object
+ * @return Array
+ */
+// function getOrderedMigrations(migrations) {
+//     console.log(migrations);
+//     let orderedMigrations = [];
+//     while (!allTablesOrdered(migrations)) {
+//         for (table in migrations) {
+//             if (migrations[table].dependencies) {
+//                 console.log('DEPS', migrations[table].dependencies);
+//             }
+//             if (!hasTable(orderedMigrations, table)
+//                 && _.get(migrations, table, { allDependencyOrdered: false }).allDependencyOrdered) {
 
-                orderedMigrations.push(migrations[table]);
-            }
+//                 orderedMigrations.push(migrations[table]);
+//             }
 
-            _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
-                if (!hasTable(orderedMigrations, table)) {
-                    if (!hasTable(orderedMigrations, dependency.referencedTable)) {
-                        orderedMigrations.unshift(migrations[dependency.referencedTable]);
-                    }
-                }
+//             _.get(migrations[table], 'dependencies', []).forEach((dependency) => {
+//                 if (!hasTable(orderedMigrations, table)) {
+//                     if (!hasTable(orderedMigrations, dependency.referencedTable)) {
+//                         orderedMigrations.unshift(migrations[dependency.referencedTable]);
+//                     }
+//                 }
 
-                migrations[table].allDependencyOrdered = true;
-                if (!hasTable(orderedMigrations, table)) {
-                    orderedMigrations.push(migrations[table]);
-                }
-            });
-        }
-    }
+//                 migrations[table].allDependencyOrdered = true;
+//                 if (!hasTable(orderedMigrations, table)) {
+//                     orderedMigrations.push(migrations[table]);
+//                 }
+//             });
+//         }
+//     }
 
-    let filtered = orderedMigrations.filter(m => m !== undefined);
-    return _.uniqBy(filtered, 'table')
-}
+//     let filtered = orderedMigrations.filter(m => m !== undefined);
+//     return _.uniqBy(filtered, 'table');
+// }
 
-function allTablesOrdered(migrations) {
-    for (table in migrations) {
-        if ( !_.get(migrations, table, {allDependencyOrdered: false}).allDependencyOrdered) {
-            return false;
-        }
-    }
+// function allTablesOrdered(migrations) {
+//     for (table in migrations) {
+//         if (!_.get(migrations, table, { allDependencyOrdered: false }).allDependencyOrdered) {
+//             return false;
+//         }
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
-function hasTable(migrations, table) {
-    return migrations.some(m => _.get(m, table, null) === table);
-}
+// function hasTable(migrations, table) {
+//     return migrations.some(m => _.get(m, table, null) === table);
+// }
