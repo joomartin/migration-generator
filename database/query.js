@@ -62,16 +62,22 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
+/**
+ * @param connection Object
+ * @param query Object
+ * @param config Object
+ * @return Promise
+ */
 let getTableData = (connection, query, config) => {
     return new Promise((resolve, reject) => {
-        let migrations = {};
+        let tableData = {};
         const tableKey = `Tables_in_${config.database}`;
 
         query.getTables(connection, config)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
-                    migrations[table] = {
+                    tableData[table] = {
                         table,
                         allDependencyOrdered: false
                     };
@@ -82,13 +88,20 @@ let getTableData = (connection, query, config) => {
                      * @todo ststic data promise
                      */
 
+                    /**
+                     * @todo a then tobbszor hivodik meg
+                     */
                     Promise.all([columnsPromise, dependenciesPromise])
                         .then(values => {
                             values.forEach(v => {
                                 if (v.Field) {
-                                    migrations[table].columns = v;
+                                    tableData[table].columns = v;
                                 } else {
-                                    migrations[table].dependencies = v;
+                                    tableData[table].dependencies = v;
+                                }
+
+                                if (index === tables.length - 1) {
+                                    resolve(tableData);
                                 }
                             });
                         });
