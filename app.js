@@ -28,12 +28,25 @@ let getMigrationNew = () => {
     query.getTableData(connection, query, config)
         .then(tables => {
             for (table in tables) {
-                file.generateFile(tables[table], typeMapper, config, createColumnInfo);
+                file.getTemplate(tables[table], typeMapper, config, createColumnInfo)
+                    .then(data => {
+
+                        /**
+                         * @todo ORDER
+                         */
+
+                        tables[table].html = data.html;
+
+                        let fileName = `${(new Date).getTime()}_create_${data.table}_table.php`;
+                        let path = `${config.output}/${fileName}`;
+
+                        fs.writeFileSync(path, data.html);
+                        console.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
             }
-            
+
             connection.end();
-
-
         })
         .catch(err => console.log(err))
 }

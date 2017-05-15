@@ -1,50 +1,47 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
-let generateFile = (table, typeMapper, config, createColumnInfo) => {
-    const variableName = getVariableName(table.table);
-    const migrationClass = getClassName(table.table);
+let getTemplate = (table, typeMapper, config, createColumnInfo) => {
+    return new Promise((resolve, reject) => {
+        const variableName = getVariableName(table.table);
+        const migrationClass = getClassName(table.table);
 
-    let primaryKey = null;
+        let primaryKey = null;
 
-    const fieldsData = table.columns.map(f => {
-        const columnInfo = createColumnInfo(f);
-        const options = columnInfo.getOptions();
+        const fieldsData = table.columns.map(f => {
+            const columnInfo = createColumnInfo(f);
+            const options = columnInfo.getOptions();
 
-        if (columnInfo.isPrimaryKey()) {
-            primaryKey = f['Field'];
+            if (columnInfo.isPrimaryKey()) {
+                primaryKey = f['Field'];
+            }
+
+            let typeObj = columnInfo.getType();
+            typeObj.name = typeMapper.map(typeObj.name);
+
+            return {
+                name: f['Field'],
+                type: typeObj,
+                table, options, variableName
+            };
+        });
+
+        ejs.renderFile(`./templates/${config['migrationLib']}.ejs`, {
+            migrationClass,
+            table: table.table,
+            columns: fieldsData,
+            variableName, primaryKey,
+            dependencies: table.dependencies
+        }, null, (err, html) => {
+            if (err) reject(err);
+
+            resolve({table: table.table, html});
+        });
+
+        if (table.dependencies.length === 0) {
+            table.allDependencyOrdered = true;
         }
-
-        let typeObj = columnInfo.getType();
-        typeObj.name = typeMapper.map(typeObj.name);
-
-        return {
-            name: f['Field'],
-            type: typeObj,
-            table, options, variableName
-        };
     });
-
-    ejs.renderFile(`./templates/${config['migrationLib']}.ejs`, {
-        migrationClass, 
-        table: table.table,
-        columns: fieldsData,
-        variableName, primaryKey,
-        dependencies: table.dependencies
-    }, null, (err, html) => {
-        if (err) throw err;
-
-        table.html = html;
-        console.log(html);
-    });
-
-    if (table.dependencies.length === 0) {
-        table.allDependencyOrdered = true;
-    }
-
-    // if (index === tables.length - 1) {
-        //resolve(migrations);
-    // }
 }
 
 let getClassName = (tableName) => {
@@ -59,7 +56,7 @@ let getVariableName = (tableName) => {
 }
 
 module.exports = {
-    generateFile,
+    getTemplate,
     getClassName,
     getVariableName
 }
