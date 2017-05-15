@@ -1,3 +1,8 @@
+/*
+ * "excludedTables" - these tables will not be generated
+ * "migrationLib"   - will generate the right format for the given library
+ * "output"         - directory to generate migration files
+ */
 {
     "host": "localhost",
     "port": 8889,
@@ -5,6 +10,8 @@
     "password": "root",
     "database": "test-project",
     "migrationLib": "phinx",
-    "excludedTables": ["migrations"],    
+    "excludedTables": [
+        "migrations"
+    ],
     "output": "/Users/joomartin/migration-test"
 }
