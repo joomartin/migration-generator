@@ -71,34 +71,28 @@ let getTableData = (connection, query, config) => {
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
+                    migrations[table] = {
+                        table,
+                        allDependencyOrdered: false
+                    };
 
                     let columnsPromise = query.getColumns(connection, table);
-                    /*.then(columns => {
-                        migrations[table] = {
-                            table,
-                            allDependencyOrdered: false,
-                            columns
-                        };
-                    })
-                    .catch(err => {
-                        reject(err);
-                    });*/
-
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    /*.then(dependencies => {
-                        migrations[table].dependencies = dependencies;
-                    })
-                    .catch(err => {
-                        reject(err);
-                    });*/
+                    /**
+                     * @todo ststic data promise
+                     */
 
                     Promise.all([columnsPromise, dependenciesPromise])
                         .then(values => {
-                            console.log(values);
-                        })
+                            values.forEach(v => {
+                                if (v.Field) {
+                                    migrations[table].columns = v;
+                                } else {
+                                    migrations[table].dependencies = v;
+                                }
+                            });
+                        });
                 });
-
-
             })
             .catch(err => {
                 reject(err);
