@@ -4,6 +4,8 @@ class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
     {
+        $this->execute('SET foreign_key_checks = 0');
+        
         $<%= variableName %> = $this->table('<%= table %>', ['primary_key' => '<%= primaryKey %>']);
 
         <% columns.forEach(c => { %>
@@ -25,6 +27,8 @@ class <%= migrationClass %> extends AbstractMigration
             <% } %>
         <% }); %>
         $<%= variableName %>->save();
+
+        $this->execute('SET foreign_key_checks = 1');
     }
 
     public function down()

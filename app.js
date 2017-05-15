@@ -143,23 +143,36 @@ function getMigrations() {
 
 getMigrations()
     .then(res => {
-        let orderedMigrations = getOrderedMigrations(res);
+        // let orderedMigrations = getOrderedMigrations(res);
 
-        orderedMigrations.forEach(m => {
-            let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
+        for (table in res) {
+            let fileName = `${(new Date).getTime()}_create_${res[table].table}_table.php`;
             let path = `${argv.output}/${fileName}`;
             
-            fs.writeFile(path, m.html, err => {
+            fs.writeFile(path, res[table].html, err => {
                 if (err) throw err;
                 console.log(`${fileName} was generated successfully`);
             });
-        });
+        }
+
+        /**
+         * @todo wtf
+         */
+        // orderedMigrations
+        //     .filter(m => m !== undefined)
+        //     .forEach(m => {
+        //         let fileName = `${(new Date).getTime()}_create_${m.table}_table.php`;
+        //         let path = `${argv.output}/${fileName}`;
+                
+        //         fs.writeFile(path, m.html, err => {
+        //             if (err) throw err;
+        //             console.log(`${fileName} was generated successfully`);
+        //         });
+        //     });
     })
     .catch(err => {
-        console.log('ERROR');
         console.log(err);
         process.exit(-1);
-        throw err;
     });
 
 function getOrderedMigrations(migrations) {
@@ -187,7 +200,8 @@ function getOrderedMigrations(migrations) {
         }
     }
 
-    return orderedMigrations;
+    let filtered = orderedMigrations.filter(m => m !== undefined);
+    return _.uniqBy(filtered, 'table')
 }
 
 function allTablesOrdered(migrations) {
