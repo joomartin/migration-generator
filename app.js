@@ -97,7 +97,7 @@ function getMigrations() {
                     let primaryKey = null;
 
                     const fieldsData = fields.map(f => {
-                        const info = createColumnInfo(config.migrationLib, f);
+                        const info = createColumnInfo(f);
                         const options = info.getOptions();
 
                         if (info.isPrimaryKey()) {

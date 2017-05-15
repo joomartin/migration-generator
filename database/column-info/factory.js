@@ -1,6 +1,7 @@
-let createColumnInfo = function (type, field) {
-    const columnInfoClass = require(`./${type}`);
-    return new columnInfoClass(field);
+const ColumnInfo = require('./column-info');
+
+let createColumnInfo = function (field) {
+    return new ColumnInfo(field);
 }
 
 module.exports = createColumnInfo;
