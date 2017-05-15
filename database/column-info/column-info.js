@@ -57,7 +57,9 @@ ColumnInfo.prototype.getType = function () {
  * @return null | Object
  */
 ColumnInfo.prototype.getOptions = function () {
-    let options = {};
+    let options = {
+        'null': true
+    };
 
     if (this.field['Null'] === 'NO') {
         options['null'] = false;

@@ -3,7 +3,7 @@ const expect = require('chai').expect;
 
 
 describe('ColumnInfo', () => {
-    describe('#isPrimaryKey', () => {
+    describe('#isPrimaryKey()', () => {
         it('should return true if a field is primary key', () => {
             let info = new ColumnInfo({
                 Key: 'PRI'
@@ -14,14 +14,14 @@ describe('ColumnInfo', () => {
 
         it('should return false if a field is not primary key', () => {
             let info = new ColumnInfo({
-                Key: 'MUML'
+                Key: 'MUL'
             });
 
             expect(info.isPrimaryKey()).to.be.false;
         });
     });
 
-    describe('#getOptions', () => {
+    describe('#getOptions()', () => {
         it('should return column options as an object', () => {
             let info = new ColumnInfo({
                 Null: 'NO',
@@ -43,23 +43,23 @@ describe('ColumnInfo', () => {
 
             let options = info.getOptions();
 
-            expect(options.null).to.be.undefined;
+            expect(options.null).to.be.true;
             expect(options.default).to.be.equal('Value');
             expect(options.unique).to.be.undefined;
         });
 
-        it('should return null when column does not have options', () => {
+        it('should return default object when column does not have options', () => {
             let info = new ColumnInfo({
                 Type: 'INT (10)'
             });
 
             let options = info.getOptions();
 
-            expect(options).to.be.null;
+            expect(options).to.be.deep.equal({null: true});
         });
     });
 
-    describe('#getType', () => {
+    describe('#getType()', () => {
         it('should return int type with length', () => {
             // INT (10)
             let type = (new ColumnInfo({
