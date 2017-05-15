@@ -4,9 +4,10 @@ const ejs = require('ejs');
 const _ = require('lodash');
 
 const createColumnInfo = require('./database/column-info/factory');
-//const ColumnInfo = require('./database/column-info');
+const createTypeMapper = require('./database/type-mapper/factory');
 
 const config = require('./config.json');
+const typeMapper = createTypeMapper(config.migrationLib);
 
 const argv = yargs
     .options({
@@ -97,16 +98,19 @@ function getMigrations() {
                     let primaryKey = null;
 
                     const fieldsData = fields.map(f => {
-                        const info = createColumnInfo(f);
-                        const options = info.getOptions();
+                        const columnInfo = createColumnInfo(f);
+                        const options = columnInfo.getOptions();
 
-                        if (info.isPrimaryKey()) {
+                        if (columnInfo.isPrimaryKey()) {
                             primaryKey = f['Field'];
                         }
 
+                        let typeObj = columnInfo.getType();
+                        typeObj.name = typeMapper.map(typeObj.name);
+                        
                         return {
                             name: f['Field'],
-                            type: info.getType(),
+                            type: typeObj,
                             table, options, variableName
                         };
                     });
