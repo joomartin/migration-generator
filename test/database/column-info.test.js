@@ -60,8 +60,6 @@ describe('ColumnInfo', () => {
     });
 
     describe('#getType', () => {
-
-
         it('should return int type with length', () => {
             // INT (10)
             let type = (new ColumnInfo({
@@ -132,6 +130,16 @@ describe('ColumnInfo', () => {
             expect(type.options.length).to.be.equal(12);
             expect(type.options.decimals).to.be.equal(4);
             expect(type.options.unsigned).to.be.true;
+        });
+
+        it('should return tinyint with length', () => {
+            // TINYINT (1)
+            let type = (new ColumnInfo({
+                Type: 'TINYINT (1)'
+            })).getType();
+
+            expect(type.name).to.be.equal('TINYINT');
+            expect(type.options.length).to.be.equal(1);
         });
     });
 });
