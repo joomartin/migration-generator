@@ -50,6 +50,19 @@ let foo = (table, typeMapper, config) => {
     }
 }
 
+let getClassName = (tableName) => {
+    const tablePartsUpper = tableName.split('_')
+        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
+
+    return `Create${tablePartsUpper.join('')}Table`;
+}
+
+let getVariableName = (tableName) => {
+    return _.camelCase(tableName);
+}
+
 module.exports = {
-    foo
+    foo,
+    getClassName,
+    getVariableName
 }
