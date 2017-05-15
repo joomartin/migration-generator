@@ -58,4 +58,80 @@ describe('ColumnInfo', () => {
             expect(options).to.be.null;
         });
     });
+
+    describe('#getType', () => {
+
+
+        it('should return int type with length', () => {
+            // INT (10)
+            let type = (new ColumnInfo({
+                Type: 'INT (10)'
+            })).getType();
+
+            expect(type.name).to.be.equal('INT');
+            expect(type.options.length).to.be.equal(10);
+        });
+
+        it('should return varchar type with length', () => {
+            // VARCHAR (100)
+            let type = (new ColumnInfo({
+                Type: 'VARCHAR (100)'
+            })).getType();
+
+            expect(type.name).to.be.equal('VARCHAR');
+            expect(type.options.length).to.be.equal(100);
+        });
+
+        it('should return text type', () => {
+            // TEXT
+            let type = (new ColumnInfo({
+                Type: 'TEXT'
+            })).getType();
+
+            expect(type.name).to.be.equal('TEXT');
+        });
+
+        it('should return long text type', () => {
+            // LONGTEXT
+            let type = (new ColumnInfo({
+                Type: 'LONGTEXT'
+            })).getType();
+
+            expect(type.name).to.be.equal('LONGTEXT');
+        });
+
+        it('should return int type with length and unsigned', () => {
+            // INT (10) UNSIGNED
+            let type = (new ColumnInfo({
+                Type: 'INT (11) UNSIGNED'
+            })).getType();
+
+            expect(type.name).to.be.equal('INT');
+            expect(type.options.length).to.be.equal(11);
+            expect(type.options.unsigned).to.be.true;
+        });
+
+        it('should return decimal type with length and precision', () => {
+            // DECIMAL (10, 2)
+            let type = (new ColumnInfo({
+                Type: 'DECIMAL (10, 2)'
+            })).getType();
+
+            expect(type.name).to.be.equal('DECIMAL');
+            expect(type.options.length).to.be.equal(10);
+            expect(type.options.decimals).to.be.equal(2);
+        });
+
+        it('should return decimal type with length, precision and unsigned', () => {
+            // DECIMAL (10, 2) UNSIGNED
+            let type = (new ColumnInfo({
+                Type: 'DECIMAL (12, 4) UNSIGNED'
+            })).getType();
+
+            expect(type.name).to.be.equal('DECIMAL');
+            expect(type.options.length).to.be.equal(12);
+            expect(type.options.decimals).to.be.equal(4);
+            expect(type.options.unsigned).to.be.true;
+        });
+    });
 });

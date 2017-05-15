@@ -39,7 +39,7 @@ ColumnInfo.prototype.getType = function () {
 
     } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
-        options.unsigned = (optionsParts[1] === 'unsigned');
+        options.unsigned = (optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');
 
         length = optionsParts[0].slice(0, optionsParts[0].length - 1);
     } else if (parts[1]) {   // INT (10)
@@ -47,15 +47,16 @@ ColumnInfo.prototype.getType = function () {
     }
 
     if (length) {
-        options.length = length;
+        options.length = parseInt(length);
     }
 
     if (decimals) {
-        options.decimals = decimals;
+        options.decimals = parseInt(decimals);
     }
 
     return {
-        name: this.mapNativeType(parts[0]),
+        // name: this.mapNativeType(parts[0]),
+        name: parts[0].trim(),
         options
     };
 }
