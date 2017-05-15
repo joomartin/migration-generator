@@ -3,7 +3,7 @@ const _ = require('lodash');
 
 const migration = require('../../database/migration');
 
-describe('#App', () => {
+describe('Migration', () => {
     describe('#getOrderedMigrations()', () => {
         it('should get all migrations in order based on their dependencies', () => {
             let orderedMigrations = migration.getOrderedMigrations(createMigrationData());
@@ -30,6 +30,18 @@ describe('#App', () => {
             orderedMigrations = migration.getOrderedMigrations(migrations);
 
             verifyOrderedMigrations(orderedMigrations);
+        });
+    });
+
+    describe('#hasTable()', () => {
+        it('should return true when a table is in migrations', () => {
+            let tables = [{todos: 'todos'}, {users: 'users'}, {categories: 'users'}, {}];
+
+            let hasTodos = migration.hasTable(tables, 'todos');
+            expect(hasTodos).to.be.true;
+
+            let hasDocuments = migration.hasTable(tables, 'documents');
+            expect(hasDocuments).to.be.false;
         });
     });
 });

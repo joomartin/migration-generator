@@ -4,7 +4,7 @@ const TypeMapperPhinx = require('../../../database/type-mapper/phinx');
 
 let mapper = new TypeMapperPhinx;
 
-describe('#TypeMapperPhinx', () => {
+describe('TypeMapperPhinx', () => {
     describe('#map()', () => {
         it('should map varchar to string', () => {
             let type = mapper.map('VARCHAR');

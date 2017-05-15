@@ -1,4 +1,4 @@
-const ColumnInfo = require('../../database/column-info');
+const ColumnInfo = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
 
 
