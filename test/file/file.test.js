@@ -1,5 +1,6 @@
-const file = require('../../file/file');
 const expect = require('chai').expect;
+
+const file = require('../../file/file');
 
 describe('File', () => {
     describe('#getClassName()', () => {
@@ -25,6 +26,25 @@ describe('File', () => {
 
             className = file.getVariableName('todos_users_categories');
             expect(className).to.be.equal('todosUsersCategories');            
+        });
+    });
+
+    describe('#generateFile()', () => {
+        it('should write out content to a file', () => {
+            let content = 'foo';
+            let tableName = 'todos';
+            let config = {
+                output: '/output'
+            };
+            let timestamp = (new Date).getTime();
+            let fs = {
+                writeFileSync(path, content) {
+                    expect(path).to.be.equal(`/output/${timestamp}_create_todos_table.php`);
+                }
+            }
+
+            let fileName = file.generateFile(content, tableName, config, fs, timestamp);
+            expect(fileName).to.be.equal(`${timestamp}_create_todos_table.php`);
         });
     });
 });

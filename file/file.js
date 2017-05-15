@@ -35,13 +35,23 @@ let getTemplate = (table, typeMapper, config, createColumnInfo) => {
         }, null, (err, html) => {
             if (err) reject(err);
 
-            resolve({table: table.table, html});
+            resolve({ table: table.table, html });
         });
-
-        if (table.dependencies.length === 0) {
-            table.allDependencyOrdered = true;
-        }
     });
+}
+
+/**
+ * @param content String
+ * @param tableName String
+ * @param config Object
+ * @return String
+ */
+let generateFile = (content, tableName, config, fs, timestamp) => {
+    let fileName = `${timestamp}_create_${tableName}_table.php`;
+    let path = `${config.output}/${fileName}`;
+
+    fs.writeFileSync(path, content);
+    return fileName;
 }
 
 let getClassName = (tableName) => {
@@ -58,5 +68,6 @@ let getVariableName = (tableName) => {
 module.exports = {
     getTemplate,
     getClassName,
-    getVariableName
+    getVariableName,
+    generateFile
 }
