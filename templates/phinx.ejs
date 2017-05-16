@@ -29,7 +29,7 @@ class <%= migrationClass %> extends AbstractMigration
         <% }); %>
 
         <% indexes.forEach(index => {%>
-        $<%= variableName %>->addIndex(['<%= index.Field %>']);
+        $<%= variableName %>->addIndex(['<%= index.Field %>']<% if (index.Key === 'UNI') {%>, ['unique' => true]<%}%>);
         <% }); %>
 
         $<%= variableName %>->save();
