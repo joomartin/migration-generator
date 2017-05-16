@@ -34,7 +34,7 @@ class <%= migrationClass %> extends AbstractMigration
 
         $<%= variableName %>->save();
 
-        <% if (content) { %>
+        <% if (content.length !== 0) { %>
         $rows = [
         <% content.forEach((item, index) => { %>
             [
