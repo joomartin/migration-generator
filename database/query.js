@@ -20,15 +20,21 @@ let getTables = (connection, config) => {
  * @param table String
  * @return Promise
  */
-let getColumns = (connection, table) => {
+let getColumns = (connection, table, indexFilterCallback) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
+            let result = {
+                indexes: columnsRaw.filter(c => indexFilterCallback(c)),
+                columns: columnsRaw
+            };
 
-            resolve(columnsRaw);
+            resolve(result);
         });
     });
 }
+
+let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
 
 /**
  * @param connection Object
@@ -135,15 +141,16 @@ let getTableData = (connection, query, config) => {
                         dependencies: []
                     };
 
-                    let columnsPromise = query.getColumns(connection, table);
+                    let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
                     let contentPromise = query.getContent(connection, table);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (_.get(v, [0, 'Field'], null)) {
-                                    tableData[table].columns = v;
+                                if (_.get(v, ['columns'], null)) {
+                                    tableData[table].columns = v.columns;
+                                    tableData[table].indexes = v.indexes;
                                 } else if (_.get(v, [0, 'sourceTable'], null)) {
                                     tableData[table].dependencies = v;
                                 } else {
@@ -182,5 +189,6 @@ module.exports = {
     getContent,
     getProcedures,
     mapProcedures,
+    filterIndexes,
     filterExcludedTables
 }

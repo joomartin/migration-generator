@@ -42,7 +42,6 @@ query.getTableData(connection, query, config)
                 tables[table].allDependencyOrdered = true;
             }
         }
-
         let orderedTables = migration.getOrderedMigrations(tables);
 
         orderedTables.forEach((table, i) => {

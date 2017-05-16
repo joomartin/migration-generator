@@ -39,14 +39,16 @@ describe('Query', () => {
                     expect(queryString).to.be.equal(`SHOW FULL COLUMNS FROM ${table}`);
 
                     callback(undefined, [
-                        { Field: 'id' }, { Field: 'name' }
+                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' }, 
+                        { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
                     ]);
                 }
             }
 
-            query.getColumns(connection, table)
+            query.getColumns(connection, table, query.filterIndexes)
                 .then(columns => {
-                    expect(columns.length).to.be.equal(2);
+                    expect(columns.columns.length).to.be.equal(5);
+                    expect(columns.indexes.length).to.be.equal(2);
                     done();
                 })
                 .catch(err => (console.log(err)));

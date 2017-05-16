@@ -10,8 +10,8 @@ const connection = mysql.createConnection({
     password: config.password || 'root',
     database: config.database
 });
-console.log(connection.config.database);
-query.getProcedures(connection, query.mapProcedures)
+
+query.getColumns(connection, 'todos', query.filterIndexes)
     .then(res => {
         console.log(res);
         connection.end();

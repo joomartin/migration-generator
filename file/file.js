@@ -29,7 +29,7 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
             return {
                 name: f['Field'],
                 type: typeObj,
-                table, options, variableName
+                table, options, variableName,
             };
         });
 
@@ -39,7 +39,8 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
             columns: fieldsData,
             content: table.content,
             variableName, primaryKey,
-            dependencies: table.dependencies
+            dependencies: table.dependencies,
+            indexes: table.indexes            
         }, null, (err, html) => {
             if (err) return reject(err);
 

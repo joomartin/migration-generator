@@ -27,6 +27,11 @@ class <%= migrationClass %> extends AbstractMigration
                 <% }); %>
             <% } %>
         <% }); %>
+
+        <% indexes.forEach(index => {%>
+        $<%= variableName %>->addIndex(['<%= index.Field %>']);
+        <% }); %>
+
         $<%= variableName %>->save();
 
         <% if (content) { %>
