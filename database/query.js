@@ -8,7 +8,7 @@ const _ = require('lodash');
 let getTables = (connection, config) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW TABLES', (err, tablesRaw) => {
-            if (err) reject(err);
+            if (err) return reject(err);
 
             resolve(filterExcludedTables(tablesRaw, config));
         });
@@ -23,7 +23,7 @@ let getTables = (connection, config) => {
 let getColumns = (connection, table) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
-            if (err) reject(err);
+            if (err) return reject(err);
 
             resolve(columnsRaw);
         });
@@ -37,7 +37,7 @@ let getColumns = (connection, table) => {
 let getContent = (connection, table) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
-            if (err) reject(err);
+            if (err) return reject(err);
 
             resolve(rows);
         });

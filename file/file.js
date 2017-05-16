@@ -40,7 +40,7 @@ let getTemplate = (table, typeMapper, config, createColumnInfo) => {
             variableName, primaryKey,
             dependencies: table.dependencies
         }, null, (err, html) => {
-            if (err) reject(err);
+            if (err) return reject(err);
 
             resolve({ table: table.table, html });
         });

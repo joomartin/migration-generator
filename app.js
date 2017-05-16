@@ -23,14 +23,15 @@ console.log(chalk.green('****************************'));
 util.log('Getting data from database...');
 
 const connection = mysql.createConnection({
-    host: config.host || 'localhost',
-    port: config.port || 3306,
-    user: config.user || 'root',
-    password: config.password || 'root',
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
     database: config.database
 });
 
 connection.connect();
+
 
 const tableKey = `Tables_in_${config.database}`;
 
