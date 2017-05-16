@@ -81,6 +81,47 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
+let getProcedures = (connection) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT *
+            FROM INFORMATION_SCHEMA.ROUTINES
+            WHERE ROUTINE_SCHEMA = '${connection.config.database}';
+        `;
+
+        connection.query(query, (err, proceduresRaw) => {
+            if (err) return reject(err);
+
+            // proceduresRaw.forEach(p => {
+            //     procedures[p['SPECIFIC_NAME']] = {
+            //         type: p['ROUTINE_TYPE'],
+            //         definition: p['ROUTINE_DEFINITION']
+            //     };
+            // });
+
+            // resolve(procedures);
+            resolve(mapProcedures(proceduresRaw));
+        });
+    });
+}
+
+/**
+ * @param procedures Object
+ * @return Object
+ */
+let mapProcedures = (proceduresRaw) => {
+    let procedures = {};
+
+    proceduresRaw.forEach(p => {
+        procedures[p['SPECIFIC_NAME']] = {
+            type: p['ROUTINE_TYPE'],
+            definition: p['ROUTINE_DEFINITION']
+        };
+    });
+
+    return procedures;
+}
+
 /**
  * @param connection Object
  * @param query Object
@@ -104,12 +145,12 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table); 
+                    let contentPromise = query.getContent(connection, table);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (_.get(v, [0, 'Field'], null)) {                                    
+                                if (_.get(v, [0, 'Field'], null)) {
                                     tableData[table].columns = v;
                                 } else if (_.get(v, [0, 'sourceTable'], null)) {
                                     tableData[table].dependencies = v;
@@ -147,5 +188,6 @@ module.exports = {
     getDependencies,
     getTableData,
     getContent,
+    getProcedures,
     filterExcludedTables
 }

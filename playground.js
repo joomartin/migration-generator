@@ -10,11 +10,10 @@ const connection = mysql.createConnection({
     password: config.password || 'root',
     database: config.database
 });
-
-query.getContent(connection, 'todos')
+console.log(connection.config.database);
+query.getProcedures(connection)
     .then(res => {
         console.log(res);
-
         connection.end();
     })
     .catch(err => (console.log(err)));

@@ -148,4 +148,40 @@ describe('Query', () => {
                 .catch(err => console.log(err));
         });
     });
+
+    describe('#getProcedures()', () => {
+        it('should get all procedures and functions for a database', (done) => {
+            let connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+
+                    expect(queryString.includes('FROM INFORMATION_SCHEMA.ROUTINES')).to.be.true;
+                    expect(queryString.includes(`WHERE ROUTINE_SCHEMA = 'database'`)).to.be.true;
+
+                    callback(undefined, [
+                        {
+                            SPECIFIC_NAME: 'proc1',
+                            ROUTINE_TYPE: 'PROCEDURE',
+                            ROUTINE_DEFINITION: 'BEGIN DECLARE END'
+                        }, {
+                            SPECIFIC_NAME: 'func1',
+                            ROUTINE_TYPE: 'FUNCTION',
+                            ROUTINE_DEFINITION: 'BEGIN DECLARE END'
+                        },
+                    ]);
+                }
+            }
+
+            query.getProcedures(connection)
+                .then(res => {
+                    expect(Object.keys(res).length).to.be.equal(2);
+
+                    expect(res['proc1'].type).to.be.equal('PROCEDURE');
+                    expect(res['func1'].type).to.be.equal('FUNCTION');
+
+                    done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
 });
