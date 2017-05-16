@@ -6,8 +6,9 @@ const ejs = require('ejs');
  * @param typeMapper Object
  * @param config Object
  * @param createColumnInfo Function
+ * @param ejs Object
  */
-let getTemplate = (table, typeMapper, config, createColumnInfo) => {
+let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
     return new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);

@@ -46,7 +46,7 @@ query.getTableData(connection, query, config)
         let orderedTables = migration.getOrderedMigrations(tables);
 
         orderedTables.forEach((table, i) => {
-            file.getTemplate(table, typeMapper, config, createColumnInfo)
+            file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)
                 .then(data => {
                     let fileName = file.generateFile(data.html, data.table, config, fs, (new Date).getTime());
                     util.log(`${fileName} was generated successfully`);
@@ -56,4 +56,4 @@ query.getTableData(connection, query, config)
 
         connection.end();
     })
-    .catch(err => console.log(err))
+    .catch(err => console.log(err));

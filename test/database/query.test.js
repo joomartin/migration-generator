@@ -61,11 +61,10 @@ describe('Query', () => {
 
             let connection = {
                 query(queryString, callback) {
-
                     callback(undefined, [
-                        { 
-                            TABLE_NAME: 'table1', 
-                            COLUMN_NAME: 'column1', 
+                        {
+                            TABLE_NAME: 'table1',
+                            COLUMN_NAME: 'column1',
                             REFERENCED_TABLE_NAME: 'table2',
                             REFERENCED_COLUMN_NAME: 'column2',
                             UPDATE_RULE: 'CASCADE',
@@ -77,7 +76,7 @@ describe('Query', () => {
 
             query.getDependencies(connection, 'table1', config)
                 .then(dependencies => {
-                    expect(dependencies.length).to.be.equal(1);               
+                    expect(dependencies.length).to.be.equal(1);
 
                     expect(dependencies[0].sourceTable).to.be.equal('table1');
                     expect(dependencies[0].sourceColumn).to.be.equal('column1');
@@ -114,6 +113,39 @@ describe('Query', () => {
             expect(tables).to.include('table1');
             expect(tables).to.include('table2');
             expect(tables).to.not.include('migrations');
+        });
+    });
+
+    describe('#getContent()', () => {
+        it('should execute SELECT * query for a table', (done) => {
+            let connection = {
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SELECT * FROM todos')
+
+                    callback(undefined, [
+                        {
+                            id: 1,
+                            title: 'Todo #1',
+                            description: 'Important'
+                        }, {
+                            id: 2,
+                            title: 'Todo #2',
+                            description: 'Not tmportant'
+                        },
+                    ]);
+                }
+            }
+
+            query.getContent(connection, 'todos')
+                .then(res => {
+                    expect(res.length).to.be.equal(2);
+
+                    expect(res[0].id).to.be.equal(1);
+                    expect(res[1].id).to.be.equal(2);
+
+                    done();
+                })
+                .catch(err => console.log(err));
         });
     });
 });
