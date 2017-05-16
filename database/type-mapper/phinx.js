@@ -20,7 +20,8 @@ const TYPES = [
     { native: 'int', mapped: 'integer' },
     { native: 'bigint', mapped: 'biginteger' },
     { native: 'tinyint', mapped: 'integer' },
-    { native: 'decimal', mapped: 'decimal' }
+    { native: 'decimal', mapped: 'decimal' },
+    { native: 'longtext', mapped: 'text' }
 ];
 
 module.exports = TypeMapperPhinx;

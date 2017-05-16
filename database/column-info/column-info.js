@@ -40,8 +40,16 @@ ColumnInfo.prototype.getType = function () {
         length = parts[1].slice(0, parts[1].length - 1);
     }
 
+    if (parts[0].trim() === 'longtext') {
+        length = 'MysqlAdapter::TEXT_LONG';
+    }
+
     if (length) {
-        options.length = parseInt(length);
+        if (!isNaN(length)) {
+            options.length = parseInt(length);
+        } else {
+            options.length = length;
+        }
     }
 
     if (precision) {

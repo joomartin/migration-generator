@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     database: config.database
 });
 console.log(connection.config.database);
-query.getProcedures(connection)
+query.getProcedures(connection, query.mapProcedures)
     .then(res => {
         console.log(res);
         connection.end();

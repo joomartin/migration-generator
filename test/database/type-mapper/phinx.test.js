@@ -53,5 +53,13 @@ describe('TypeMapperPhinx', () => {
             type = mapper.map('unknown');
             expect(type).to.be.equal('unknown');
         });
+
+        it('should map longtext to text', () => {
+            let type = mapper.map('LONGTEXT');
+            expect(type).to.be.equal('text');
+
+            type = mapper.map('longtext');
+            expect(type).to.be.equal('text');
+        });
     });
 });

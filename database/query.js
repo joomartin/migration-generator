@@ -81,7 +81,7 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
-let getProcedures = (connection) => {
+let getProcedures = (connection, mappingCallback) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -92,15 +92,7 @@ let getProcedures = (connection) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            // proceduresRaw.forEach(p => {
-            //     procedures[p['SPECIFIC_NAME']] = {
-            //         type: p['ROUTINE_TYPE'],
-            //         definition: p['ROUTINE_DEFINITION']
-            //     };
-            // });
-
-            // resolve(procedures);
-            resolve(mapProcedures(proceduresRaw));
+            resolve(mappingCallback(proceduresRaw));
         });
     });
 }
@@ -189,5 +181,6 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    mapProcedures,
     filterExcludedTables
 }
