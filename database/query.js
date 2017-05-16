@@ -10,7 +10,7 @@ let getTables = (connection, config, filterCallback) => {
         connection.query('SHOW TABLES', (err, tablesRaw) => {
             if (err) return reject(err);
 
-            resolve(filterCallback(tablesRaw, config));
+            resolve(tablesRaw.filter(t => filterCallback(t, config)));
         });
     });
 }
@@ -131,7 +131,7 @@ let getTableData = (connection, query, config) => {
         let tableData = {};
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, query.filterExcludedTables)
+        query.getTables(connection, config, query.filterExcludedTable)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -175,11 +175,7 @@ let getTableData = (connection, query, config) => {
  * @param config Object
  * @return Array
  */
-let filterExcludedTables = (tablesRaw, config) => {
-    const tableKey = `Tables_in_${config.database}`;
-    return tables = tablesRaw
-        .filter(t => !config.excludedTables.includes(t[tableKey]));
-}
+let filterExcludedTable = (table, config) => !config.excludedTables.includes(table);
 
 module.exports = {
     getTables,
@@ -190,5 +186,5 @@ module.exports = {
     getProcedures,
     mapProcedures,
     filterIndexes,
-    filterExcludedTables
+    filterExcludedTable
 }

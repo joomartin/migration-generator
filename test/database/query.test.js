@@ -21,7 +21,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getTables(connection, config, query.filterExcludedTables)
+            query.getTables(connection, config, query.filterExcludedTable)
                 .then(res => {
                     expect(res.length).to.be.equal(2)
                     done();
@@ -93,7 +93,7 @@ describe('Query', () => {
         });
     });
 
-    describe('#filterExcludedTables', () => {
+    describe('#filterExcludedTable', () => {
         it('should filter out tables which are in config excluded tables', () => {
             let tablesRaw = [
                 { 'Tables_in_database': 'table1' },
@@ -106,15 +106,11 @@ describe('Query', () => {
                 database: 'database'
             };
 
-            let filteredTables = query.filterExcludedTables(tablesRaw, config);
+            let filter = query.filterExcludedTable('migrations', config);
+            expect(filter).to.be.false;
 
-            expect(filteredTables.length).to.be.equal(2);
-
-            let tables = filteredTables.map(t => t['Tables_in_database']);
-
-            expect(tables).to.include('table1');
-            expect(tables).to.include('table2');
-            expect(tables).to.not.include('migrations');
+            filter = query.filterExcludedTable('table1', config);
+            expect(filter).to.be.true;
         });
     });
 
