@@ -1,4 +1,20 @@
-const createTypeMapper = require('./database/type-mapper/factory');
+const query = require('./database/query');
+const mysql = require('mysql');
 
-let mapper = createTypeMapper('phinx');
-console.log(mapper.map('varchar'));
+const config = require('./config.json');
+
+const connection = mysql.createConnection({
+    host: config.host || 'localhost',
+    port: config.port || 3306,
+    user: config.user || 'root',
+    password: config.password || 'root',
+    database: config.database
+});
+
+query.getContent(connection, 'todos')
+    .then(res => {
+        console.log(res);
+
+        connection.end();
+    })
+    .catch(err => (console.log(err)));
