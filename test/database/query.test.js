@@ -21,7 +21,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getTables(connection, config)
+            query.getTables(connection, config, query.filterExcludedTables)
                 .then(res => {
                     expect(res.length).to.be.equal(2)
                     done();

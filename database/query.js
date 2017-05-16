@@ -5,12 +5,12 @@ const _ = require('lodash');
  * @param config Object
  * @return Promise
  */
-let getTables = (connection, config) => {
+let getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW TABLES', (err, tablesRaw) => {
             if (err) return reject(err);
 
-            resolve(filterExcludedTables(tablesRaw, config));
+            resolve(filterCallback(tablesRaw, config));
         });
     });
 }
@@ -131,7 +131,7 @@ let getTableData = (connection, query, config) => {
         let tableData = {};
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config)
+        query.getTables(connection, config, query.filterExcludedTables)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
