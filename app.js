@@ -7,7 +7,6 @@ const util = require('util');
 
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
-const migration = require('./database/migration');
 const query = require('./database/query');
 const file = require('./file/file');
 
