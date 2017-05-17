@@ -19,7 +19,7 @@ console.log(chalk.green('*    Migration Generator   *'));
 console.log(chalk.green('* GreenTech Innovacio Zrt. *'));
 console.log(chalk.green('*                          *'));
 console.log(chalk.green('****************************'));
-util.log('Getting data from database...');
+util.log(`Getting data from database "${config.database}"...`);
 
 const connection = mysql.createConnection({
     host: config.host,
