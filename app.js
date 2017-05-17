@@ -38,20 +38,13 @@ const tableKey = `Tables_in_${config.database}`;
 query.getTableData(connection, query, config)
     .then(tables => {
         for (table in tables) {
-            if (tables[table].dependencies.length === 0) {
-                tables[table].allDependencyOrdered = true;
-            }
-        }
-        let orderedTables = migration.getOrderedMigrations(tables);
-
-        orderedTables.forEach((table, i) => {
-            file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)
+            file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
                 .then(data => {
                     let fileName = file.generateFile(data.html, data.table, config, fs, (new Date).getTime());
                     util.log(`${fileName} was generated successfully`);
                 })
                 .catch(err => console.log(err));
-        });
+        }
 
         connection.end();
     })
