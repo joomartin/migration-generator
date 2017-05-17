@@ -82,9 +82,9 @@ ColumnInfo.prototype.getOptions = function () {
         options['default'] = this.field['Default'];
     }
 
-    if (this.field['Key'] === 'UNI') {
-        options['unique'] = true;
-    }
+    //if (this.field['Key'] === 'UNI') {
+        //options['unique'] = true;
+    //}
 
     return (_.isEmpty(options)) ? null : options;
 }
