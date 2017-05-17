@@ -131,7 +131,7 @@ let getTableData = (connection, query, config) => {
         let tableData = {};
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, query.filterExcludedTable)
+        query.getTables(connection, config, query.isTableIncluded)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -175,7 +175,7 @@ let getTableData = (connection, query, config) => {
  * @param config Object
  * @return Array
  */
-let filterExcludedTable = (table, config) => !config.excludedTables.includes(table);
+let isTableIncluded = (table, config) => !config.excludedTables.includes(table);
 
 module.exports = {
     getTables,
@@ -186,5 +186,5 @@ module.exports = {
     getProcedures,
     mapProcedures,
     filterIndexes,
-    filterExcludedTable
+    isTableIncluded
 }
