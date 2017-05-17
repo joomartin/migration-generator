@@ -32,7 +32,6 @@ const connection = mysql.createConnection({
 
 connection.connect();
 
-
 const tableKey = `Tables_in_${config.database}`;
 
 query.getTableData(connection, query, config)

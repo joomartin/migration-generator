@@ -6,6 +6,7 @@ class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
     {
+        $this->execute('SET FOREIGN_KEY_CHECKS=0');
         <% for (table in tables) { %>
             <% tables[table].dependencies.forEach((d, i) => { %>
             <% if (i === 0) {%>
@@ -16,5 +17,6 @@ class <%= migrationClass %> extends AbstractMigration
             )<% if (i === tables[table].dependencies.length - 1) { %>
             ->save();
             <% } %><% }); %><% } %>
+        $this->execute('SET FOREIGN_KEY_CHECKS=1');            
     }
 }
