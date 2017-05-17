@@ -163,7 +163,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getProcedures(connection, query.mapProcedures)
+            query.getProcedures(connection, query.convertProceduresToObjects)
                 .then(res => {
                     expect(Object.keys(res).length).to.be.equal(2);
 

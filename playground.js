@@ -11,9 +11,8 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getTables(connection, config)
+query.getProcedures(connection, query.mapProcedures)
     .then(res => {
-        console.log(res);
         connection.end();
     })
     .catch(err => (console.log(err)));

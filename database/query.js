@@ -87,7 +87,7 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
-let getProcedures = (connection, mappingCallback) => {
+let getProcedures = (connection, objectConverter) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -98,7 +98,9 @@ let getProcedures = (connection, mappingCallback) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            resolve(mappingCallback(proceduresRaw));
+            console.log(proceduresRaw);
+
+            resolve(objectConverter(proceduresRaw));
         });
     });
 }
@@ -107,7 +109,7 @@ let getProcedures = (connection, mappingCallback) => {
  * @param procedures Object
  * @return Object
  */
-let mapProcedures = (proceduresRaw) => {
+let convertProceduresToObjects = (proceduresRaw) => {
     let procedures = {};
 
     proceduresRaw.forEach(p => {
@@ -184,7 +186,7 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
-    mapProcedures,
+    convertProceduresToObjects,
     filterIndexes,
     isTableIncluded
 }
