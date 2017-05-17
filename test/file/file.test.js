@@ -50,4 +50,51 @@ describe('File', () => {
                 })
         });
     });
+
+    describe('#getTemplate()', () => {
+        it('should get template for a table', () => {
+            let config = {
+                migrationLib: 'phinx'
+            }
+
+            let createColumnInfo = field => ({
+                isPrimaryKey() {
+                    return true;
+                },
+                getType() {
+                    return {name: 'INTEGER'};
+                },
+                getOptions() {
+                    return {unsigned: true};
+                }
+            });
+
+            let table = {
+                table: 'todos',
+                columns: [
+                    {Field: 'id'}
+                ]
+            }
+
+            let ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(path).to.be.equal(`./templates/phinx.ejs`);
+                    expect(data.table).to.be.equal('todos');
+
+                    callback(undefined, 'html content');
+                }
+            }
+
+            let typeMapper = {
+                map() {
+                    return 'int';
+                }
+            }
+
+            file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)
+                .then(data => {
+                    expect(data.table).to.be.equal('todos');
+                })
+        });
+    });
 });
