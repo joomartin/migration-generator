@@ -33,7 +33,6 @@ describe('ColumnInfo', () => {
 
             expect(options.null).to.be.false;
             expect(options.default).to.be.equal('Value');
-            expect(options.unique).to.be.true;
         });
 
         it('should return column options as an object excluding non existing options', () => {
@@ -45,7 +44,6 @@ describe('ColumnInfo', () => {
 
             expect(options.null).to.be.true;
             expect(options.default).to.be.equal('Value');
-            expect(options.unique).to.be.undefined;
         });
 
         it('should return default object when column does not have options', () => {
