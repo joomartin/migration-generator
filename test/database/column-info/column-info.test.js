@@ -37,7 +37,7 @@ describe('ColumnInfo', () => {
 
         it('should return column options as an object excluding non existing options', () => {
             let info = new ColumnInfo({
-                Default: 'Value',
+                Default: 'Value'
             });
 
             let options = info.getOptions();
