@@ -16,16 +16,7 @@ class <%= migrationClass %> extends AbstractMigration
             <% } %> <% for (option in c.type.options) { %>
             '<%= option %>' => <% if (typeof c.type.options[option] === 'string' && isNaN(c.type.options[option]) && !c.type.options[option].includes('::')) { %>'<%= c.type.options[option] %>'<% } else {%><%= c.type.options[option] %><% } %>,
             <% } %>
-        ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %><% if (columnDependencies.length === 0) { %>;
-            <% } else { %>
-                <% columnDependencies
-                    .forEach(cd => { %>
-            ->addForeignKey(
-                '<%= cd.sourceColumn %>', '<%= cd.referencedTable %>', '<%= cd.referencedColumn %>', 
-                ['delete' => '<%= cd.deleteRule %>', 'update' => '<%= cd.updateRule %>']
-            );
-                <% }); %>
-            <% } %>
+        ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %>;
         <% }); %>
 
         <% indexes.forEach(index => {%>

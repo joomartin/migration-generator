@@ -1,0 +1,20 @@
+<?php
+
+use \Phinx\Migration\AbstractMigration;
+
+class <%= migrationClass %> extends AbstractMigration
+{
+    public function up()
+    {
+        <% for (table in tables) { %>
+            <% tables[table].dependencies.forEach((d, i) => { %>
+            <% if (i === 0) {%>
+        $<%= variableNames[table] %><% } %>
+            ->addForeignKey(
+                '<%= d.sourceColumn %>', '<%= d.referencedTable %>', '<%= d.referencedColumn %>', 
+                ['delete' => '<%= d.deleteRule %>', 'update' => '<%= d.updateRule %>']
+            )<% if (i === tables[table].dependencies.length - 1) { %>
+            ->save();
+            <% } %><% }); %><% } %>
+    }
+}

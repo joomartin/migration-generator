@@ -40,11 +40,26 @@ query.getTableData(connection, query, config)
         for (table in tables) {
             file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
                 .then(data => {
-                    let fileName = file.generateFile(data.html, data.table, config, fs, (new Date).getTime());
-                    util.log(`${fileName} was generated successfully`);
+                    let fileName = `${(new Date).getTime()}_create_${data.table}_table.php`;
+                    file.generateFile(data.html, fileName, config, fs)
+                        .then(fileName => {
+                            util.log(`${fileName} was generated successfully`);
+                        })
+                        .catch(err => console.log(err));
                 })
                 .catch(err => console.log(err));
         }
+
+        file.getForeignKeyTemplate(tables, config, ejs)
+            .then(html => {
+                let fileName = `z_${(new Date).getTime()}_add_foreign_keys.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            })
+            .catch(err => console.log(err));
 
         connection.end();
     })

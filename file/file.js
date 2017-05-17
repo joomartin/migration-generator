@@ -40,11 +40,29 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
             content: table.content,
             variableName, primaryKey,
             dependencies: table.dependencies,
-            indexes: table.indexes            
+            indexes: table.indexes
         }, null, (err, html) => {
             if (err) return reject(err);
 
             resolve({ table: table.table, html });
+        });
+    });
+}
+
+let getForeignKeyTemplate = (tables, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        let variableNames = {};
+        for (table in tables) {
+            variableNames[table] = _.camelCase(table);
+        }
+
+        ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, {
+            tables, variableNames,
+            migrationClass: 'AddForeignKeys'
+        }, null, (err, html) => {
+            if (err) return reject(err);
+
+            resolve(html);
         });
     });
 }
@@ -57,12 +75,16 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
  * @param timestamp int
  * @return String
  */
-let generateFile = (content, tableName, config, fs, timestamp) => {
-    let fileName = `${timestamp}_create_${tableName}_table.php`;
-    let path = `${config.output}/${fileName}`;
+let generateFile = (content, fileName, config, fs) => {
+    return new Promise((resolve, reject) => {
+        let path = `${config.output}/${fileName}`;
 
-    fs.writeFileSync(path, content);
-    return fileName;
+        fs.writeFile(path, content, err => {
+            if (err) return reject(err);
+
+            resolve(fileName)
+        });
+    });
 }
 
 /**
@@ -86,6 +108,7 @@ let getVariableName = (tableName) => {
 
 module.exports = {
     getTemplate,
+    getForeignKeyTemplate,
     getClassName,
     getVariableName,
     generateFile
