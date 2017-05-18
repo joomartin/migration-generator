@@ -127,7 +127,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getContent(connection, 'todos', query.escapeJsonContent)
+            query.getContent(connection, 'todos')
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 

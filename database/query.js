@@ -40,21 +40,10 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
  * @param connection Object
  * @param table String
  */
-let getContent = (connection, table, contentConverterCallback) => {
+let getContent = (connection, table) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
             if (err) return reject(err);
-
-            // let newRows = rows.map(r => {
-            //     let newRow = Object.create(r);
-            //     for (index in newRow) {
-            //         if (typeof newRow[index] === 'string') {
-            //             newRow[index] = contentConverterCallback(newRow[index].toString());
-            //         } 
-            //     }
-
-            //     return newRow;
-            // });
 
             resolve(rows);
         });
@@ -156,7 +145,7 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
+                    let contentPromise = query.getContent(connection, table);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
