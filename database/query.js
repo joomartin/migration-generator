@@ -98,8 +98,6 @@ let getProcedures = (connection, objectConverter) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            console.log(proceduresRaw);
-
             resolve(objectConverter(proceduresRaw));
         });
     });

@@ -39,7 +39,7 @@ describe('Query', () => {
                     expect(queryString).to.be.equal(`SHOW FULL COLUMNS FROM ${table}`);
 
                     callback(undefined, [
-                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' }, 
+                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
                         { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
                     ]);
                 }
@@ -171,6 +171,104 @@ describe('Query', () => {
                     expect(res['func1'].type).to.be.equal('FUNCTION');
 
                     done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
+
+    describe('#getTableData()', () => {
+        it('happy path', () => {
+            let connectionMock = {};
+            let config = {
+                database: 'test'
+            };
+            let queryDependency = {
+                tables: [
+                    {
+                        'Tables_in_test': 'todos'
+                    }, {
+                        'Tables_in_test': 'categories'
+                    }
+                ],
+                hasTable(table) {
+                    return this.tables
+                        .map(t => t['Tables_in_test'])
+                        .some(tn => tn === table);
+                },
+                getTables(connection, config, filterCallback) {
+                    expect(true).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        resolve(this.tables);
+                    });
+                },
+                getColumns(connection, table, filterCallback) {
+                    expect(connection).to.be.equal(connectionMock);
+                    expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = {
+                            indexes: [
+                                {
+                                    'Field': 'category_id',
+                                    'Type': 'int(11) unsigned',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'MUL',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                }
+                            ],
+                            columns: [
+                                {
+                                    'Field': 'title',
+                                    'Type': 'varchar(255)',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'NO',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                },
+                                {
+                                    'Field': 'category_id',
+                                    'Type': 'int(11) unsigned',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'MUL',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                }
+                            ]
+                        };
+
+                        resolve(data);
+                    });
+                },
+                getDependencies(connection, table, config) {
+                    expect(connection).to.be.equal(connectionMock);
+
+                    expect(this.hasTable(table)).to.be.true;
+                },
+                getContent(connection, table) {
+                    expect(connection).to.be.equal(connectionMock);
+
+                    expect(this.hasTable(table)).to.be.true;
+                }
+            };
+
+            query.getTableData(connectionMock, queryDependency, config)
+                .then(res => {
+                    expect(res.todos.indexes.length).to.be.equal(1);
+                    expect(res.todos.columns.length).to.be.equal(2);
+
+                    expect(res.todos.indexes[0].Field).to.be.equal('category_id');
+                    expect(res.todos.columns[0].Field).to.be.equal('title');
                 })
                 .catch(err => console.log(err));
         });
