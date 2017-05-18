@@ -3,6 +3,10 @@
     "port": 8889,
     "user": "root",
     "password": "root",
-    "migration-lib": "phinx",
-    "excludedTables": ["migrations"]
+    "database": "erp-clear",
+    "migrationLib": "phinx",
+    "excludedTables": [
+        "migrations"
+    ],
+    "output": "/Users/joomartin/migration-test"
 }

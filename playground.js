@@ -1,20 +1,18 @@
-let migrations = {
-    todos: {
-        allDependencyOrdered: false
-    },
-    users: {
-        allDependencyOrdered: true
-    }
-}
+const query = require('./database/query');
+const mysql = require('mysql');
 
-console.log(allTablesOrdered(migrations));
+const config = require('./config.json');
 
-function allTablesOrdered(migrations) {
-    for (table in migrations) {
-        if (!migrations[table].allDependencyOrdered) {
-            return false;
-        }
-    }
+const connection = mysql.createConnection({
+    host: config.host || 'localhost',
+    port: config.port || 3306,
+    user: config.user || 'root',
+    password: config.password || 'root',
+    database: config.database
+});
 
-    return true;
-}
+query.getProcedures(connection, query.mapProcedures)
+    .then(res => {
+        connection.end();
+    })
+    .catch(err => (console.log(err)));

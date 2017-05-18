@@ -1,30 +1,42 @@
 <?php
 
+use \Phinx\Migration\AbstractMigration;
+use \Phinx\Db\Adapter\MysqlAdapter;
+
 class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
     {
-        $<%= variableName %> = $this->table('<%= table %>', ['primary_key' => '<%= primaryKey %>']);
+        $<%= variableName %> = $this->table('<%= table %>', ['id' => false, 'primary_key' => '<%= primaryKey %>']);
 
         <% columns.forEach(c => { %>
         $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.name %>'<% if (c.options || c.type.options) { %>, [
             <% for (option in c.options) { %>
-            '<%= option %>' => <% if (typeof c.options[option] === 'string' && isNaN(c.options[option])) { %>'<%= c.options[option] %>'<% } else {%><%= c.options[option] %><% } %>,
+            '<%= option %>' => <% if (typeof c.options[option] === 'string' && isNaN(c.options[option]) && !c.options[option].includes('::')) { %>'<%= c.options[option] %>'<% } else {%><%= c.options[option] %><% } %>,
             <% } %> <% for (option in c.type.options) { %>
-            '<%= option %>' => <% if (typeof c.type.options[option] === 'string' && isNaN(c.type.options[option])) { %>'<%= c.type.options[option] %>'<% } else {%><%= c.type.options[option] %><% } %>,
+            '<%= option %>' => <% if (typeof c.type.options[option] === 'string' && isNaN(c.type.options[option]) && !c.type.options[option].includes('::')) { %>'<%= c.type.options[option] %>'<% } else {%><%= c.type.options[option] %><% } %>,
             <% } %>
-        ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %><% if (columnDependencies.length === 0) { %>;
-            <% } else { %>
-                <% columnDependencies
-                    .forEach(cd => { %>
-            ->addForeignKey(
-                '<%= cd.sourceColumn %>', '<%= cd.referencedTable %>', '<%= cd.referencedColumn %>', 
-                ['delete' => '<%= cd.deleteRule %>', 'update' => '<%= cd.updateRule %>']
-            );
-                <% }); %>
-            <% } %>
+        ]<% } %>)<% let columnDependencies = dependencies.filter(d => d.sourceColumn === c.name); %>;
         <% }); %>
+
+        <% indexes.forEach(index => {%>
+        $<%= variableName %>->addIndex(['<%= index.Field %>']<% if (index.Key === 'UNI') {%>, ['unique' => true]<%}%>);
+        <% }); %>
+
         $<%= variableName %>->save();
+
+        <% if (content.length !== 0) { %>
+        $rows = [
+        <% content.forEach((item, index) => { %>
+            [
+            <% for (column in item) { %>
+            '<%= column %>' => <% if (item[column] && column.includes('id')) { %><%= item[column] %><% } else if (item[column] && !column.includes('id')) { %>'<%= item[column] %>'<% } else if (column.includes('id')) { %>NULL<% } else { %>''<% } %>,
+            <% } %>
+            ]<% if (index !== content.length - 1){%>,<% } %>
+        <% }); %>            
+        ];
+
+        $this->insert('<%= table %>', $rows);<% } %>
     }
 
     public function down()
