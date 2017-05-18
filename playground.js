@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getColumns(connection, 'todos', query.filterIndexes)
+query.getContent(connection, 'todos')
     .then(res => {
         console.log(res);
         connection.end();

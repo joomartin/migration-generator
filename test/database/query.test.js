@@ -252,13 +252,38 @@ describe('Query', () => {
                 },
                 getDependencies(connection, table, config) {
                     expect(connection).to.be.equal(connectionMock);
-
                     expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = [{
+                            sourceTable: 'todos',
+                            sourceColumn: 'category_id',
+                            referencedTable: 'categories',
+                            referencedColumn: 'id',
+                            updateRule: 'NO ACTION',
+                            deleteRule: 'SET NULL'
+                        }];
+
+                        resolve(data);
+                    });
                 },
                 getContent(connection, table) {
                     expect(connection).to.be.equal(connectionMock);
-
                     expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = [
+                            {
+                                title: 'Todo #1',
+                                category_id: null
+                            }, {
+                                title: 'Todo #2',
+                                category_id: null
+                            }
+                        ];
+
+                        resolve(data);
+                    });
                 }
             };
 
@@ -269,6 +294,14 @@ describe('Query', () => {
 
                     expect(res.todos.indexes[0].Field).to.be.equal('category_id');
                     expect(res.todos.columns[0].Field).to.be.equal('title');
+
+                    expect(res.todos.dependencies.length).to.be.equal(1);
+                    expect(res.todos.dependencies[0].referencedTable).to.be.equal('categories');
+                    expect(res.todos.dependencies[0].referencedColumn).to.be.equal('id');
+
+                    expect(res.todos.content.length).to.be.equal(2);
+                    expect(res.todos.content[0].title).to.be.equal('Todo #1');
+                    expect(res.todos.content[1].title).to.be.equal('Todo #2');
                 })
                 .catch(err => console.log(err));
         });
