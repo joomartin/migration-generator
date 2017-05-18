@@ -40,15 +40,28 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
  * @param connection Object
  * @param table String
  */
-let getContent = (connection, table) => {
+let getContent = (connection, table, contentConverterCallback) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
             if (err) return reject(err);
 
-            resolve(rows);
+            let newRows = rows.map(r => {
+                let newRow = Object.create(r);
+                for (index in newRow) {
+                    if (typeof newRow[index] === 'string') {
+                        newRow[index] = contentConverterCallback(newRow[index].toString());
+                    } 
+                }
+
+                return newRow;
+            });
+
+            resolve(newRows);
         });
     });
 }
+
+let escapeJsonContent = content => content.replace(/"/g, '\\"');
 
 /**
  * @param connection Object
@@ -186,5 +199,6 @@ module.exports = {
     getProcedures,
     convertProceduresToObjects,
     filterIndexes,
-    isTableIncluded
+    isTableIncluded,
+    escapeJsonContent
 }

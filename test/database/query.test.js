@@ -127,7 +127,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getContent(connection, 'todos')
+            query.getContent(connection, 'todos', query.escapeJsonContent)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -304,6 +304,15 @@ describe('Query', () => {
                     expect(res.todos.content[1].title).to.be.equal('Todo #2');
                 })
                 .catch(err => console.log(err));
+        });
+    });
+
+    describe('#escapeJsonContent()', () => {
+        it('should escape quotes', () => {
+            let obj = {id: 1, name: 'test'};
+            let escaped = query.escapeJsonContent(JSON.stringify(obj));
+
+            expect(escaped).to.be.equal('{\\"id\\":1,\\"name\\":\\"test\\"}');
         });
     });
 });
