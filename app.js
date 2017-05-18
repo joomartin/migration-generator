@@ -7,7 +7,6 @@ const util = require('util');
 
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
-const migration = require('./database/migration');
 const query = require('./database/query');
 const file = require('./file/file');
 
@@ -20,7 +19,7 @@ console.log(chalk.green('*    Migration Generator   *'));
 console.log(chalk.green('* GreenTech Innovacio Zrt. *'));
 console.log(chalk.green('*                          *'));
 console.log(chalk.green('****************************'));
-util.log('Getting data from database...');
+util.log(`Getting data from database "${config.database}"...`);
 
 const connection = mysql.createConnection({
     host: config.host,
@@ -32,26 +31,33 @@ const connection = mysql.createConnection({
 
 connection.connect();
 
-
 const tableKey = `Tables_in_${config.database}`;
 
 query.getTableData(connection, query, config)
     .then(tables => {
         for (table in tables) {
-            if (tables[table].dependencies.length === 0) {
-                tables[table].allDependencyOrdered = true;
-            }
-        }
-        let orderedTables = migration.getOrderedMigrations(tables);
-
-        orderedTables.forEach((table, i) => {
-            file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)
+            file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
                 .then(data => {
-                    let fileName = file.generateFile(data.html, data.table, config, fs, (new Date).getTime());
-                    util.log(`${fileName} was generated successfully`);
+                    let fileName = `${(new Date).getTime()}_create_${data.table}_table.php`;
+                    file.generateFile(data.html, fileName, config, fs)
+                        .then(fileName => {
+                            util.log(`${fileName} was generated successfully`);
+                        })
+                        .catch(err => console.log(err));
                 })
                 .catch(err => console.log(err));
-        });
+        }
+
+        file.getForeignKeyTemplate(tables, config, ejs)
+            .then(html => {
+                let fileName = `z_${(new Date).getTime()}_add_foreign_keys.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            })
+            .catch(err => console.log(err));
 
         connection.end();
     })
