@@ -115,7 +115,8 @@ let convertProceduresToObjects = (proceduresRaw) => {
     proceduresRaw.forEach(p => {
         procedures[p['SPECIFIC_NAME']] = {
             type: p['ROUTINE_TYPE'],
-            definition: p['ROUTINE_DEFINITION']
+            definition: p['ROUTINE_DEFINITION'],
+            definer: p['DEFINER']
         };
     });
 
