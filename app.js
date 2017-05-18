@@ -35,22 +35,27 @@ const tableKey = `Tables_in_${config.database}`;
 
 query.getTableData(connection, query, config)
     .then(tables => {
+        let i = 0;
         for (table in tables) {
-            file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
+            (function (index) {
+                file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
                 .then(data => {
-                    let fileName = `${(new Date).getTime()}_create_${data.table}_table.php`;
+                    let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
                     file.generateFile(data.html, fileName, config, fs)
                         .then(fileName => {
                             util.log(`${fileName} was generated successfully`);
                         })
                         .catch(err => console.log(err));
+                    
                 })
                 .catch(err => console.log(err));
+            }(i));
+            i++;
         }
 
         file.getForeignKeyTemplate(tables, config, ejs)
             .then(html => {
-                let fileName = `z_${(new Date).getTime()}_add_foreign_keys.php`;
+                let fileName = `${(new Date).getTime()}${i}_add_foreign_keys.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);

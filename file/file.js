@@ -80,9 +80,7 @@ let generateFile = (content, fileName, config, fs) => {
         let path = `${config.output}/${fileName}`;
 
         fs.writeFile(path, content, err => {
-            if (err) return reject(err);
-
-            resolve(fileName)
+            resolve(fileName);
         });
     });
 }
