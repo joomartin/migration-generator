@@ -30,7 +30,7 @@ class <%= migrationClass %> extends AbstractMigration
         <% content.forEach((item, index) => { %>
             [
             <% for (column in item) { %>
-            '<%= column %>' => <% if (item[column]) { %>'<%= item[column] %>'<% } else if (column.includes('id')) { %>NULL<% } else { %>''<% } %>,
+            '<%= column %>' => <% if (item[column]) { %>'<%- item[column] %>'<% } else if (column.includes('id')) { %>NULL<% } else { %>''<% } %>,
             <% } %>
             ]<% if (index !== content.length - 1){%>,<% } %>
         <% }); %>            

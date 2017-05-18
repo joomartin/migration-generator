@@ -45,18 +45,18 @@ let getContent = (connection, table, contentConverterCallback) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
             if (err) return reject(err);
 
-            let newRows = rows.map(r => {
-                let newRow = Object.create(r);
-                for (index in newRow) {
-                    if (typeof newRow[index] === 'string') {
-                        newRow[index] = contentConverterCallback(newRow[index].toString());
-                    } 
-                }
+            // let newRows = rows.map(r => {
+            //     let newRow = Object.create(r);
+            //     for (index in newRow) {
+            //         if (typeof newRow[index] === 'string') {
+            //             newRow[index] = contentConverterCallback(newRow[index].toString());
+            //         } 
+            //     }
 
-                return newRow;
-            });
+            //     return newRow;
+            // });
 
-            resolve(newRows);
+            resolve(rows);
         });
     });
 }
@@ -156,7 +156,7 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table);
+                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {

@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getContent(connection, 'filters')
+query.getContent(connection, 'filters', query.escapeJsonContent)
     .then(res => {
         console.log(res);
         connection.end();
