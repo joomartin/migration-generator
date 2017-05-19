@@ -67,6 +67,19 @@ let getForeignKeyTemplate = (tables, config, ejs) => {
     });
 }
 
+let getProcedureTemplate = (procedures, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
+            migrationClass: 'AddProceduresAndFunctions',
+            procedures,
+        }, null, (err, html) => {
+            if (err) return reject(err);
+
+            resolve(html);
+        });
+    });
+}
+
 /**
  * @param content String
  * @param tableName String
@@ -107,6 +120,7 @@ let getVariableName = (tableName) => {
 module.exports = {
     getTemplate,
     getForeignKeyTemplate,
+    getProcedureTemplate,
     getClassName,
     getVariableName,
     generateFile
