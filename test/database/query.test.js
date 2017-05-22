@@ -165,7 +165,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getProcedures(connection, query.convertProceduresToObjects)
+            query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
                 .then(res => {
                     expect(Object.keys(res).length).to.be.equal(2);
 
