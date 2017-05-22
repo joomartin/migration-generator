@@ -160,7 +160,7 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table);
+                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
