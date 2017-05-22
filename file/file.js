@@ -13,14 +13,14 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
 
-        let primaryKey = null;
+        let primaryKey = [];
 
         const fieldsData = table.columns.map(f => {
             const columnInfo = createColumnInfo(f);
             const options = columnInfo.getOptions();
 
             if (columnInfo.isPrimaryKey()) {
-                primaryKey = f['Field'];
+                primaryKey.push(f['Field']);
             }
 
             let typeObj = columnInfo.getType();

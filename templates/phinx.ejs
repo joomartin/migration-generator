@@ -7,7 +7,7 @@ class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
     {
-        $<%= variableName %> = $this->table('<%= table %>', ['id' => false, 'primary_key' => '<%= primaryKey %>']);
+        $<%= variableName %> = $this->table('<%= table %>', ['id' => false, 'primary_key' => [<% primaryKey.forEach((pk, i) => { %>'<%= pk %>' <% if (i !== primaryKey.length - 1){%>,<% } %><% }); %>]]);
 
         <% columns.forEach(c => { %>
         $<%= variableName %>->addColumn('<%= c.name %>', '<%= c.type.name %>'<% if (c.options || c.type.options) { %>, [
