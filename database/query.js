@@ -87,7 +87,7 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
-let getProcedures = (connection, objectConverter) => {
+let getProcedures = (connection, objectConverter, escapeCallback) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -97,11 +97,20 @@ let getProcedures = (connection, objectConverter) => {
 
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
+            
+            let converted = objectConverter(proceduresRaw);
+            let escaped = {};
+            for (procedure in converted) {
+                escaped[procedure] = converted[procedure];
+                escaped[procedure].definition = escapeCallback(converted[procedure].definition);
+            }
 
-            resolve(objectConverter(proceduresRaw));
+            resolve(escaped);
         });
     });
 }
+
+let escapeQuotes = content => content.replace(/'/g, "\\'");
 
 /**
  * @param procedures Object
@@ -188,5 +197,6 @@ module.exports = {
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
-    convertProceduresToObjects
+    convertProceduresToObjects,
+    escapeQuotes
 }

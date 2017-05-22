@@ -66,7 +66,7 @@ let tablesPromise = query.getTableData(connection, query, config)
     })
     .catch(err => console.log(err));
 
-let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects)
+let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
     .then(procedures => {
         file.getProcedureTemplate(procedures, config, ejs)
             .then(html => {
