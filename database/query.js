@@ -40,17 +40,32 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
  * @param connection Object
  * @param table String
  */
-let getContent = (connection, table) => {
+let getContent = (connection, table, escapeCallback) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
             if (err) return reject(err);
 
-            resolve(rows);
+            let escapedRows = [];
+            rows.forEach(r => {
+                let escapedRow = [];
+                for (key in r) {
+                    escapedRow[key] = r[key];
+                    if (typeof r[key] === 'string') {
+                        escapedRow[key] = escapeCallback(r[key]);
+                    }
+                }
+
+                escapedRows.push(escapedRow);
+            });
+
+            resolve(escapedRows);
         });
     });
 }
 
-let escapeJsonContent = content => content.replace(/"/g, '\\"');
+
+
+let escapeJsonContent = content => content.replace(/'/g, "\\'");
 
 /**
  * @param connection Object
