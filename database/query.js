@@ -149,12 +149,12 @@ let getTableData = (connection, query, config) => {
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (_.get(v, ['columns'], null)) {
+                                if (_.get(v, ['columns'], null)) {                  // Columns
                                     tableData[table].columns = v.columns;
                                     tableData[table].indexes = v.indexes;
-                                } else if (_.get(v, [0, 'sourceTable'], null)) {
+                                } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
                                     tableData[table].dependencies = v;
-                                } else {
+                                } else {                                            // Content
                                     tableData[table].content = v;
                                 }
 

@@ -33,7 +33,7 @@ connection.connect();
 
 const tableKey = `Tables_in_${config.database}`;
 
-query.getTableData(connection, query, config)
+let tablesPromise = query.getTableData(connection, query, config)
     .then(tables => {
         let i = 0;
         for (table in tables) {
@@ -63,7 +63,24 @@ query.getTableData(connection, query, config)
                     .catch(err => console.log(err));
             })
             .catch(err => console.log(err));
-
-        connection.end();
     })
     .catch(err => console.log(err));
+
+let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects)
+    .then(procedures => {
+        file.getProcedureTemplate(procedures, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}x_add_procedures.php`;                
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            });
+    })
+    .catch(err => console.log(err));
+
+Promise.all([tablesPromise, proceduresPromise])
+    .then(res => {
+        connection.end();
+    });
