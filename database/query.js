@@ -16,6 +16,13 @@ let getTables = (connection, config, filterCallback) => {
 }
 
 /**
+ * @param tablesRaw Array
+ * @param config Object
+ * @return Array
+ */
+let isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
+
+/**
  * @param connection Object
  * @param table String
  * @return Promise
@@ -186,13 +193,6 @@ let getTableData = (connection, query, config) => {
             });
     });
 }
-
-/**
- * @param tablesRaw Array
- * @param config Object
- * @return Array
- */
-let isTableIncluded = (table, config) => !config.excludedTables.includes(table);
 
 module.exports = {
     getTables,

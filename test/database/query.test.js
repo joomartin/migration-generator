@@ -97,12 +97,13 @@ describe('Query', () => {
         it('should return true if a table is not excluded by config', () => {
             let config = {
                 excludedTables: ['migrations'],
+                database: 'test'
             };
 
-            let filter = query.isTableIncluded('migrations', config);
+            let filter = query.isTableIncluded({Tables_in_test: 'migrations'}, config);
             expect(filter).to.be.false;
 
-            filter = query.isTableIncluded('table1', config);
+            filter = query.isTableIncluded({Tables_in_test: 'test1'}, config);
             expect(filter).to.be.true;
         });
     });
