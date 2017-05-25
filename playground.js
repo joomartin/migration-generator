@@ -11,7 +11,7 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getProcedures(connection, query.convertProceduresToObjects)
+query.getViewTables(connection)
     .then(res => {
         console.log(res);
         connection.end();

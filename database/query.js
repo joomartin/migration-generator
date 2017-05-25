@@ -7,10 +7,24 @@ const _ = require('lodash');
  */
 let getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW TABLES', (err, tablesRaw) => {
+        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
             resolve(tablesRaw.filter(t => filterCallback(t, config)));
+        });
+    });
+}
+
+/**
+ * @param connection Object
+ * @return Promise
+ */
+let getViewTables = (connection) => {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, tablesRaw) => {
+            if (err) return reject(err);
+
+            resolve(tablesRaw);
         });
     });
 }
@@ -201,6 +215,7 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getViewTables,
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
