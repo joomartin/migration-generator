@@ -9,10 +9,12 @@ class <%= migrationClass %> extends AbstractMigration
         <% for (table in triggersByTables) { %>
             <% triggersByTables[table].forEach(trigger => { %>
             $this->execute('CREATE 
-                DEFINER = `<%= trigger.definer %>`
+                DEFINER = <%- trigger.definer %>
                 TRIGGER `<%= trigger.name %>`
                 <%= trigger.timing %> <%= trigger.event %>
-                ON `<%= trigger.table %>`');
+                ON `<%= trigger.database %>`.`<%= trigger.table %>` FOR EACH ROW
+                <%- trigger.statement %>
+                ');
             <% }); %>        
         <% } %>
     }

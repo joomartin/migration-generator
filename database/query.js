@@ -148,9 +148,10 @@ let getTriggers = (connection, escapeCallback, _) => {
                     name: t.Trigger,
                     event: t.Event,
                     timing: t.Timing,
-                    statemtn: escapeCallback(t.Statement),
+                    statement: escapeCallback(t.Statement),
                     definer: t.Definer,
-                    table: t.Table                  
+                    table: t.Table,
+                    database: connection.config.database             
                 });
             });
 
