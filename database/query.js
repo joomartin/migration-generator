@@ -19,12 +19,17 @@ let getTables = (connection, config, filterCallback) => {
  * @param connection Object
  * @return Promise
  */
-let getViewTables = (connection) => {
+let getViewTables = (connection, escapeCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, tablesRaw) => {
+        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            resolve(tablesRaw);
+            let escaped = viewTablesRaw.map(vt => {
+                vt.VIEW_DEFINITION = escapeCallback(vt.VIEW_DEFINITION)
+                return vt;
+            });
+
+            resolve(escaped);
         });
     });
 }

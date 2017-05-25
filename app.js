@@ -39,16 +39,16 @@ query.getTableData(connection, query, config)
         for (table in tables) {
             (function (index) {
                 file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
-                .then(data => {
-                    let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
-                    file.generateFile(data.html, fileName, config, fs)
-                        .then(fileName => {
-                            util.log(`${fileName} was generated successfully`);
-                        })
-                        .catch(err => console.log(err));
-                    
-                })
-                .catch(err => console.log(err));
+                    .then(data => {
+                        let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
+                        file.generateFile(data.html, fileName, config, fs)
+                            .then(fileName => {
+                                util.log(`${fileName} was generated successfully`);
+                            })
+                            .catch(err => console.log(err));
+
+                    })
+                    .catch(err => console.log(err));
             }(i));
             i++;
         }
@@ -67,3 +67,22 @@ query.getTableData(connection, query, config)
         connection.end();
     })
     .catch(err => console.log(err));
+
+let viewTablesPromise = query.getViewTables(connection)
+    .then(viewTables => {
+        file.getProcedureTemplate(viewTables, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}x_add_procedures.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            });
+    })
+    .catch(err => console.log(err));
+
+Promise.all([tablesPromise, viewTablesPromise])
+    .then(res => {
+        connection.end();
+    });

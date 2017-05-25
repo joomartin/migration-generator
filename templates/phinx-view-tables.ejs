@@ -1,0 +1,17 @@
+<?php
+
+use \Phinx\Migration\AbstractMigration;
+
+class <%= migrationClass %> extends AbstractMigration
+{
+    public function up()
+    {
+        <% viewTables.forEach(vt => { %>
+            $this->execute('CREATE 
+                DEFINER = <%= vt.DEFINER %>
+                VIEW `<%= vt.TABLE_SCHEMA %>`.`<%= vt.TABLE_NAME %>`
+                AS <%- vt.VIEW_DEFINITION %>
+            ');
+        <% }); %>
+    }
+}
