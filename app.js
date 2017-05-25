@@ -13,13 +13,16 @@ const file = require('./file/file');
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
 
-console.log(chalk.green('****************************'));
-console.log(chalk.green('*                          *'));
-console.log(chalk.green('*    Migration Generator   *'));
-console.log(chalk.green('* GreenTech Innovacio Zrt. *'));
-console.log(chalk.green('*                          *'));
-console.log(chalk.green('****************************'));
-util.log(`Getting data from database "${config.database}"...`);
+console.log(chalk.green('********************************************************'));
+console.log(chalk.green('*                                                      *'));
+console.log(chalk.green('*                 Migration Generator                  *'));
+console.log(chalk.green('*               GreenTech Innovacio Zrt.               *'));
+console.log(chalk.green('*                                                      *'));
+console.log(chalk.green('********************************************************'));
+
+util.log(chalk.yellow(`Generating initial migrations for database ${chalk.bold(config.database)}...`));
+util.log(chalk.yellow(`View tables, procedures, triggers, static contents, dependencies will be created`));
+console.log('--------');
 
 const connection = mysql.createConnection({
     host: config.host,
@@ -32,10 +35,10 @@ const connection = mysql.createConnection({
 connection.connect();
 
 const tableKey = `Tables_in_${config.database}`;
+let i = 0;
 
 let tablesPromise = query.getTableData(connection, query, config)
     .then(tables => {
-        let i = 0;
         for (table in tables) {
             (function (index) {
                 file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
@@ -83,6 +86,5 @@ let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
 Promise.all([tablesPromise, viewTablesPromise])
     .then(res => {
         connection.end();
-        util.log(chalk.green('All done'));
     })
     .catch(err => console.log(chalk.bgRed(err)));
