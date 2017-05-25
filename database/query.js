@@ -100,6 +100,7 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
             
             let converted = objectConverter(proceduresRaw);
             let escaped = {};
+
             for (procedure in converted) {
                 escaped[procedure] = converted[procedure];
                 escaped[procedure].definition = escapeCallback(converted[procedure].definition);
@@ -128,6 +129,33 @@ let convertProceduresToObjects = (proceduresRaw) => {
     });
 
     return procedures;
+}
+
+let getTriggers = (connection, escapeCallback, _) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
+
+        connection.query(query, (err, triggers) => {
+            if (err) return reject(err);
+            
+            let escaped = {};
+            triggers.forEach(t => {
+                if (!_.has(escaped, t.Table)) {
+                    _.set(escaped, t.Table, []);
+                }
+
+                escaped[t.Table].push({
+                    name: t.Trigger,
+                    event: t.Event,
+                    timing: t.Timing,
+                    statemtn: t.Statement,
+                    definer: t.Definer                    
+                });
+            });
+
+            resolve(escaped);
+        });
+    });
 }
 
 /**
@@ -194,6 +222,7 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getTriggers,
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
