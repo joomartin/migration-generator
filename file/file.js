@@ -120,6 +120,7 @@ let getVariableName = (tableName) => {
 module.exports = {
     getTemplate,
     getForeignKeyTemplate,
+    getViewTablesTemplate,
     getClassName,
     getVariableName,
     generateFile

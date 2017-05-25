@@ -92,6 +92,8 @@ let getContent = (connection, table, escapeCallback) => {
 
 
 let escapeJsonContent = content => content.replace(/'/g, "\\'");
+let escapeQuotes = content => content.replace(/'/g, "\\'");
+
 
 /**
  * @param connection Object

@@ -33,7 +33,7 @@ connection.connect();
 
 const tableKey = `Tables_in_${config.database}`;
 
-query.getTableData(connection, query, config)
+let tablesPromise = query.getTableData(connection, query, config)
     .then(tables => {
         let i = 0;
         for (table in tables) {
@@ -45,10 +45,10 @@ query.getTableData(connection, query, config)
                             .then(fileName => {
                                 util.log(`${fileName} was generated successfully`);
                             })
-                            .catch(err => console.log(err));
+                            .catch(err => console.log(chalk.bgRed(err)));
 
                     })
-                    .catch(err => console.log(err));
+                    .catch(err => console.log(chalk.bgRed(err)));
             }(i));
             i++;
         }
@@ -60,29 +60,29 @@ query.getTableData(connection, query, config)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
                     })
-                    .catch(err => console.log(err));
+                    .catch(err => console.log(chalk.bgRed(err)));
             })
-            .catch(err => console.log(err));
-
-        connection.end();
+            .catch(err => console.log(chalk.bgRed(err)));
     })
-    .catch(err => console.log(err));
+    .catch(err => console.log(chalk.bgRed(err)));
 
-let viewTablesPromise = query.getViewTables(connection)
+let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
     .then(viewTables => {
-        file.getProcedureTemplate(viewTables, config, ejs)
+        file.getViewTablesTemplate(viewTables, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}x_add_procedures.php`;
+                let fileName = `${(new Date).getTime()}_create_view_tables.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
                     })
-                    .catch(err => console.log(err));
+                    .catch(err => console.log(chalk.bgRed(err)));
             });
     })
-    .catch(err => console.log(err));
+    .catch(err => console.log(chalk.bgRed(err)));
 
 Promise.all([tablesPromise, viewTablesPromise])
     .then(res => {
         connection.end();
-    });
+        util.log(chalk.green('All done'));
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
