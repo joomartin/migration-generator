@@ -7,7 +7,7 @@ const _ = require('lodash');
  */
 let getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW TABLES', (err, tablesRaw) => {
+        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
             resolve(tablesRaw.filter(t => filterCallback(t, config)));
