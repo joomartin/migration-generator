@@ -39,16 +39,16 @@ let tablesPromise = query.getTableData(connection, query, config)
         for (table in tables) {
             (function (index) {
                 file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
-                .then(data => {
-                    let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
-                    file.generateFile(data.html, fileName, config, fs)
-                        .then(fileName => {
-                            util.log(`${fileName} was generated successfully`);
-                        })
-                        .catch(err => console.log(err));
-                    
-                })
-                .catch(err => console.log(err));
+                    .then(data => {
+                        let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
+                        file.generateFile(data.html, fileName, config, fs)
+                            .then(fileName => {
+                                util.log(`${fileName} was generated successfully`);
+                            })
+                            .catch(err => console.log(err));
+
+                    })
+                    .catch(err => console.log(err));
             }(i));
             i++;
         }
@@ -70,7 +70,7 @@ let proceduresPromise = query.getProcedures(connection, query.convertProceduresT
     .then(procedures => {
         file.getProcedureTemplate(procedures, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}x_add_procedures.php`;                
+                let fileName = `${(new Date).getTime()}x_add_procedures.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
@@ -80,7 +80,21 @@ let proceduresPromise = query.getProcedures(connection, query.convertProceduresT
     })
     .catch(err => console.log(err));
 
-Promise.all([tablesPromise, proceduresPromise])
+let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+    .then(triggers => {
+        file.getTriggersTemplate(triggers, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}x_add_triggers.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            });
+    })
+    .catch(err => console.log(err));
+
+Promise.all([tablesPromise, proceduresPromise, triggersPromise])
     .then(res => {
         connection.end();
     });
