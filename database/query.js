@@ -24,14 +24,27 @@ let getViewTables = (connection, escapeCallback) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            let escaped = viewTablesRaw.map(vt => {
-                vt.VIEW_DEFINITION = escapeCallback(vt.VIEW_DEFINITION)
+            let sanitized = viewTablesRaw.map(vt => {
+                let escaped = escapeCallback(vt.VIEW_DEFINITION);
+                vt.VIEW_DEFINITION = clearSourceDatabaseName(connection.config.database, escaped);
+
                 return vt;
             });
 
-            resolve(escaped);
+            resolve(sanitized);
         });
     });
+}
+
+/**
+ * @param {string} database 
+ * @param {string} content 
+ */
+let clearSourceDatabaseName = (database, content) => {
+    let pattern = new RegExp('`' + database + '`.', 'g')
+    let tmp = content;
+
+    return tmp.replace(pattern, '');
 }
 
 /**

@@ -7,7 +7,7 @@ class <%= migrationClass %> extends AbstractMigration
     public function up()
     {
         <% procedures.forEach(p => { %>
-            $this->execute('DROP <%= p.type %> IF EXISTS `<%= p.name %>`;DELIMITER ;; <%- p.definition %> ;; DELIMITER;');
+            $this->execute('DROP <%= p.type %> IF EXISTS `<%= p.name %>`; <%- p.definition %> ;');
         <% }); %>
     }
 }
