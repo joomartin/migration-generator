@@ -138,15 +138,30 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
 
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
-            
-            let converted = objectConverter(proceduresRaw);
-            let escaped = {};
-            for (procedure in converted) {
-                escaped[procedure] = converted[procedure];
-                escaped[procedure].definition = escapeCallback(converted[procedure].definition);
-            }
+            let procedures = [];
 
-            resolve(escaped);
+            proceduresRaw.forEach((p, i) => {
+                connection.query('SHOW CREATE ' + p['ROUTINE_TYPE'].toUpperCase() + ' `' + p['ROUTINE_NAME'] + '`', (err, result) => {
+                    if (err) return reject(err);
+
+                    let tmp = { type: p['ROUTINE_TYPE'] };                
+                    if (p['ROUTINE_TYPE'] === 'FUNCTION') {
+                        tmp.name = result[0]['Function'];
+                        tmp.definition = result[0]['Create Function'];
+                        
+                    } else if (p['ROUTINE_TYPE'] === 'PROCEDURE'){
+                        tmp.name = result[0]['Procedure'];
+                        tmp.definition = result[0]['Create Procedure'];
+                    }
+
+                    procedures.push(tmp);
+
+                    if (i === proceduresRaw.length - 1) {
+                        resolve(procedures);
+                    }
+                });
+            });
+
         });
     });
 }

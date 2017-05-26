@@ -15,9 +15,12 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getViewTables(connection, query.escapeJsonContent)
+query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
     .then(res => {
         console.log(res);
+        // res.forEach(p => {
+        //     console.log(p.Procedure);
+        // });
         connection.end();
     })
     .catch(err => (console.log(err)));
