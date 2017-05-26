@@ -67,6 +67,19 @@ let getForeignKeyTemplate = (tables, config, ejs) => {
     });
 }
 
+let getViewTablesTemplate = (viewTables, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, {
+            viewTables,
+            migrationClass: 'CreateViewTables'
+        }, null, (err, html) => {
+            if (err) return reject(err);
+
+            resolve(html);
+        });
+    });
+}
+
 /**
  * @param content String
  * @param tableName String
@@ -107,6 +120,7 @@ let getVariableName = (tableName) => {
 module.exports = {
     getTemplate,
     getForeignKeyTemplate,
+    getViewTablesTemplate,
     getClassName,
     getVariableName,
     generateFile

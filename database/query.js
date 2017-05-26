@@ -7,10 +7,29 @@ const _ = require('lodash');
  */
 let getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW TABLES', (err, tablesRaw) => {
+        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
             resolve(tablesRaw.filter(t => filterCallback(t, config)));
+        });
+    });
+}
+
+/**
+ * @param connection Object
+ * @return Promise
+ */
+let getViewTables = (connection, escapeCallback) => {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
+            if (err) return reject(err);
+
+            let escaped = viewTablesRaw.map(vt => {
+                vt.VIEW_DEFINITION = escapeCallback(vt.VIEW_DEFINITION)
+                return vt;
+            });
+
+            resolve(escaped);
         });
     });
 }
@@ -73,6 +92,8 @@ let getContent = (connection, table, escapeCallback) => {
 
 
 let escapeJsonContent = content => content.replace(/'/g, "\\'");
+let escapeQuotes = content => content.replace(/'/g, "\\'");
+
 
 /**
  * @param connection Object
@@ -201,6 +222,7 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getViewTables,
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
