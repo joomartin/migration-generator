@@ -6,13 +6,14 @@ describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
             let config = {
-                excludedTables: ['migrations']
+                excludedTables: ['migrations'],
+                database: 'test'
             };
 
             let connection = {
                 query(queryString, callback) {
 
-                    expect(queryString).to.be.equal('SHOW TABLES');
+                    expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
 
                     callback(undefined, [
                         { 'Tables_in_database': 'table1' },
