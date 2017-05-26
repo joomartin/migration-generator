@@ -80,6 +80,21 @@ let getViewTablesTemplate = (viewTables, config, ejs) => {
     });
 }
 
+let getProcedureTemplate = (procedures, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
+            migrationClass: 'AddProceduresAndFunctions',
+            procedures,
+        }, null, (err, html) => {
+            if (err) return reject(err);
+
+            resolve(html);
+        });
+    });
+}
+
+
+
 /**
  * @param content String
  * @param tableName String
@@ -121,6 +136,7 @@ module.exports = {
     getTemplate,
     getForeignKeyTemplate,
     getViewTablesTemplate,
+    getProcedureTemplate,
     getClassName,
     getVariableName,
     generateFile

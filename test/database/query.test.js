@@ -164,22 +164,30 @@ describe('Query', () => {
                         {
                             SPECIFIC_NAME: 'proc1',
                             ROUTINE_TYPE: 'PROCEDURE',
-                            ROUTINE_DEFINITION: 'BEGIN DECLARE END'
+                            ROUTINE_DEFINITION: 'BEGIN DECLARE END',
+                            DEFINER: 'root@localhost'
                         }, {
                             SPECIFIC_NAME: 'func1',
                             ROUTINE_TYPE: 'FUNCTION',
-                            ROUTINE_DEFINITION: 'BEGIN DECLARE END'
+                            ROUTINE_DEFINITION: 'BEGIN DECLARE END',
+                            DEFINER: 'root@localhost'                            
                         },
                     ]);
                 }
             }
 
-            query.getProcedures(connection, query.convertProceduresToObjects)
+            query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
                 .then(res => {
                     expect(Object.keys(res).length).to.be.equal(2);
 
                     expect(res['proc1'].type).to.be.equal('PROCEDURE');
+                    expect(res['proc1'].definition).to.be.equal('BEGIN DECLARE END');
+                    expect(res['proc1'].definer).to.be.equal('root@localhost');
+
+
                     expect(res['func1'].type).to.be.equal('FUNCTION');
+                    expect(res['func1'].definition).to.be.equal('BEGIN DECLARE END');
+                    expect(res['func1'].definer).to.be.equal('root@localhost');
 
                     done();
                 })

@@ -1,0 +1,16 @@
+<?php
+
+use \Phinx\Migration\AbstractMigration;
+
+class <%= migrationClass %> extends AbstractMigration
+{
+    public function up()
+    {
+        <% for (procedure in procedures) { %>
+            $this->execute('DROP PROCEDURE IF EXISTS `<%= procedure %>`;');
+            $this->execute('DELIMITER ;;');
+            $this->execute('CREATE DEFINER=<%- procedures[procedure].definer %> <%- procedures[procedure].type.toUpperCase() %> `<%= procedure %>` <%- procedures[procedure].definition %>');
+            $this->execute(';; DELIMITER;');
+        <% } %>
+    }
+}

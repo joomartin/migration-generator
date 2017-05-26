@@ -132,7 +132,7 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
-let getProcedures = (connection, objectConverter) => {
+let getProcedures = (connection, objectConverter, escapeCallback) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -142,11 +142,20 @@ let getProcedures = (connection, objectConverter) => {
 
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
+            
+            let converted = objectConverter(proceduresRaw);
+            let escaped = {};
+            for (procedure in converted) {
+                escaped[procedure] = converted[procedure];
+                escaped[procedure].definition = escapeCallback(converted[procedure].definition);
+            }
 
-            resolve(objectConverter(proceduresRaw));
+            resolve(escaped);
         });
     });
 }
+
+let escapeQuotes = content => content.replace(/'/g, "\\'");
 
 /**
  * @param procedures Object
@@ -158,7 +167,8 @@ let convertProceduresToObjects = (proceduresRaw) => {
     proceduresRaw.forEach(p => {
         procedures[p['SPECIFIC_NAME']] = {
             type: p['ROUTINE_TYPE'],
-            definition: p['ROUTINE_DEFINITION']
+            definition: p['ROUTINE_DEFINITION'],
+            definer: p['DEFINER']
         };
     });
 
@@ -193,12 +203,12 @@ let getTableData = (connection, query, config) => {
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (_.get(v, ['columns'], null)) {
+                                if (_.get(v, ['columns'], null)) {                  // Columns
                                     tableData[table].columns = v.columns;
                                     tableData[table].indexes = v.indexes;
-                                } else if (_.get(v, [0, 'sourceTable'], null)) {
+                                } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
                                     tableData[table].dependencies = v;
-                                } else {
+                                } else {                                            // Content
                                     tableData[table].content = v;
                                 }
 
@@ -226,5 +236,6 @@ module.exports = {
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
-    escapeJsonContent
+    convertProceduresToObjects,
+    escapeQuotes
 }

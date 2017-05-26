@@ -65,10 +65,9 @@ let tablesPromise = query.getTableData(connection, query, config)
                     })
                     .catch(err => console.log(chalk.bgRed(err)));
             })
-            .catch(err => console.log(chalk.bgRed(err)));
     })
     .catch(err => console.log(chalk.bgRed(err)));
-
+    
 let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
     .then(viewTables => {
         file.getViewTablesTemplate(viewTables, config, ejs)
@@ -82,8 +81,23 @@ let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
             });
     })
     .catch(err => console.log(chalk.bgRed(err)));
+    
 
-Promise.all([tablesPromise, viewTablesPromise])
+let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
+    .then(procedures => {
+        file.getProcedureTemplate(procedures, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}x_add_procedures.php`;                
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(chalk.bgRed(err)));
+            });
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
+    
+Promise.all([tablesPromise, viewTablesPromise, proceduresPromise])
     .then(res => {
         connection.end();
     })
