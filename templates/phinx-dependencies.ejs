@@ -8,6 +8,7 @@ class <%= migrationClass %> extends AbstractMigration
     {
         $this->execute('SET FOREIGN_KEY_CHECKS=0');
         <% for (table in tables) { %>
+        $<%= variableNames[table] %> = $this->table('<%= table %>');
             <% tables[table].dependencies.forEach((d, i) => { %>
             <% if (i === 0) {%>
         $<%= variableNames[table] %><% } %>

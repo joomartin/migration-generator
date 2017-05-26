@@ -11,8 +11,9 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getProcedures(connection, query.mapProcedures)
+query.getViewTables(connection, query.escapeJsonContent)
     .then(res => {
+        console.log(res);
         connection.end();
     })
     .catch(err => (console.log(err)));

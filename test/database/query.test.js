@@ -6,13 +6,14 @@ describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
             let config = {
-                excludedTables: ['migrations']
+                excludedTables: ['migrations'],
+                database: 'test'
             };
 
             let connection = {
                 query(queryString, callback) {
 
-                    expect(queryString).to.be.equal('SHOW TABLES');
+                    expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
 
                     callback(undefined, [
                         { 'Tables_in_database': 'table1' },
@@ -39,7 +40,7 @@ describe('Query', () => {
                     expect(queryString).to.be.equal(`SHOW FULL COLUMNS FROM ${table}`);
 
                     callback(undefined, [
-                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' }, 
+                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
                         { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
                     ]);
                 }
@@ -97,12 +98,13 @@ describe('Query', () => {
         it('should return true if a table is not excluded by config', () => {
             let config = {
                 excludedTables: ['migrations'],
+                database: 'test'
             };
 
-            let filter = query.isTableIncluded('migrations', config);
+            let filter = query.isTableIncluded({Tables_in_test: 'migrations'}, config);
             expect(filter).to.be.false;
 
-            filter = query.isTableIncluded('table1', config);
+            filter = query.isTableIncluded({Tables_in_test: 'test1'}, config);
             expect(filter).to.be.true;
         });
     });
@@ -127,12 +129,21 @@ describe('Query', () => {
                 }
             }
 
-            query.getContent(connection, 'todos')
+            let escapeJsonContent = (content) => {
+                expect(content).to.be.string;
+
+                return content;
+            }
+
+            query.getContent(connection, 'todos', escapeJsonContent)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
                     expect(res[0].id).to.be.equal(1);
+                    expect(res[0].title).to.be.equal('Todo #1');
+
                     expect(res[1].id).to.be.equal(2);
+                    expect(res[1].title).to.be.equal('Todo #2');
 
                     done();
                 })
@@ -170,6 +181,172 @@ describe('Query', () => {
                     expect(res['proc1'].type).to.be.equal('PROCEDURE');
                     expect(res['func1'].type).to.be.equal('FUNCTION');
 
+                    done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
+
+    describe('#getTableData()', () => {
+        it('happy path', () => {
+            let connectionMock = {};
+            let config = {
+                database: 'test'
+            };
+            let queryDependency = {
+                tables: [
+                    {
+                        'Tables_in_test': 'todos'
+                    }, {
+                        'Tables_in_test': 'categories'
+                    }
+                ],
+                hasTable(table) {
+                    return this.tables
+                        .map(t => t['Tables_in_test'])
+                        .some(tn => tn === table);
+                },
+                getTables(connection, config, filterCallback) {
+                    expect(true).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        resolve(this.tables);
+                    });
+                },
+                getColumns(connection, table, filterCallback) {
+                    expect(connection).to.be.equal(connectionMock);
+                    expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = {
+                            indexes: [
+                                {
+                                    'Field': 'category_id',
+                                    'Type': 'int(11) unsigned',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'MUL',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                }
+                            ],
+                            columns: [
+                                {
+                                    'Field': 'title',
+                                    'Type': 'varchar(255)',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'NO',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                },
+                                {
+                                    'Field': 'category_id',
+                                    'Type': 'int(11) unsigned',
+                                    'Collation': null,
+                                    'Null': 'YES',
+                                    'Key': 'MUL',
+                                    'Default': null,
+                                    'Extra': '',
+                                    'Privileges': 'select,insert,update,references',
+                                    'Comment': ''
+                                }
+                            ]
+                        };
+
+                        resolve(data);
+                    });
+                },
+                getDependencies(connection, table, config) {
+                    expect(connection).to.be.equal(connectionMock);
+                    expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = [{
+                            sourceTable: 'todos',
+                            sourceColumn: 'category_id',
+                            referencedTable: 'categories',
+                            referencedColumn: 'id',
+                            updateRule: 'NO ACTION',
+                            deleteRule: 'SET NULL'
+                        }];
+
+                        resolve(data);
+                    });
+                },
+                getContent(connection, table) {
+                    expect(connection).to.be.equal(connectionMock);
+                    expect(this.hasTable(table)).to.be.true;
+
+                    return new Promise((resolve, reject) => {
+                        let data = [
+                            {
+                                title: 'Todo #1',
+                                category_id: null
+                            }, {
+                                title: 'Todo #2',
+                                category_id: null
+                            }
+                        ];
+
+                        resolve(data);
+                    });
+                }
+            };
+
+            query.getTableData(connectionMock, queryDependency, config)
+                .then(res => {
+                    expect(res.todos.indexes.length).to.be.equal(1);
+                    expect(res.todos.columns.length).to.be.equal(2);
+
+                    expect(res.todos.indexes[0].Field).to.be.equal('category_id');
+                    expect(res.todos.columns[0].Field).to.be.equal('title');
+
+                    expect(res.todos.dependencies.length).to.be.equal(1);
+                    expect(res.todos.dependencies[0].referencedTable).to.be.equal('categories');
+                    expect(res.todos.dependencies[0].referencedColumn).to.be.equal('id');
+
+                    expect(res.todos.content.length).to.be.equal(2);
+                    expect(res.todos.content[0].title).to.be.equal('Todo #1');
+                    expect(res.todos.content[1].title).to.be.equal('Todo #2');
+                })
+                .catch(err => console.log(err));
+        });
+    });
+
+    describe('#escapeJsonContent()', () => {
+        it('should escape quotes', () => {
+            let obj = {id: 1, name: "it has 'quotes'"};
+            let escaped = query.escapeJsonContent(JSON.stringify(obj));
+
+            let temp = "\\'quotes\\'";
+            expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
+        });
+    });
+
+    describe('#getViewTables()', () => {
+        it('should query database for view tables', (done) => {
+            let connection = {
+                config: { database: 'test' },
+                query(queryString, callback) {
+
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'");
+
+                    callback(undefined, [
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+                }
+            }
+
+            query.getViewTables(connection, query.escapeJsonContent)
+                .then(res => {
+                    expect(res.length).to.be.equal(2);
+                    expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
                     done();
                 })
                 .catch(err => console.log(err));

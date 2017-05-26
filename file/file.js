@@ -13,14 +13,14 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
 
-        let primaryKey = null;
+        let primaryKey = [];
 
         const fieldsData = table.columns.map(f => {
             const columnInfo = createColumnInfo(f);
             const options = columnInfo.getOptions();
 
             if (columnInfo.isPrimaryKey()) {
-                primaryKey = f['Field'];
+                primaryKey.push(f['Field']);
             }
 
             let typeObj = columnInfo.getType();
@@ -67,6 +67,19 @@ let getForeignKeyTemplate = (tables, config, ejs) => {
     });
 }
 
+let getViewTablesTemplate = (viewTables, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, {
+            viewTables,
+            migrationClass: 'CreateViewTables'
+        }, null, (err, html) => {
+            if (err) return reject(err);
+
+            resolve(html);
+        });
+    });
+}
+
 /**
  * @param content String
  * @param tableName String
@@ -80,9 +93,7 @@ let generateFile = (content, fileName, config, fs) => {
         let path = `${config.output}/${fileName}`;
 
         fs.writeFile(path, content, err => {
-            if (err) return reject(err);
-
-            resolve(fileName)
+            resolve(fileName);
         });
     });
 }
@@ -109,6 +120,7 @@ let getVariableName = (tableName) => {
 module.exports = {
     getTemplate,
     getForeignKeyTemplate,
+    getViewTablesTemplate,
     getClassName,
     getVariableName,
     generateFile

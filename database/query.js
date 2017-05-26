@@ -7,13 +7,39 @@ const _ = require('lodash');
  */
 let getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW TABLES', (err, tablesRaw) => {
+        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
             resolve(tablesRaw.filter(t => filterCallback(t, config)));
         });
     });
 }
+
+/**
+ * @param connection Object
+ * @return Promise
+ */
+let getViewTables = (connection, escapeCallback) => {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
+            if (err) return reject(err);
+
+            let escaped = viewTablesRaw.map(vt => {
+                vt.VIEW_DEFINITION = escapeCallback(vt.VIEW_DEFINITION)
+                return vt;
+            });
+
+            resolve(escaped);
+        });
+    });
+}
+
+/**
+ * @param tablesRaw Array
+ * @param config Object
+ * @return Array
+ */
+let isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
 
 /**
  * @param connection Object
@@ -40,15 +66,34 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
  * @param connection Object
  * @param table String
  */
-let getContent = (connection, table) => {
+let getContent = (connection, table, escapeCallback) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM ${table}`, (err, rows) => {
             if (err) return reject(err);
 
-            resolve(rows);
+            let escapedRows = [];
+            rows.forEach(r => {
+                let escapedRow = [];
+                for (key in r) {
+                    escapedRow[key] = r[key];
+                    if (typeof r[key] === 'string') {
+                        escapedRow[key] = escapeCallback(r[key]);
+                    }
+                }
+
+                escapedRows.push(escapedRow);
+            });
+
+            resolve(escapedRows);
         });
     });
 }
+
+
+
+let escapeJsonContent = content => content.replace(/'/g, "\\'");
+let escapeQuotes = content => content.replace(/'/g, "\\'");
+
 
 /**
  * @param connection Object
@@ -98,8 +143,6 @@ let getProcedures = (connection, objectConverter) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            console.log(proceduresRaw);
-
             resolve(objectConverter(proceduresRaw));
         });
     });
@@ -145,7 +188,7 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table);
+                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
@@ -172,13 +215,6 @@ let getTableData = (connection, query, config) => {
     });
 }
 
-/**
- * @param tablesRaw Array
- * @param config Object
- * @return Array
- */
-let isTableIncluded = (table, config) => !config.excludedTables.includes(table);
-
 module.exports = {
     getTables,
     getColumns,
@@ -186,7 +222,9 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getViewTables,
     convertProceduresToObjects,
     filterIndexes,
-    isTableIncluded
+    isTableIncluded,
+    escapeJsonContent
 }

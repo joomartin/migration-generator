@@ -1,12 +1,12 @@
 {
     "host": "localhost",
-    "port": 8889,
+    "port": 3306,
     "user": "root",
-    "password": "root",
-    "database": "erp-clear",
+    "password": "",
+    "database": "",
     "migrationLib": "phinx",
     "excludedTables": [
         "migrations"
     ],
-    "output": "/Users/joomartin/migration-test"
+    "output": "./output/"
 }
