@@ -327,4 +327,29 @@ describe('Query', () => {
             expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
         });
     });
+
+    describe('#getViewTables()', () => {
+        it('should query database for view tables', (done) => {
+            let connection = {
+                config: { database: 'test' },
+                query(queryString, callback) {
+
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'");
+
+                    callback(undefined, [
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+                }
+            }
+
+            query.getViewTables(connection, query.escapeJsonContent)
+                .then(res => {
+                    expect(res.length).to.be.equal(2);
+                    expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
+                    done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
 });
