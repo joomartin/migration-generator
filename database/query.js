@@ -147,11 +147,11 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
                     let tmp = { type: p['ROUTINE_TYPE'] };                
                     if (p['ROUTINE_TYPE'] === 'FUNCTION') {
                         tmp.name = result[0]['Function'];
-                        tmp.definition = result[0]['Create Function'];
+                        tmp.definition = escapeCallback(result[0]['Create Function']);
                         
                     } else if (p['ROUTINE_TYPE'] === 'PROCEDURE'){
                         tmp.name = result[0]['Procedure'];
-                        tmp.definition = result[0]['Create Procedure'];
+                        tmp.definition = escapeCallback(result[0]['Create Procedure']);
                     }
 
                     procedures.push(tmp);
