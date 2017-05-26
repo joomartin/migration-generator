@@ -65,11 +65,10 @@ let tablesPromise = query.getTableData(connection, query, config)
                     })
                     .catch(err => console.log(chalk.bgRed(err)));
             })
-            .catch(err => console.log(chalk.bgRed(err)));
     })
     .catch(err => console.log(chalk.bgRed(err)));
-
-let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
+    
+let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => {
         file.getViewTablesTemplate(viewTables, config, ejs)
             .then(html => {
@@ -82,8 +81,37 @@ let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
             });
     })
     .catch(err => console.log(chalk.bgRed(err)));
+    
 
-Promise.all([tablesPromise, viewTablesPromise])
+let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
+    .then(procedures => {
+        file.getProcedureTemplate(procedures, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}_add_procedures_and_functions.php`;                
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(chalk.bgRed(err)));
+            });
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
+
+let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+    .then(triggers => {
+        file.getTriggersTemplate(triggers, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}_add_triggers.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            });
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
+
+Promise.all([tablesPromise, proceduresPromise, viewTablesPromise, triggersPromise])
     .then(res => {
         connection.end();
     })

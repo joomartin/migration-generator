@@ -7,11 +7,11 @@ class <%= migrationClass %> extends AbstractMigration
     public function up()
     {
         <% viewTables.forEach(vt => { %>
-            $this->execute('DROP VIEW IF EXISTS `<%= vt.TABLE_NAME %>`');
-            $this->execute('CREATE 
+            $this->execute('
+                CREATE 
                 DEFINER = <%= vt.DEFINER %>
                 VIEW `<%= vt.TABLE_NAME %>`
-                AS <%- vt.VIEW_DEFINITION %>
+                AS <%- vt.VIEW_DEFINITION %> ;
             ');
         <% }); %>
     }

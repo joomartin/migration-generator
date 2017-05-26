@@ -24,14 +24,27 @@ let getViewTables = (connection, escapeCallback) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            let escaped = viewTablesRaw.map(vt => {
-                vt.VIEW_DEFINITION = escapeCallback(vt.VIEW_DEFINITION)
+            let sanitized = viewTablesRaw.map(vt => {
+                let escaped = escapeCallback(vt.VIEW_DEFINITION);
+                vt.VIEW_DEFINITION = clearSourceDatabaseName(connection.config.database, escaped);
+
                 return vt;
             });
 
-            resolve(escaped);
+            resolve(sanitized);
         });
     });
+}
+
+/**
+ * @param {string} database 
+ * @param {string} content 
+ */
+let clearSourceDatabaseName = (database, content) => {
+    let pattern = new RegExp('`' + database + '`.', 'g')
+    let tmp = content;
+
+    return tmp.replace(pattern, '');
 }
 
 /**
@@ -89,11 +102,7 @@ let getContent = (connection, table, escapeCallback) => {
     });
 }
 
-
-
-let escapeJsonContent = content => content.replace(/'/g, "\\'");
 let escapeQuotes = content => content.replace(/'/g, "\\'");
-
 
 /**
  * @param connection Object
@@ -132,7 +141,7 @@ let getDependencies = (connection, table, config) => {
     });
 }
 
-let getProcedures = (connection, objectConverter) => {
+let getProcedures = (connection, objectConverter, escapeCallback) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -142,8 +151,30 @@ let getProcedures = (connection, objectConverter) => {
 
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
+            let procedures = [];
 
-            resolve(objectConverter(proceduresRaw));
+            proceduresRaw.forEach((p, i) => {
+                connection.query('SHOW CREATE ' + p['ROUTINE_TYPE'].toUpperCase() + ' `' + p['ROUTINE_NAME'] + '`', (err, result) => {
+                    if (err) return reject(err);
+
+                    let tmp = { type: p['ROUTINE_TYPE'] };                
+                    if (p['ROUTINE_TYPE'] === 'FUNCTION') {
+                        tmp.name = result[0]['Function'];
+                        tmp.definition = escapeCallback(result[0]['Create Function']);
+                        
+                    } else if (p['ROUTINE_TYPE'] === 'PROCEDURE'){
+                        tmp.name = result[0]['Procedure'];
+                        tmp.definition = escapeCallback(result[0]['Create Procedure']);
+                    }
+
+                    procedures.push(tmp);
+
+                    if (i === proceduresRaw.length - 1) {
+                        resolve(procedures);
+                    }
+                });
+            });
+
         });
     });
 }
@@ -158,11 +189,41 @@ let convertProceduresToObjects = (proceduresRaw) => {
     proceduresRaw.forEach(p => {
         procedures[p['SPECIFIC_NAME']] = {
             type: p['ROUTINE_TYPE'],
-            definition: p['ROUTINE_DEFINITION']
+            definition: p['ROUTINE_DEFINITION'],
+            definer: p['DEFINER']
         };
     });
 
     return procedures;
+}
+
+let getTriggers = (connection, escapeCallback, _) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
+
+        connection.query(query, (err, triggers) => {
+            if (err) return reject(err);
+            
+            let escaped = {};
+            triggers.forEach(t => {
+                if (!_.has(escaped, t.Table)) {
+                    _.set(escaped, t.Table, []);
+                }
+
+                escaped[t.Table].push({
+                    name: t.Trigger,
+                    event: t.Event,
+                    timing: t.Timing,
+                    statement: escapeCallback(t.Statement),
+                    definer: t.Definer,
+                    table: t.Table,
+                    database: connection.config.database             
+                });
+            });
+
+            resolve(escaped);
+        });
+    });
 }
 
 /**
@@ -188,17 +249,17 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
+                    let contentPromise = query.getContent(connection, table, query.escapeQuotes);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
                             values.forEach(v => {
-                                if (_.get(v, ['columns'], null)) {
+                                if (_.get(v, ['columns'], null)) {                  // Columns
                                     tableData[table].columns = v.columns;
                                     tableData[table].indexes = v.indexes;
-                                } else if (_.get(v, [0, 'sourceTable'], null)) {
+                                } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
                                     tableData[table].dependencies = v;
-                                } else {
+                                } else {                                            // Content
                                     tableData[table].content = v;
                                 }
 
@@ -222,9 +283,10 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getTriggers,
     getViewTables,
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
-    escapeJsonContent
+    escapeQuotes
 }
