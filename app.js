@@ -68,7 +68,7 @@ let tablesPromise = query.getTableData(connection, query, config)
     })
     .catch(err => console.log(chalk.bgRed(err)));
     
-let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
+let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => {
         file.getViewTablesTemplate(viewTables, config, ejs)
             .then(html => {
@@ -87,7 +87,7 @@ let proceduresPromise = query.getProcedures(connection, query.convertProceduresT
     .then(procedures => {
         file.getProcedureTemplate(procedures, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}x_add_procedures.php`;                
+                let fileName = `${(new Date).getTime()}_add_procedures.php`;                
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);

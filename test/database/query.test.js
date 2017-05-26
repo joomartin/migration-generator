@@ -129,13 +129,13 @@ describe('Query', () => {
                 }
             }
 
-            let escapeJsonContent = (content) => {
+            let escapeQuotes = (content) => {
                 expect(content).to.be.string;
 
                 return content;
             }
 
-            query.getContent(connection, 'todos', escapeJsonContent)
+            query.getContent(connection, 'todos', escapeQuotes)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -326,10 +326,10 @@ describe('Query', () => {
         });
     });
 
-    describe('#escapeJsonContent()', () => {
+    describe('#escapeQuotes()', () => {
         it('should escape quotes', () => {
             let obj = {id: 1, name: "it has 'quotes'"};
-            let escaped = query.escapeJsonContent(JSON.stringify(obj));
+            let escaped = query.escapeQuotes(JSON.stringify(obj));
 
             let temp = "\\'quotes\\'";
             expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
@@ -351,7 +351,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, query.escapeJsonContent)
+            query.getViewTables(connection, query.escapeQuotes)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");

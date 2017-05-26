@@ -89,11 +89,7 @@ let getContent = (connection, table, escapeCallback) => {
     });
 }
 
-
-
-let escapeJsonContent = content => content.replace(/'/g, "\\'");
 let escapeQuotes = content => content.replace(/'/g, "\\'");
-
 
 /**
  * @param connection Object
@@ -155,8 +151,6 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
     });
 }
 
-let escapeQuotes = content => content.replace(/'/g, "\\'");
-
 /**
  * @param procedures Object
  * @return Object
@@ -198,7 +192,7 @@ let getTableData = (connection, query, config) => {
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
-                    let contentPromise = query.getContent(connection, table, query.escapeJsonContent);
+                    let contentPromise = query.getContent(connection, table, query.escapeQuotes);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
@@ -236,6 +230,5 @@ module.exports = {
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
-    convertProceduresToObjects,
     escapeQuotes
 }
