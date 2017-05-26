@@ -58,7 +58,7 @@ let tablesPromise = query.getTableData(connection, query, config)
 
         file.getForeignKeyTemplate(tables, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}${i}_add_foreign_keys.php`;
+                let fileName = `x${(new Date).getTime()}${i}_add_foreign_keys.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
@@ -73,7 +73,7 @@ let viewTablesPromise = query.getViewTables(connection, query.escapeJsonContent)
     .then(viewTables => {
         file.getViewTablesTemplate(viewTables, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}_create_view_tables.php`;
+                let fileName = `x${(new Date).getTime()}_create_view_tables.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
