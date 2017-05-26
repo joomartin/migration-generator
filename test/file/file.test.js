@@ -99,7 +99,7 @@ describe('File', () => {
     });
 
     describe('#getForeignKeyTemplate()', () => {
-        it('should get template for foreign key migration', () => {
+        it('should get template for foreign key migration', (done) => {
             let config = {
                 migrationLib: 'phinx'
             }
@@ -121,7 +121,39 @@ describe('File', () => {
             file.getForeignKeyTemplate(tables, config, ejs)
                 .then(data => {
                     expect(data).to.be.equal('html content');
+                    done();
                 })
+                .catch(err => console.log(err));
+                
+        });
+    });
+
+    describe('#getViewTablesTemplate()', () => {
+        it('should get template for view tables', (done) => {
+            let config = {
+                migrationLib: 'phinx'
+            }
+
+            let tables = {
+                'todos': {},
+                'categories': {}
+            }
+
+            let ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(path).to.be.equal(`./templates/phinx-view-tables.ejs`);
+                    expect(data.viewTables).to.be.equal(tables);
+
+                    callback(undefined, 'html content');
+                }
+            }
+
+            file.getViewTablesTemplate(tables, config, ejs)
+                .then(data => {
+                    expect(data).to.be.equal('html content');
+                    done();
+                })
+                .catch(err => console.log(err));
         });
     });
 });
