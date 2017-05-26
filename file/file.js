@@ -93,7 +93,18 @@ let getProcedureTemplate = (procedures, config, ejs) => {
     });
 }
 
+let getTriggersTemplate = (triggersByTables, config, ejs) => {
+    return new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, {            
+            migrationClass: 'AddTriggers',
+            triggersByTables,
+        }, null, (err, html) => {
+            if (err) return reject(err);
 
+            resolve(html);
+        });
+    });
+}
 
 /**
  * @param content String
@@ -137,6 +148,7 @@ module.exports = {
     getForeignKeyTemplate,
     getViewTablesTemplate,
     getProcedureTemplate,
+    getTriggersTemplate,
     getClassName,
     getVariableName,
     generateFile

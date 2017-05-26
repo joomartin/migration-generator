@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const ejs = require('ejs');
 const fs = require('fs');
 const util = require('util');
+const _ = require('lodash');
 
 const config = require('./config.json');
 const file = require('./file/file');

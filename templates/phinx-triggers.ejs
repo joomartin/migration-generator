@@ -1,0 +1,21 @@
+<?php
+
+use \Phinx\Migration\AbstractMigration;
+
+class <%= migrationClass %> extends AbstractMigration
+{
+    public function up()
+    {
+        <% for (table in triggersByTables) { %>
+            <% triggersByTables[table].forEach(trigger => { %>
+            $this->execute('CREATE 
+                DEFINER = <%- trigger.definer %>
+                TRIGGER `<%= trigger.name %>`
+                <%= trigger.timing %> <%= trigger.event %>
+                ON `<%= trigger.database %>`.`<%= trigger.table %>` FOR EACH ROW
+                <%- trigger.statement %>
+                ');
+            <% }); %>        
+        <% } %>
+    }
+}

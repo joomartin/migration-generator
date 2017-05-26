@@ -96,8 +96,22 @@ let proceduresPromise = query.getProcedures(connection, query.convertProceduresT
             });
     })
     .catch(err => console.log(chalk.bgRed(err)));
-    
-Promise.all([tablesPromise, viewTablesPromise, proceduresPromise])
+
+let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+    .then(triggers => {
+        file.getTriggersTemplate(triggers, config, ejs)
+            .then(html => {
+                let fileName = `${(new Date).getTime()}x_add_triggers.php`;
+                file.generateFile(html, fileName, config, fs)
+                    .then(fileName => {
+                        util.log(`${fileName} was generated successfully`);
+                    })
+                    .catch(err => console.log(err));
+            });
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
+
+Promise.all([tablesPromise, proceduresPromise, viewTablesPromise, triggersPromise])
     .then(res => {
         connection.end();
     })

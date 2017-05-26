@@ -197,6 +197,35 @@ let convertProceduresToObjects = (proceduresRaw) => {
     return procedures;
 }
 
+let getTriggers = (connection, escapeCallback, _) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
+
+        connection.query(query, (err, triggers) => {
+            if (err) return reject(err);
+            
+            let escaped = {};
+            triggers.forEach(t => {
+                if (!_.has(escaped, t.Table)) {
+                    _.set(escaped, t.Table, []);
+                }
+
+                escaped[t.Table].push({
+                    name: t.Trigger,
+                    event: t.Event,
+                    timing: t.Timing,
+                    statement: escapeCallback(t.Statement),
+                    definer: t.Definer,
+                    table: t.Table,
+                    database: connection.config.database             
+                });
+            });
+
+            resolve(escaped);
+        });
+    });
+}
+
 /**
  * @param connection Object
  * @param query Object
@@ -254,6 +283,7 @@ module.exports = {
     getTableData,
     getContent,
     getProcedures,
+    getTriggers,
     getViewTables,
     convertProceduresToObjects,
     filterIndexes,
