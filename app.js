@@ -101,7 +101,7 @@ let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
     .then(triggers => {
         file.getTriggersTemplate(triggers, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}x_add_triggers.php`;
+                let fileName = `${(new Date).getTime()}_add_triggers.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
