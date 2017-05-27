@@ -47,7 +47,7 @@ let tablesPromise = query.getTableData(connection, query, config)
                         let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
                         file.generateFile(data.html, fileName, config, fs)
                             .then(fileName => {
-                                util.log(`${fileName} was generated successfully`);
+                                util.log(`${data.table} was generated successfully`);
                             })
                             .catch(err => console.log(chalk.bgRed(err)));
 
@@ -62,7 +62,7 @@ let tablesPromise = query.getTableData(connection, query, config)
                 let fileName = `${(new Date).getTime()}${length}_add_foreign_keys.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
-                        util.log(`${fileName} was generated successfully`);
+                        util.log(`Foreign keys was generated successfully`);
                     })
                     .catch(err => console.log(chalk.bgRed(err)));
             });
@@ -74,7 +74,7 @@ let tablesPromise = query.getTableData(connection, query, config)
                         let fileName = `${(new Date).getTime()}${length + 1}_create_view_tables.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
-                                util.log(`${fileName} was generated successfully`);
+                                util.log(`View tables was generated successfully`);
                             })
                             .catch(err => console.log(chalk.bgRed(err)));
                     });
@@ -88,7 +88,7 @@ let tablesPromise = query.getTableData(connection, query, config)
                         let fileName = `${(new Date).getTime()}${length + 2}_add_procedures_and_functions.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
-                                util.log(`${fileName} was generated successfully`);
+                                util.log(`Procedures and functions was generated successfully`);
                             })
                             .catch(err => console.log(chalk.bgRed(err)));
                     });
@@ -102,7 +102,7 @@ let tablesPromise = query.getTableData(connection, query, config)
                         let fileName = `${(new Date).getTime()}${length + 3}_add_triggers.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
-                                util.log(`${fileName} was generated successfully`);
+                                util.log(`Triggers was generated successfully`);
                             })
                             .catch(err => console.log(err));
                     });
