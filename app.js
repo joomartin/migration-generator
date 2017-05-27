@@ -39,6 +39,7 @@ let i = 0;
 
 let tablesPromise = query.getTableData(connection, query, config)
     .then(tables => {
+        let length = Object.keys(tables).length;
         for (table in tables) {
             (function (index) {
                 file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
@@ -56,63 +57,62 @@ let tablesPromise = query.getTableData(connection, query, config)
             i++;
         }
 
-        file.getForeignKeyTemplate(tables, config, ejs)
+        let foreignKeyPromise = file.getForeignKeyTemplate(tables, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}${i}_add_foreign_keys.php`;
+                let fileName = `${(new Date).getTime()}${length}_add_foreign_keys.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`${fileName} was generated successfully`);
                     })
                     .catch(err => console.log(chalk.bgRed(err)));
+            });
+
+        let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
+            .then(viewTables => {
+                file.getViewTablesTemplate(viewTables, config, ejs)
+                    .then(html => {
+                        let fileName = `${(new Date).getTime()}${length + 1}_create_view_tables.php`;
+                        file.generateFile(html, fileName, config, fs)
+                            .then(fileName => {
+                                util.log(`${fileName} was generated successfully`);
+                            })
+                            .catch(err => console.log(chalk.bgRed(err)));
+                    });
             })
-    })
-    .catch(err => console.log(chalk.bgRed(err)));
-    
-let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
-    .then(viewTables => {
-        file.getViewTablesTemplate(viewTables, config, ejs)
-            .then(html => {
-                let fileName = `${(new Date).getTime()}_create_view_tables.php`;
-                file.generateFile(html, fileName, config, fs)
-                    .then(fileName => {
-                        util.log(`${fileName} was generated successfully`);
-                    })
-                    .catch(err => console.log(chalk.bgRed(err)));
-            });
-    })
-    .catch(err => console.log(chalk.bgRed(err)));
-    
+            .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
-    .then(procedures => {
-        file.getProcedureTemplate(procedures, config, ejs)
-            .then(html => {
-                let fileName = `${(new Date).getTime()}_add_procedures_and_functions.php`;                
-                file.generateFile(html, fileName, config, fs)
-                    .then(fileName => {
-                        util.log(`${fileName} was generated successfully`);
-                    })
-                    .catch(err => console.log(chalk.bgRed(err)));
-            });
-    })
-    .catch(err => console.log(chalk.bgRed(err)));
+        let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
+            .then(procedures => {
+                file.getProcedureTemplate(procedures, config, ejs)
+                    .then(html => {
+                        let fileName = `${(new Date).getTime()}${length + 2}_add_procedures_and_functions.php`;
+                        file.generateFile(html, fileName, config, fs)
+                            .then(fileName => {
+                                util.log(`${fileName} was generated successfully`);
+                            })
+                            .catch(err => console.log(chalk.bgRed(err)));
+                    });
+            })
+            .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
-    .then(triggers => {
-        file.getTriggersTemplate(triggers, config, ejs)
-            .then(html => {
-                let fileName = `${(new Date).getTime()}_add_triggers.php`;
-                file.generateFile(html, fileName, config, fs)
-                    .then(fileName => {
-                        util.log(`${fileName} was generated successfully`);
-                    })
-                    .catch(err => console.log(err));
-            });
-    })
-    .catch(err => console.log(chalk.bgRed(err)));
+        let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+            .then(triggers => {
+                file.getTriggersTemplate(triggers, config, ejs)
+                    .then(html => {
+                        let fileName = `${(new Date).getTime()}${length + 3}_add_triggers.php`;
+                        file.generateFile(html, fileName, config, fs)
+                            .then(fileName => {
+                                util.log(`${fileName} was generated successfully`);
+                            })
+                            .catch(err => console.log(err));
+                    });
+            })
+            .catch(err => console.log(chalk.bgRed(err)));
 
-Promise.all([tablesPromise, proceduresPromise, viewTablesPromise, triggersPromise])
-    .then(res => {
-        connection.end();
+        Promise.all([foreignKeyPromise, proceduresPromise, viewTablesPromise, triggersPromise])
+            .then(res => {
+                connection.end();
+            })
+            .catch(err => console.log(chalk.bgRed(err)));
     })
     .catch(err => console.log(chalk.bgRed(err)));

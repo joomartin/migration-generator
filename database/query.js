@@ -153,6 +153,10 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
             if (err) return reject(err);
             let procedures = [];
 
+            if (proceduresRaw.length === 0) {
+                resolve([]);
+            }
+
             proceduresRaw.forEach((p, i) => {
                 connection.query('SHOW CREATE ' + p['ROUTINE_TYPE'].toUpperCase() + ' `' + p['ROUTINE_NAME'] + '`', (err, result) => {
                     if (err) return reject(err);
