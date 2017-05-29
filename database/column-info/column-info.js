@@ -71,7 +71,7 @@ ColumnInfo.prototype.getType = function () {
  */
 ColumnInfo.prototype.getOptions = function () {
     let options = {
-        'null': true
+        'null': true,
     };
 
     if (this.field['Null'] === 'NO') {
@@ -80,6 +80,10 @@ ColumnInfo.prototype.getOptions = function () {
 
     if (this.field['Default']) {
         options['default'] = this.field['Default'];
+    }
+
+    if (this.field['Extra'] === 'auto_increment') {
+        options['auto_increment'] = true;
     }
 
     //if (this.field['Key'] === 'UNI') {
