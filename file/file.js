@@ -1,11 +1,13 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
+const utils = require('../utils/utils');
+
 let getFileNames = (date, tables, file) => 
     tables.map((table, index) => file.getFileName(date, table.table, index + 1))
 
 let getFileName = (date, table, index = 0) => 
-    `${date.getTime()}_create_${table}_table.php`;
+    `${utils.getDate()}_create_${table}_table.php`;
 
 let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
     Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
