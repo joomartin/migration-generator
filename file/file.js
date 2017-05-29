@@ -1,8 +1,8 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
-let getFileNames = (date, tables, file, index = 0) => 
-    tables.map(table => file.getFileName(date, table.table, index))
+let getFileNames = (date, tables, file) => 
+    tables.map((table, index) => file.getFileName(date, table.table, index + 1))
 
 let getFileName = (date, table, index = 0) => 
     `${date.getTime()}${index}_create_${table}_table.php`;
