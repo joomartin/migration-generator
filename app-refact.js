@@ -53,7 +53,7 @@ let tableDataPromise = query.getTableData(connection, query, config)
 
 let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
-    .then(template => file.generateFile(template, 'view_tables', config, fs))
+    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_view_tables.php`, config, fs))
     .catch(console.log);
 
 // let proceduresPromise = query.getProcedures()
