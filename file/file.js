@@ -67,9 +67,9 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
 let getForeignKeyTemplate = (tables, config, ejs) => {
     return new Promise((resolve, reject) => {
         let variableNames = {};
-        for (table in tables) {
-            variableNames[table] = _.camelCase(table);
-        }
+        tables.forEach(table => {
+            variableNames[table.table] = _.camelCase(table.table);
+        });
 
         ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, {
             tables, variableNames,

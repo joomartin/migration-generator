@@ -7,17 +7,17 @@ class <%= migrationClass %> extends AbstractMigration
     public function up()
     {
         $this->execute('SET FOREIGN_KEY_CHECKS=0');
-        <% for (table in tables) { %>
-        $<%= variableNames[table] %> = $this->table('<%= table %>');
-            <% tables[table].dependencies.forEach((d, i) => { %>
+        <% tables.forEach((table, index) => { %>
+        $<%= variableNames[table.table] %> = $this->table('<%= table.table %>');
+            <% table.dependencies.forEach((d, i) => { %>
             <% if (i === 0) {%>
-        $<%= variableNames[table] %><% } %>
+        $<%= variableNames[table.table] %><% } %>
             ->addForeignKey(
                 '<%= d.sourceColumn %>', '<%= d.referencedTable %>', '<%= d.referencedColumn %>', 
                 ['delete' => '<%= d.deleteRule %>', 'update' => '<%= d.updateRule %>']
-            )<% if (i === tables[table].dependencies.length - 1) { %>
+            )<% if (i === table.dependencies.length - 1) { %>
             ->save();
-            <% } %><% }); %><% } %>
+            <% } %><% }); %><% }); %>
         $this->execute('SET FOREIGN_KEY_CHECKS=1');            
     }
 }
