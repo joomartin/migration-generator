@@ -24,6 +24,11 @@ util.log(chalk.yellow(`Generating initial migrations for database ${chalk.bold(c
 util.log(chalk.yellow(`View tables, procedures, triggers, static contents, dependencies will be created`));
 console.log('--------');
 
+const getDate = () => {
+    let date = new Date;
+    return `${date.getFullYear()}${("0" + date.getMonth()).slice(-2)}${date.getDate()}${date.getHours()}${date.getMinutes()}${date.getSeconds()}${date.getMilliseconds()}`;      
+}
+
 const connection = mysql.createConnection({
     host: config.host,
     port: config.port,
@@ -44,7 +49,7 @@ let tablesPromise = query.getTableData(connection, query, config)
             (function (index) {
                 file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs)
                     .then(data => {
-                        let fileName = `${(new Date).getTime()}${index}_create_${data.table}_table.php`;
+                        let fileName = `${getDate()}${index}_create_${data.table}_table.php`;
                         file.generateFile(data.html, fileName, config, fs)
                             .then(fileName => {
                                 util.log(`${data.table} was generated successfully`);
@@ -59,7 +64,7 @@ let tablesPromise = query.getTableData(connection, query, config)
 
         let foreignKeyPromise = file.getForeignKeyTemplate(tables, config, ejs)
             .then(html => {
-                let fileName = `${(new Date).getTime()}${length}_add_foreign_keys.php`;
+                let fileName = `${getDate()}${length}_add_foreign_keys.php`;
                 file.generateFile(html, fileName, config, fs)
                     .then(fileName => {
                         util.log(`Foreign keys was generated successfully`);
@@ -71,7 +76,7 @@ let tablesPromise = query.getTableData(connection, query, config)
             .then(viewTables => {
                 file.getViewTablesTemplate(viewTables, config, ejs)
                     .then(html => {
-                        let fileName = `${(new Date).getTime()}${length + 1}_create_view_tables.php`;
+                        let fileName = `${getDate()}${length + 1}_create_view_tables.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
                                 util.log(`View tables was generated successfully`);
@@ -85,7 +90,7 @@ let tablesPromise = query.getTableData(connection, query, config)
             .then(procedures => {
                 file.getProcedureTemplate(procedures, config, ejs)
                     .then(html => {
-                        let fileName = `${(new Date).getTime()}${length + 2}_add_procedures_and_functions.php`;
+                        let fileName = `${getDate()}${length + 2}_add_procedures_and_functions.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
                                 util.log(`Procedures and functions was generated successfully`);
@@ -99,7 +104,7 @@ let tablesPromise = query.getTableData(connection, query, config)
             .then(triggers => {
                 file.getTriggersTemplate(triggers, config, ejs)
                     .then(html => {
-                        let fileName = `${(new Date).getTime()}${length + 3}_add_triggers.php`;
+                        let fileName = `${getDate()}${length + 3}_add_triggers.php`;
                         file.generateFile(html, fileName, config, fs)
                             .then(fileName => {
                                 util.log(`Triggers was generated successfully`);
