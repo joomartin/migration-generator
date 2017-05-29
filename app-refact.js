@@ -1,10 +1,10 @@
 const fs = require('fs');
 const ejs = require('ejs');
 const _ = require('lodash');
-const mysql = require('mysql');
 const chalk = require('chalk');
 const util = require('util');
 
+const connection = require('./database/connection');
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
 const query = require('./database/query');
@@ -23,19 +23,6 @@ console.log(chalk.green('*******************************************************
 util.log(chalk.yellow(`Generating initial migrations for database ${chalk.bold(config.database)}...`));
 util.log(chalk.yellow(`View tables, procedures, triggers, static contents, dependencies will be created`));
 console.log('--------');
-
-const connection = mysql.createConnection({
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    database: config.database
-});
-
-connection.connect();
-
-const tableKey = `Tables_in_${config.database}`;
-let i = 0;
 
 let fileNames = [];
 let allTables = [];
