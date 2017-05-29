@@ -10,6 +10,11 @@ let getFileName = (date, table, index = 0) =>
 let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
     Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
 
+let generateFiles = (contents, fileNames, config, fs, file) => 
+    Promise.all(contents.map((content, index) => 
+        file.generateFile(content.html, fileNames[index], config, fs)
+    ));
+
 /**
  * @param table Object
  * @param typeMapper Object
@@ -115,11 +120,6 @@ let getTriggersTemplate = (triggersByTables, config, ejs) => {
     });
 }
 
-let generateFiles = (contents, fileNames, config, ejs, file) => 
-    contents.forEach((content, index) => {
-        
-    });
-
 /**
  * @param content String
  * @param tableName String
@@ -167,6 +167,7 @@ module.exports = {
     getClassName,
     getVariableName,
     generateFile,
+    generateFiles,
     getFileName,
     getFileNames
 }

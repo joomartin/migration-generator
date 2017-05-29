@@ -45,11 +45,10 @@ const sideEffect = fn => v => {
 }
 
 let tableDataPromise = query.getTableData(connection, query, config)
-    .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
     .then(sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file)))
-    .then(sideEffect(tables => console.log(fileNames)))
-    // .then(templates => file.generateFiles(templates)) 
-    .then(console.log)
+    .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
+    .then(templates => file.generateFiles(templates, fileNames, config, fs, file)) 
+    // .then(console.log)
     .catch(console.log);
 
 // let viewTablesPromise = query.getViewTables()
