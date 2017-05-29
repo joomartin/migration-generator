@@ -44,26 +44,33 @@ const sideEffect = fn => v => {
     return v;
 }
 
+let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
+    .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
+    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_view_tables.php`, config, fs))
+    .then(file => console.log(`${new Date().getTime()}1_create_view_tables.php was generated successfully`))
+    .catch(console.log);
+
+let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
+    .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
+    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_procedures.php`, config, fs))
+    .then(file => console.log(`${new Date().getTime()}1_create_procedures.php was generated successfully`))
+    .catch(console.log);
+
+let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+    .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
+    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_triggers.php`, config, fs))
+    .then(file => console.log(`${new Date().getTime()}1_create_create_triggers.php was generated successfully`))    
+    .catch(console.log);
+
 let tableDataPromise = query.getTableData(connection, query, config)
     .then(sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file)))
     .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file)) 
-    .then(files => util.log('All Done'))
     .catch(console.log);
 
-let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
-    .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
-    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_view_tables.php`, config, fs))
-    .catch(console.log);
-
-// let proceduresPromise = query.getProcedures()
-//     .then(procedures => file.getProcedureTemplates())
-//     .then(template => file.generateFiles());
-
-// let triggersPromise = query.getTriggers()
-//     .then(triggers => file.getTriggerTemplates())
-//     .then(template => file.generateFiles());
-
-// Promise.all([tableDataPromise, foreignKeyPromise, proceduresPromise, viewTablesPromise, triggersPromise])
-//     .then(res => connection.end())
-//     .catch(err => console.log(chalk.bgRed(err)));
+Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise])
+    .then(res => {
+        connection.end()
+        util.log('All Done');
+    })
+    .catch(err => console.log(chalk.bgRed(err)));
