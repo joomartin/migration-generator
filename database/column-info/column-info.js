@@ -83,7 +83,7 @@ ColumnInfo.prototype.getOptions = function () {
     }
 
     if (this.field['Extra'] === 'auto_increment') {
-        options['auto_increment'] = true;
+        options['identity'] = true;
     }
 
     //if (this.field['Key'] === 'UNI') {
