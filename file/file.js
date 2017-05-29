@@ -1,6 +1,15 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
+let getFileNames = (date, tables, file, index = 0) => 
+    tables.map(table => file.getFileName(date, table.table, index))
+
+let getFileName = (date, table, index = 0) => 
+    `${date.getTime()}${index}_create_${table}_table.php`;
+
+let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
+    Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
+
 /**
  * @param table Object
  * @param typeMapper Object
@@ -106,6 +115,11 @@ let getTriggersTemplate = (triggersByTables, config, ejs) => {
     });
 }
 
+let generateFiles = (contents, fileNames, config, ejs, file) => 
+    contents.forEach((content, index) => {
+        
+    });
+
 /**
  * @param content String
  * @param tableName String
@@ -145,11 +159,14 @@ let getVariableName = (tableName) => {
 
 module.exports = {
     getTemplate,
+    getTemplates,
     getForeignKeyTemplate,
     getViewTablesTemplate,
     getProcedureTemplate,
     getTriggersTemplate,
     getClassName,
     getVariableName,
-    generateFile
+    generateFile,
+    getFileName,
+    getFileNames
 }
