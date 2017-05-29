@@ -48,12 +48,13 @@ let tableDataPromise = query.getTableData(connection, query, config)
     .then(sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file)))
     .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file)) 
-    // .then(console.log)
+    .then(files => util.log('All Done'))
     .catch(console.log);
 
-// let viewTablesPromise = query.getViewTables()
-//     .then(viewTables => file.getViewTableTemplates())
-//     .then(template => file.generateFiles());
+let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
+    .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
+    .then(template => file.generateFile(template, 'view_tables', config, fs))
+    .catch(console.log);
 
 // let proceduresPromise = query.getProcedures()
 //     .then(procedures => file.getProcedureTemplates())

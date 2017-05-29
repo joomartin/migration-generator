@@ -13,6 +13,7 @@ let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>
 let generateFiles = (contents, fileNames, config, fs, file) => 
     Promise.all(contents.map((content, index) => 
         file.generateFile(content.html, fileNames[index], config, fs)
+            .then(file => console.log(`${fileNames[index]} was generated sucessfully`))
     ));
 
 /**
