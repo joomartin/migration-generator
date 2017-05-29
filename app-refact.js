@@ -38,11 +38,18 @@ const tableKey = `Tables_in_${config.database}`;
 let i = 0;
 
 let fileNames = [];
+let allTables = [];
 
 const sideEffect = fn => v => {
     fn(v);
     return v;
 }
+
+const identity = v => v;
+const merge = (promise, outTrans = identity, inTrans = identity) => d =>
+    promise(inTrans(d))
+        .then(outTrans)
+        .then(result => Object.assign({}, d, result));
 
 let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
@@ -64,11 +71,21 @@ let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
 
 let tableDataPromise = query.getTableData(connection, query, config)
     .then(sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file)))
+    .then(sideEffect(tables => allTables = tables))
     .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
-    .then(templates => file.generateFiles(templates, fileNames, config, fs, file)) 
+    .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
     .catch(console.log);
 
-Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise])
+let foreignKeyTemplate = tableDataPromise
+    .then(res =>
+        file.getForeignKeyTemplate(allTables, config, ejs)
+            .then(template => file.generateFile(template, `${(new Date).getTime()}_add_foreign_keys.php`, config, fs))
+            .then(fileName => console.log(`Foreign keys was generated successfully`))
+            .catch(console.log)
+    )
+    .catch(console.log);
+
+Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise, foreignKeyTemplate])
     .then(res => {
         connection.end()
         util.log('All Done');
