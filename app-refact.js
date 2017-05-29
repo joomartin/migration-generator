@@ -47,20 +47,20 @@ const sideEffect = fn => v => {
 
 let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
-    .then(template => file.generateFile(template, `${new Date().getTime()}_create_view_tables.php`, config, fs))
-    .then(filename => console.log(`${new Date().getTime()}_create_view_tables.php was generated successfully`))
+    .then(template => file.generateFile(template, `${new Date().getTime()}1_create_view_tables.php`, config, fs))
+    .then(filename => console.log(`${filename}_create_view_tables.php was generated successfully`))
     .catch(console.log);
 
 let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
-    .then(template => file.generateFile(template, `${new Date().getTime()}_create_procedures.php`, config, fs))
-    .then(filename => console.log(`${new Date().getTime()}_create_procedures.php was generated successfully`))
+    .then(template => file.generateFile(template, `${new Date().getTime()}2_create_procedures.php`, config, fs))
+    .then(filename => console.log(`${filename}_create_procedures.php was generated successfully`))
     .catch(console.log);
 
 let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
-    .then(template => file.generateFile(template, `${new Date().getTime()}_create_triggers.php`, config, fs))
-    .then(filename => console.log(`${new Date().getTime()}_create_triggers.php was generated successfully`))
+    .then(template => file.generateFile(template, `${new Date().getTime()}3_create_triggers.php`, config, fs))
+    .then(filename => console.log(`${filename}_create_triggers.php was generated successfully`))
     .catch(console.log);
 
 let tableDataPromise = query.getTableData(connection, query, config)
@@ -73,7 +73,7 @@ let tableDataPromise = query.getTableData(connection, query, config)
 let foreignKeyTemplate = tableDataPromise
     .then(res =>
         file.getForeignKeyTemplate(allTables, config, ejs)
-            .then(template => file.generateFile(template, `${(new Date).getTime()}_add_foreign_keys.php`, config, fs))
+            .then(template => file.generateFile(template, `${(new Date).getTime()}4_add_foreign_keys.php`, config, fs))
             .then(filename => console.log(`${filename} was generated successfully`))
             .catch(console.log)
     )
