@@ -22,6 +22,7 @@ console.log(chalk.green('*******************************************************
 
 util.log(chalk.yellow(`Generating initial migrations for database ${chalk.bold(config.database)}...`));
 util.log(chalk.yellow(`View tables, procedures, triggers, static contents, dependencies will be created`));
+util.log(chalk.bgRed.bold.yellow(`***Don't forget to rewrite DEFINER in views, procedures, triggers***`));
 console.log('--------');
 
 const getDate = () => {
