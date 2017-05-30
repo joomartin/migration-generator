@@ -84,7 +84,7 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
 let getContent = (connection, table, escapeCallback) => {
     return new Promise((resolve, reject) => {
         let rows = [];
-        let content$ = new TableContent(table, { max: 1 });
+        let content$ = new TableContent(table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
         content$.on('error', (err) => reject(err));
 
