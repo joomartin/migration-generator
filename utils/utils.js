@@ -6,9 +6,13 @@ const sideEffect = fn => v => {
     return v;
 }
 
-const getDate = () => {
+const getDate = (minutes = null) => {
     let date = new Date;
-    return `${date.getFullYear()}${("0" + date.getMonth()).slice(-2)}${date.getDate()}${date.getHours()}${date.getMinutes()}${date.getSeconds()}${date.getMilliseconds()}`;
+    let realMinutes = (minutes) ? minutes : date.getMinutes();
+    let month = date.getMonth() + 1;
+    let zeroFilledMonth = ("0" + month).slice(-2);
+
+    return `${date.getFullYear()}${zeroFilledMonth}${date.getDate()}${date.getHours()}${realMinutes}${date.getSeconds()}${date.getMilliseconds()}`;
 }
 
 const logHeader = (config) => {
