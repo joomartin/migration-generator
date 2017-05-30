@@ -66,6 +66,7 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('INT');
             expect(type.options.length).to.be.equal(10);
+            expect(type.options.signed).to.be.true;
         });
 
         it('should return varchar type with length', () => {
@@ -76,6 +77,8 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('VARCHAR');
             expect(type.options.length).to.be.equal(100);
+            expect(type.options.signed).to.be.undefined;
+            
         });
 
         it('should return text type', () => {

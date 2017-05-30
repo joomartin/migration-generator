@@ -29,9 +29,19 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
         options.scale = parseInt(scale);
     }
 
-    options.signed = signed;
+    if (signed !== null) {
+        options.signed = signed;
+    }
 
     return options;
+}
+
+ColumnInfo.prototype.isTypeOf = function (actual, expected) {
+    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
+}
+
+ColumnInfo.prototype.isUnsigned = function (type) {
+    return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
 /**
@@ -44,14 +54,16 @@ ColumnInfo.prototype.getType = function () {
     let length = null;
     let scale = null;
     let precision = null;
-    let signed = !type.includes('UNSIGNED');
+    let signed = null;
 
-    if (type.includes('DECIMAL')) {
+    if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
+        signed = !this.isUnsigned(type);
+    }
+
+    if (this.isTypeOf(type, 'decimal')) {
         precision = parseInt(parts[1].split(',')[0]);
         scale = parseInt(parts[1].split(',')[1]);
-    }
-    
-    else if (parts[1]) { 
+    } else if (parts[1]) { 
         length = parseInt(parts[1]);
     } 
 
@@ -80,10 +92,6 @@ ColumnInfo.prototype.getOptions = function () {
     if (this.field['Extra'] === 'auto_increment') {
         options['identity'] = true;
     }
-
-    //if (this.field['Key'] === 'UNI') {
-        //options['unique'] = true;
-    //}
 
     return (_.isEmpty(options)) ? null : options;
 }
