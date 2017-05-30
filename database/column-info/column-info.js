@@ -29,49 +29,43 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
         options.scale = parseInt(scale);
     }
 
-    options.signed = signed;
+    if (signed !== null) {
+        options.signed = signed;
+    }
 
     return options;
 }
 
-// const isDecimal = (type) => {
-//     let parts = this.field['Type'].split('(');
+ColumnInfo.prototype.isTypeOf = function (actual, expected) {
+    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
+}
 
-//     return parts[1] && parts[1].includes(',');
-// }
+ColumnInfo.prototype.isUnsigned = function (type) {
+    return type.includes('unsigned') || type.includes('UNSIGNED');
+}
 
 /**
  * @return Object
  */
 ColumnInfo.prototype.getType = function () {
-    let parts = this.field['Type'].split('(');          // ['DECIMAL ', '10, 2)']
+    let type = this.field['Type'];
+
+    let parts = type.split('(');          
     let length = null;
     let scale = null;
     let precision = null;
-    let signed = true;
+    let signed = null;
 
-    // DECIMAL (10,2)
-    if (this.field['Type'].includes('DECIMAL')) {
-        let lengthParts = parts[1].split(',');          // ['10', '2)']
-
-        if (lengthParts[1] && lengthParts[1].includes(')')) {   // DECIMAL (10, 2) UNSIGNED
-            precision = lengthParts[0];
-            let decimalParts = lengthParts[1].split(')');
-            scale = decimalParts[0];
-            signed = !(decimalParts.length > 1);
-        } else {                                                // DECIMAL (10,2)
-            precision = lengthParts[0];
-            scale = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
-        }
-
-    } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
-        let optionsParts = parts[1].split(' ');
-        signed = !(optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');
-
-        length = optionsParts[0].slice(0, optionsParts[0].length - 1);
-    } else if (parts[1]) {   // INT (10)
-        length = parts[1].slice(0, parts[1].length - 1);
+    if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
+        signed = !this.isUnsigned(type);
     }
+
+    if (this.isTypeOf(type, 'decimal')) {
+        precision = parseInt(parts[1].split(',')[0]);
+        scale = parseInt(parts[1].split(',')[1]);
+    } else if (parts[1]) { 
+        length = parseInt(parts[1]);
+    } 
 
     return {
         name: parts[0].trim(),
@@ -98,10 +92,6 @@ ColumnInfo.prototype.getOptions = function () {
     if (this.field['Extra'] === 'auto_increment') {
         options['identity'] = true;
     }
-
-    //if (this.field['Key'] === 'UNI') {
-        //options['unique'] = true;
-    //}
 
     return (_.isEmpty(options)) ? null : options;
 }
