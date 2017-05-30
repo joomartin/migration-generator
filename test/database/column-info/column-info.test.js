@@ -56,7 +56,7 @@ describe('ColumnInfo', () => {
             expect(options).to.be.deep.equal({null: true});
         });
     });
-
+    
     describe('#getType()', () => {
         it('should return int type with length', () => {
             // INT (10)

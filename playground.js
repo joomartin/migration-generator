@@ -23,8 +23,8 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-console.log(utils.getSerial(1, 9));
-console.log(utils.getSerial(431, 9));
+let ci = createColumnInfo({ Type: 'DECIMAL (10, 2)'});
+console.log(ci.getType());
 
-console.log(_.padStart(432, 9, 0));
-console.log(_.padStart(1, 9, 0));
+ci = createColumnInfo({ Type: 'DECIMAL (10, 2) UNSIGNED'});
+console.log(ci.getType());
