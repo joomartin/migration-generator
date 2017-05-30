@@ -11,6 +11,10 @@ ColumnInfo.prototype.mapTypeOptions = function (typeOptions) {
     return typeOptions;
 }
 
+ColumnInfo.prototype.mapOptions = function (options) {
+    return options;
+}
+
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
     let parts = this.field['Type'].split('(');
     let options = {};
@@ -95,10 +99,10 @@ ColumnInfo.prototype.getOptions = function () {
     }
 
     if (this.field['Extra'] === 'auto_increment') {
-        options['identity'] = true;
+        options['auto_increment'] = true;
     }
 
-    return (_.isEmpty(options)) ? null : options;
+    return (_.isEmpty(options)) ? null : this.mapOptions(options);
 }
 
 /**
