@@ -1,19 +1,21 @@
 const util = require('util');
 const chalk = require('chalk');
+const _ = require('lodash');
 
 const sideEffect = fn => v => {
     fn(v);
     return v;
 }
 
-const getDate = (minutes = null) => {
+const getDate = () => {
     let date = new Date;
-    let realMinutes = (minutes) ? minutes : date.getMinutes();
     let month = date.getMonth() + 1;
     let zeroFilledMonth = ("0" + month).slice(-2);
 
-    return `${date.getFullYear()}${zeroFilledMonth}${date.getDate()}${date.getHours()}${realMinutes}${date.getSeconds()}${date.getMilliseconds()}`;
+    return `${date.getFullYear()}${zeroFilledMonth}${date.getDate()}`;
 }
+
+const getSerial = (number, width = 9) => _.padStart(number, width, 0);
 
 const logHeader = (config) => {
     console.log(chalk.green('********************************************************'));
@@ -30,5 +32,6 @@ const logHeader = (config) => {
 }
 
 module.exports = {
-    sideEffect, getDate, logHeader
+    sideEffect, getDate, logHeader,
+    getSerial
 }

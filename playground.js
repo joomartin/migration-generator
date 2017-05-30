@@ -11,6 +11,7 @@ const file = require('./file/file');
 
 const createColumnInfo = require('./database/column-info/factory');
 const createTypeMapper = require('./database/type-mapper/factory');
+const utils = require('./utils/utils');
 
 const typeMapper = createTypeMapper(config.migrationLib);
 
@@ -22,26 +23,8 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-let tablesPromise = query.getTableData(connection, query, config)
-    .then(tables => {
-        let promises = [];
-        for (table in tables) {
-            promises.push(file.getTemplate(tables[table], typeMapper, config, createColumnInfo, ejs));
-        }
+console.log(utils.getSerial(1, 9));
+console.log(utils.getSerial(431, 9));
 
-        Promise.all(promises)
-            .then(value => {
-                return new Promise((resolve, reject) => {
-                    resolve(value)
-                });
-            });
-    })
-    .then(data => { 
-        console.log('DATA:', data);
-        // let fileName = `${(new Date).getTime()}_create_${data.table}_table.php`;
-        // file.generateFile(data.html, fileName, config, fs)
-    })
-    .then(fileName => {
-        // util.log(`${fileName} was generated successfully`);
-    })
-    .catch(err => console.log(err));
+console.log(_.padStart(432, 9, 0));
+console.log(_.padStart(1, 9, 0));

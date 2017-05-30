@@ -3,10 +3,10 @@ const ejs = require('ejs');
 
 const utils = require('../utils/utils');
 
-let getFileNames = (date, tables, file) => 
-    tables.map((table, index) => file.getFileName(date, table.table, index + 1))
+let getFileNames = (date, tables, file, padIndex) => 
+    tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
 
-let getFileName = (date, table, index = 0) => 
+let getFileName = (date, table, index) => 
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
 let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
