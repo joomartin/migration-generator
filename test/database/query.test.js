@@ -113,7 +113,7 @@ describe('Query', () => {
         it('should execute SELECT * query for a table', (done) => {
             let connection = {
                 query(queryString, callback) {
-                    expect(queryString).to.be.equal('SELECT * FROM todos')
+                    expect(queryString).to.be.equal('SELECT * FROM `todos`')
 
                     callback(undefined, [
                         {
