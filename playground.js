@@ -23,8 +23,8 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-let ci = createColumnInfo({ Type: 'DECIMAL (10, 2)'});
+let ci = createColumnInfo({ Type: 'INT (11)'});
 console.log(ci.getType());
 
-ci = createColumnInfo({ Type: 'DECIMAL (12, 3) UNSIGNED'});
+ci = createColumnInfo({ Type: 'INT (10) UNSIGNED'});
 console.log(ci.getType());

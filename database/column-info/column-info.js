@@ -34,33 +34,26 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     return options;
 }
 
-// const isDecimal = (type) => {
-//     let parts = this.field['Type'].split('(');
-
-//     return parts[1] && parts[1].includes(',');
-// }
-
 /**
  * @return Object
  */
 ColumnInfo.prototype.getType = function () {
-    let parts = this.field['Type'].split('(');          // ['DECIMAL ', '10, 2)']
-    let length = null;
-    let scale = 2;
-    let precision = 10;
-    let signed = !this.field['Type'].includes('UNSIGNED');
+    let type = this.field['Type'];
 
-    if (this.field['Type'].includes('DECIMAL')) {
+    let parts = type.split('(');          
+    let length = null;
+    let scale = null;
+    let precision = null;
+    let signed = !type.includes('UNSIGNED');
+
+    if (type.includes('DECIMAL')) {
         precision = parseInt(parts[1].split(',')[0]);
         scale = parseInt(parts[1].split(',')[1]);
-    } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
-        let optionsParts = parts[1].split(' ');
-        signed = !(optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');
-
-        length = optionsParts[0].slice(0, optionsParts[0].length - 1);
-    } else if (parts[1]) {   // INT (10)
-        length = parts[1].slice(0, parts[1].length - 1);
     }
+    
+    else if (parts[1]) { 
+        length = parseInt(parts[1]);
+    } 
 
     return {
         name: parts[0].trim(),
