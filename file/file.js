@@ -1,6 +1,23 @@
 const _ = require('lodash');
 const ejs = require('ejs');
 
+const utils = require('../utils/utils');
+
+let getFileNames = (date, tables, file) => 
+    tables.map((table, index) => file.getFileName(date, table.table, index + 1))
+
+let getFileName = (date, table, index = 0) => 
+    `${utils.getDate()}_create_${table}_table.php`;
+
+let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
+    Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
+
+let generateFiles = (contents, fileNames, config, fs, file) => 
+    Promise.all(contents.map((content, index) => 
+        file.generateFile(content.html, fileNames[index], config, fs)
+            .then(file => console.log(`${fileNames[index]} was generated successfully`))
+    ));
+
 /**
  * @param table Object
  * @param typeMapper Object
@@ -52,9 +69,9 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
 let getForeignKeyTemplate = (tables, config, ejs) => {
     return new Promise((resolve, reject) => {
         let variableNames = {};
-        for (table in tables) {
-            variableNames[table] = _.camelCase(table);
-        }
+        tables.forEach(table => {
+            variableNames[table.table] = _.camelCase(table.table);
+        });
 
         ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, {
             tables, variableNames,
@@ -118,9 +135,11 @@ let generateFile = (content, fileName, config, fs) => {
     return new Promise((resolve, reject) => {
         let path = `${config.output}/${fileName}`;
 
-        fs.writeFile(path, content, err => {
-            resolve(fileName);
-        });
+        let options = { highWaterMark: Math.pow(2, 16) };
+        let ws = fs.createWriteStream(path, options);
+        ws.write(content);
+        ws.end();
+        resolve(fileName);
     });
 }
 
@@ -145,11 +164,15 @@ let getVariableName = (tableName) => {
 
 module.exports = {
     getTemplate,
+    getTemplates,
     getForeignKeyTemplate,
     getViewTablesTemplate,
     getProcedureTemplate,
     getTriggersTemplate,
     getClassName,
     getVariableName,
-    generateFile
+    generateFile,
+    generateFiles,
+    getFileName,
+    getFileNames
 }
