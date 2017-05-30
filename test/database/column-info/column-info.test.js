@@ -116,7 +116,7 @@ describe('ColumnInfo', () => {
             expect(type.name).to.be.equal('DECIMAL');
             expect(type.options.precision).to.be.equal(10);
             expect(type.options.scale).to.be.equal(2);
-            expect(type.options.signed).to.be.false;
+            expect(type.options.signed).to.be.true;
         });
 
         it('should return decimal type with precision, scale and unsigned', () => {

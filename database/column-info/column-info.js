@@ -46,24 +46,13 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
 ColumnInfo.prototype.getType = function () {
     let parts = this.field['Type'].split('(');          // ['DECIMAL ', '10, 2)']
     let length = null;
-    let scale = null;
-    let precision = null;
-    let signed = true;
+    let scale = 2;
+    let precision = 10;
+    let signed = !this.field['Type'].includes('UNSIGNED');
 
-    // DECIMAL (10,2)
     if (this.field['Type'].includes('DECIMAL')) {
-        let lengthParts = parts[1].split(',');          // ['10', '2)']
-
-        if (lengthParts[1] && lengthParts[1].includes(')')) {   // DECIMAL (10, 2) UNSIGNED
-            precision = lengthParts[0];
-            let decimalParts = lengthParts[1].split(')');
-            scale = decimalParts[0];
-            signed = !(decimalParts.length > 1);
-        } else {                                                // DECIMAL (10,2)
-            precision = lengthParts[0];
-            scale = lengthParts[1].slice(0, lengthParts[1].length - 1).trim();
-        }
-
+        precision = parseInt(parts[1].split(',')[0]);
+        scale = parseInt(parts[1].split(',')[1]);
     } else if (parts[1] && parts[1].includes(' ')) {    // INT (10) UNSIGNED
         let optionsParts = parts[1].split(' ');
         signed = !(optionsParts[1] === 'unsigned' || optionsParts[1] === 'UNSIGNED');

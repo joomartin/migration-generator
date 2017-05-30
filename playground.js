@@ -26,5 +26,5 @@ const connection = mysql.createConnection({
 let ci = createColumnInfo({ Type: 'DECIMAL (10, 2)'});
 console.log(ci.getType());
 
-ci = createColumnInfo({ Type: 'DECIMAL (10, 2) UNSIGNED'});
+ci = createColumnInfo({ Type: 'DECIMAL (12, 3) UNSIGNED'});
 console.log(ci.getType());
