@@ -1,5 +1,7 @@
 const _ = require('lodash');
 
+const TableContent = require('./stream/table-content');
+
 /**
  * @param connection Object
  * @param config Object
@@ -81,9 +83,16 @@ let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
  */
 let getContent = (connection, table, escapeCallback) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM ${table}`, (err, rows) => {
-            if (err) return reject(err);
+        let rows = [];
+        let content$ = new TableContent(table, { max: 1 });
 
+        content$.on('error', (err) => reject(err));
+
+        content$.on('data', (chunk) => {
+            rows = rows.concat(chunk);
+        });
+
+        content$.on('end', () => {
             let escapedRows = [];
             rows.forEach(r => {
                 let escapedRow = [];
@@ -161,12 +170,12 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
                 connection.query('SHOW CREATE ' + p['ROUTINE_TYPE'].toUpperCase() + ' `' + p['ROUTINE_NAME'] + '`', (err, result) => {
                     if (err) return reject(err);
 
-                    let tmp = { type: p['ROUTINE_TYPE'] };                
+                    let tmp = { type: p['ROUTINE_TYPE'] };
                     if (p['ROUTINE_TYPE'] === 'FUNCTION') {
                         tmp.name = result[0]['Function'];
                         tmp.definition = escapeCallback(result[0]['Create Function']);
-                        
-                    } else if (p['ROUTINE_TYPE'] === 'PROCEDURE'){
+
+                    } else if (p['ROUTINE_TYPE'] === 'PROCEDURE') {
                         tmp.name = result[0]['Procedure'];
                         tmp.definition = escapeCallback(result[0]['Create Procedure']);
                     }
@@ -207,7 +216,7 @@ let getTriggers = (connection, escapeCallback, _) => {
 
         connection.query(query, (err, triggers) => {
             if (err) return reject(err);
-            
+
             let escaped = {};
             triggers.forEach(t => {
                 if (!_.has(escaped, t.Table)) {
@@ -221,7 +230,7 @@ let getTriggers = (connection, escapeCallback, _) => {
                     statement: escapeCallback(t.Statement),
                     definer: t.Definer,
                     table: t.Table,
-                    database: connection.config.database             
+                    database: connection.config.database
                 });
             });
 
