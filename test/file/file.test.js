@@ -37,10 +37,21 @@ describe('File', () => {
                 output: '/output'
             };
             let timestamp = (new Date).getTime();
+            let writeStream = {
+                write(content, options) {
+                    
+                },
+                end() {
+                    expect(true).to.be.true;
+                }
+            };
+
             let fs = {
-                writeFile(path, content, callback) {
-                    expect(path).to.be.equal(`/output/${timestamp}_create_todos_table.php`);
-                    callback(undefined);
+                createWriteStream(path, options) {
+                    expect(path).to.be.include(config.output);                    
+                    expect(path).to.be.include('create_todos_table.php');    
+
+                    return writeStream;                
                 }
             }
 
@@ -102,12 +113,12 @@ describe('File', () => {
         it('should get template for foreign key migration', (done) => {
             let config = {
                 migrationLib: 'phinx'
-            }
+            };
 
-            let tables = {
-                'todos': {},
-                'categories': {}
-            }
+            let tables = [
+                {table: 'todos'},
+                {table: 'categories'}
+            ];
 
             let ejs = {
                 renderFile(path, data, options, callback) {

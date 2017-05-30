@@ -13,7 +13,7 @@ const utils = require('./utils/utils');
 
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
-
+ 
 utils.logHeader(config);
 
 let fileNames = [];
