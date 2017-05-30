@@ -151,13 +151,13 @@ describe('Query', () => {
         });
     });
 
-    xdescribe('#getProcedures()', () => {
+    describe('#getProcedures()', () => {
         it('should get all procedures and functions for a database', (done) => {
             let connection = {
                 count: 0,
                 config: { database: 'database' },
                 query(queryString, callback) {
-                    this.count++;                    
+                    this.count++;
                     if (this.count === 1) {
                         expect(queryString.includes("FROM INFORMATION_SCHEMA.ROUTINES")).to.be.true;
                         expect(queryString.includes("WHERE ROUTINE_SCHEMA = 'database'")).to.be.true;
@@ -166,33 +166,50 @@ describe('Query', () => {
                             {
                                 SPECIFIC_NAME: 'proc1',
                                 ROUTINE_TYPE: 'PROCEDURE',
-                                ROUTINE_DEFINITION: 'BEGIN DECLARE END',
+                                ROUTINE_DEFINITION: 'SOME PROCEDURE',
                                 DEFINER: 'root@localhost'
                             }, {
                                 SPECIFIC_NAME: 'func1',
                                 ROUTINE_TYPE: 'FUNCTION',
-                                ROUTINE_DEFINITION: 'BEGIN DECLARE END',
+                                ROUTINE_DEFINITION: 'SOME FUNCTION',
                                 DEFINER: 'root@localhost'
                             },
                         ]);
                     } else {
-                        return {};
+                        expect(queryString.includes("SHOW CREATE")).to.be.true;
+
+                        if (queryString.includes('FUNCTION')) {
+                            callback(undefined, [
+                                {
+                                    'Function': 'func1',
+                                    'Create Function': 'SOME FUNCTION'
+                                }
+                            ]);
+                        } else {
+                            callback(undefined, [
+                                {
+                                    'Function': 'proc1',
+                                    'Create Function': 'SOME PROCEDURE'
+                                }
+                            ]);
+                        }
                     }
                 }
             }
 
-            query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
+            let escapeCallback = (s) => s;
+
+            query.getProcedures(connection, query.convertProceduresToObjects, escapeCallback)
                 .then(res => {
-                    expect(Object.keys(res).length).to.be.equal(2);
+                    expect(res.length).to.be.equal(2);    
 
-                    expect(res['proc1'].type).to.be.equal('PROCEDURE');
-                    expect(res['proc1'].definition).to.be.equal('BEGIN DECLARE END');
-                    expect(res['proc1'].definer).to.be.equal('root@localhost');
+                    expect(res[0].type).to.be.equal('PROCEDURE');
+                    expect(res[0].definition).to.be.equal('SOME PROCEDURE');
+                    expect(res[0].name).to.be.equal('proc1');
 
-
-                    expect(res['func1'].type).to.be.equal('FUNCTION');
-                    expect(res['func1'].definition).to.be.equal('BEGIN DECLARE END');
-                    expect(res['func1'].definer).to.be.equal('root@localhost');
+                    expect(res[1].type).to.be.equal('FUNCTION');
+                    expect(res[1].definition).to.be.equal('SOME FUNCTION');
+                    expect(res[1].name).to.be.equal('func1');
 
                     done();
                 })
@@ -201,7 +218,7 @@ describe('Query', () => {
     });
 
     describe('#getTableData()', () => {
-        it('happy path', () => {
+        it('it returns all table data', (done) => {
             let connectionMock = {};
             let config = {
                 database: 'test'
@@ -313,19 +330,22 @@ describe('Query', () => {
 
             query.getTableData(connectionMock, queryDependency, config)
                 .then(res => {
-                    expect(res.todos.indexes.length).to.be.equal(1);
-                    expect(res.todos.columns.length).to.be.equal(2);
+                    expect(res[0].table).to.be.equal('todos');
+                    expect(res[0].indexes.length).to.be.equal(1);
+                    expect(res[0].columns.length).to.be.equal(2);
 
-                    expect(res.todos.indexes[0].Field).to.be.equal('category_id');
-                    expect(res.todos.columns[0].Field).to.be.equal('title');
+                    expect(res[0].indexes[0].Field).to.be.equal('category_id');
+                    expect(res[0].columns[0].Field).to.be.equal('title');
 
-                    expect(res.todos.dependencies.length).to.be.equal(1);
-                    expect(res.todos.dependencies[0].referencedTable).to.be.equal('categories');
-                    expect(res.todos.dependencies[0].referencedColumn).to.be.equal('id');
+                    expect(res[0].dependencies.length).to.be.equal(1);
+                    expect(res[0].dependencies[0].referencedTable).to.be.equal('categories');
+                    expect(res[0].dependencies[0].referencedColumn).to.be.equal('id');
 
-                    expect(res.todos.content.length).to.be.equal(2);
-                    expect(res.todos.content[0].title).to.be.equal('Todo #1');
-                    expect(res.todos.content[1].title).to.be.equal('Todo #2');
+                    expect(res[0].content.length).to.be.equal(2);
+                    expect(res[0].content[0].title).to.be.equal('Todo #1');
+                    expect(res[0].content[1].title).to.be.equal('Todo #2');
+
+                    done();
                 })
                 .catch(err => console.log(err));
         });
