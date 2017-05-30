@@ -7,7 +7,7 @@ let getFileNames = (date, tables, file) =>
     tables.map((table, index) => file.getFileName(date, table.table, index + 1))
 
 let getFileName = (date, table, index = 0) => 
-    `${utils.getDate()}_create_${table}_table.php`;
+    `${utils.getDate()}${index}_create_${table}_table.php`;
 
 let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
     Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
@@ -100,7 +100,7 @@ let getViewTablesTemplate = (viewTables, config, ejs) => {
 let getProcedureTemplate = (procedures, config, ejs) => {
     return new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
-            migrationClass: 'AddProceduresAndFunctions',
+            migrationClass: 'CreateProcedures',
             procedures,
         }, null, (err, html) => {
             if (err) return reject(err);
@@ -113,7 +113,7 @@ let getProcedureTemplate = (procedures, config, ejs) => {
 let getTriggersTemplate = (triggersByTables, config, ejs) => {
     return new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, {            
-            migrationClass: 'AddTriggers',
+            migrationClass: 'CreateTriggers',
             triggersByTables,
         }, null, (err, html) => {
             if (err) return reject(err);
