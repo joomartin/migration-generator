@@ -238,18 +238,17 @@ let getTriggers = (connection, escapeCallback, _) => {
  */
 let getTableData = (connection, query, config) => {
     return new Promise((resolve, reject) => {
-        let tableData = {};
+        let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
         query.getTables(connection, config, query.isTableIncluded)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
-                    tableData[table] = {
+                    tableData.push({
                         table,
-                        allDependencyOrdered: false,
                         dependencies: []
-                    };
+                    });
 
                     let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
@@ -259,12 +258,12 @@ let getTableData = (connection, query, config) => {
                         .then(values => {
                             values.forEach(v => {
                                 if (_.get(v, ['columns'], null)) {                  // Columns
-                                    tableData[table].columns = v.columns;
-                                    tableData[table].indexes = v.indexes;
+                                    tableData[index].columns = v.columns;
+                                    tableData[index].indexes = v.indexes;
                                 } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
-                                    tableData[table].dependencies = v;
+                                    tableData[index].dependencies = v;
                                 } else {                                            // Content
-                                    tableData[table].content = v;
+                                    tableData[index].content = v;
                                 }
 
                                 if (index === tables.length - 1) {
