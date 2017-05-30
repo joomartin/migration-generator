@@ -1,7 +1,10 @@
-xdescribe('#getType', () => {
+const ColumnInfoPhinx = require('../../../database/column-info/column-info-phinx')
+const expect = require('chai').expect;
+
+describe('#getType', () => {
     it('should return int type with length and signed', () => {
         // INT (10) UNSIGNED
-        let type = (new ColumnInfo({
+        let type = (new ColumnInfoPhinx({
             Type: 'INT (11) UNSIGNED'
         })).getType();
 
@@ -12,7 +15,7 @@ xdescribe('#getType', () => {
 
     it('should return decimal type with precision and scale', () => {
         // DECIMAL (10, 2)
-        let type = (new ColumnInfo({
+        let type = (new ColumnInfoPhinx({
             Type: 'DECIMAL (10, 2)'
         })).getType();
 
@@ -24,7 +27,7 @@ xdescribe('#getType', () => {
 
     it('should return decimal type with precision, scale and unsigned', () => {
         // DECIMAL (10, 2) UNSIGNED
-        let type = (new ColumnInfo({
+        let type = (new ColumnInfoPhinx({
             Type: 'DECIMAL (12, 4) UNSIGNED'
         })).getType();
 
@@ -36,12 +39,12 @@ xdescribe('#getType', () => {
 
     it('should return int type with length', () => {
             // INT (10)
-            let type = (new ColumnInfo({
+            let type = (new ColumnInfoPhinx({
                 Type: 'INT (10)'
             })).getType();
 
             expect(type.name).to.be.equal('INT');
             expect(type.options.length).to.be.equal(10);
-            expect(type.options.unsigned).to.be.false;
+            expect(type.options.signed).to.be.true;
         });
 });

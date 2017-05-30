@@ -1,7 +1,6 @@
 const ColumnInfo = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
 
-
 describe('ColumnInfo', () => {
     describe('#isPrimaryKey()', () => {
         it('should return true if a field is primary key', () => {
