@@ -135,9 +135,11 @@ let generateFile = (content, fileName, config, fs) => {
     return new Promise((resolve, reject) => {
         let path = `${config.output}/${fileName}`;
 
-        fs.writeFile(path, content, err => {
-            resolve(fileName);
-        });
+        let options = { highWaterMark: Math.pow(2, 16) };
+        let ws = fs.createWriteStream(path, options);
+        ws.write(content);
+        ws.end();
+        resolve(fileName);
     });
 }
 
