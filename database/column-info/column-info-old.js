@@ -7,11 +7,7 @@ function ColumnInfo(field) {
     this.field = field;
 }
 
-ColumnInfo.prototype.mapTypeOptions = function (typeOptions) {
-    return typeOptions;
-}
-
-ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
+ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, signed) {
     let parts = this.field['Type'].split('(');
     let options = {};
     
@@ -33,8 +29,8 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
         options.scale = parseInt(scale);
     }
 
-    if (unsigned !== null) {
-        options.unsigned = unsigned;
+    if (signed !== null) {
+        options.signed = signed;
     }
 
     return options;
@@ -58,10 +54,10 @@ ColumnInfo.prototype.getType = function () {
     let length = null;
     let scale = null;
     let precision = null;
-    let unsigned = null;
+    let signed = null;
 
     if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
-        unsigned = this.isUnsigned(type);
+        signed = !this.isUnsigned(type);
     }
 
     if (this.isTypeOf(type, 'decimal')) {
@@ -73,8 +69,7 @@ ColumnInfo.prototype.getType = function () {
 
     return {
         name: parts[0].trim(),
-        options: this.mapTypeOptions(
-            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned))
+        options: this.getTypeOptions(this.field['Type'], precision, scale, length, signed)
     };
 }
 

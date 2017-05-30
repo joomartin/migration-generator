@@ -66,7 +66,7 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('INT');
             expect(type.options.length).to.be.equal(10);
-            expect(type.options.signed).to.be.true;
+            expect(type.options.unsigned).to.be.false;
         });
 
         it('should return varchar type with length', () => {
@@ -107,7 +107,7 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('INT');
             expect(type.options.length).to.be.equal(11);
-            expect(type.options.signed).to.be.false;
+            expect(type.options.unsigned).to.be.true;
         });
 
         it('should return decimal type with precision and scale', () => {
@@ -119,7 +119,7 @@ describe('ColumnInfo', () => {
             expect(type.name).to.be.equal('DECIMAL');
             expect(type.options.precision).to.be.equal(10);
             expect(type.options.scale).to.be.equal(2);
-            expect(type.options.signed).to.be.true;
+            expect(type.options.unsigned).to.be.false;
         });
 
         it('should return decimal type with precision, scale and unsigned', () => {
@@ -131,7 +131,7 @@ describe('ColumnInfo', () => {
             expect(type.name).to.be.equal('DECIMAL');
             expect(type.options.precision).to.be.equal(12);
             expect(type.options.scale).to.be.equal(4);
-            expect(type.options.signed).to.be.false;
+            expect(type.options.unsigned).to.be.true;
         });
 
         it('should return tinyint with length', () => {
