@@ -7,7 +7,7 @@ function ColumnInfo(field) {
     this.field = field;
 }
 
-ColumnInfo.prototype.mapTypeOptions = function (typeOptions) {
+ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
     return typeOptions;
 }
 
@@ -19,10 +19,6 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     let parts = this.field['Type'].split('(');
     let options = {};
     
-    if (parts[0].trim() === 'longtext') {
-        length = 'MysqlAdapter::TEXT_LONG';
-    }
-
     if (length && !isNaN(length)) {
         options.length = parseInt(length);
     } else if (length) {
@@ -78,7 +74,7 @@ ColumnInfo.prototype.getType = function () {
     return {
         name: parts[0].trim(),
         options: this.mapTypeOptions(
-            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned))
+            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned), type)
     };
 }
 

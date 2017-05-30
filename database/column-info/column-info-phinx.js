@@ -1,26 +1,32 @@
+const _ = require('lodash');
+
 const ColumnInfo = require('./column-info');
 
-function ColumnInfoPhinx() {
-    ColumnInfo.call(this);
+function ColumnInfoPhinx(field) {
+    ColumnInfo.call(this, field);
 }
 
 ColumnInfoPhinx.prototype = Object.create(ColumnInfo.prototype);
 
-ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions) {
-    let original = Object.create(typeOptions);
-    let mapped = Object.create(original);
+ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
+    let original = _.clone(typeOptions);
+    let mapped = _.clone(typeOptions);
 
-    if (original.signed) {
-        mapped.unsigned = !original.signed;
-        delete mapped.signed;
+    if (original.unsigned) {
+        mapped.signed = !original.unsigned;
+        delete mapped.unsigned;
+    }
+
+    if (this.isTypeOf(type, 'longtext')) {
+        mapped.length = 'MysqlAdapter::TEXT_LONG';
     }
 
     return mapped;
 }
 
 ColumnInfoPhinx.prototype.mapOptions = function (options) {
-    let original = Object.create(options);
-    let mapped = Object.create(original);
+    let original = _.clone(options);
+    let mapped = _.clone(options);
 
     if (original.auto_increment) {
         mapped.identity = original.auto_increment;
@@ -29,3 +35,5 @@ ColumnInfoPhinx.prototype.mapOptions = function (options) {
 
     return mapped;
 }
+
+module.exports = ColumnInfoPhinx;
