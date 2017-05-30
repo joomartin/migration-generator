@@ -7,6 +7,8 @@ class <%= migrationClass %> extends AbstractMigration
 {
     public function up()
     {
+        $this->execute("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'");
+
         $<%= variableName %> = $this->table('<%= table %>', ['id' => false, 'primary_key' => [<% primaryKey.forEach((pk, i) => { %>'<%= pk %>' <% if (i !== primaryKey.length - 1){%>,<% } %><% }); %>]]);
 
         <% columns.forEach(c => { %>

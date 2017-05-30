@@ -3,7 +3,6 @@ const ejs = require('ejs');
 const _ = require('lodash');
 const chalk = require('chalk');
 const util = require('util');
-const cluster = require('cluster');
 
 const connection = require('./database/connection');
 const createColumnInfo = require('./database/column-info/factory');
@@ -22,24 +21,24 @@ let allTables = [];
 
 let viewTablesPromise = query.getViewTables(connection, query.escapeQuotes)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}1_create_view_tables.php`, config, fs))
+    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
 let proceduresPromise = query.getProcedures(connection, query.convertProceduresToObjects, query.escapeQuotes)
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}2_create_procedures.php`, config, fs))
+    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
 let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}3_create_triggers.php`, config, fs))
+    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
 let tableDataPromise = query.getTableData(connection, query, config)
-    .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file)))
+    .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
     .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
@@ -48,7 +47,7 @@ let tableDataPromise = query.getTableData(connection, query, config)
 let foreignKeyTemplate = tableDataPromise
     .then(res =>
         file.getForeignKeyTemplate(allTables, config, ejs)
-            .then(template => file.generateFile(template, `${utils.getDate()}4_add_foreign_keys.php`, config, fs))
+            .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(993)}_add_foreign_keys.php`, config, fs))
             .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
             .catch(err => console.log(chalk.bgRed(err)))
     )
