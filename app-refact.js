@@ -14,17 +14,7 @@ const utils = require('./utils/utils');
 const config = require('./config.json');
 const typeMapper = createTypeMapper(config.migrationLib);
 
-console.log(chalk.green('********************************************************'));
-console.log(chalk.green('*                                                      *'));
-console.log(chalk.green('*                 Migration Generator                  *'));
-console.log(chalk.green('*               GreenTech Innovacio Zrt.               *'));
-console.log(chalk.green('*                                                      *'));
-console.log(chalk.green('********************************************************'));
-
-util.log(chalk.yellow(`Generating initial migrations for database ${chalk.bold(config.database)}...`));
-util.log(chalk.yellow(`View tables, procedures, triggers, static contents, dependencies will be created`));
-util.log(chalk.bgRed.bold.yellow(`***Don't forget to rewrite DEFINER in views, procedures, triggers***`));
-console.log('--------');
+utils.logHeader(config);
 
 let fileNames = [];
 let allTables = [];
