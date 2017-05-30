@@ -3,6 +3,7 @@ const ejs = require('ejs');
 const _ = require('lodash');
 const chalk = require('chalk');
 const util = require('util');
+const cluster = require('cluster');
 
 const connection = require('./database/connection');
 const createColumnInfo = require('./database/column-info/factory');
