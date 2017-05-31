@@ -19,7 +19,6 @@ const getTables = (connection, config, filterCallback) => {
 }
 
 /**
- * 
  * @param {Array} viewTables - Raw view tables queried from database
  * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
  * @param {Function} escapeQuotesFn - A callback that escape quotes
@@ -68,13 +67,16 @@ const replaceInContent = (value, content) => {
  */
 const isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
 
-const convertColumns = (columns, indexFilterFn) => ({
-    indexes: columns.filter(c => indexFilterFn(c)),
+/**
+ * @param {Array} columns - Collection of table column objects
+ * @param {Function} isIndexFn - A callback that filter out index column
+ */
+const convertColumns = (columns, isIndexFn) => ({
+    indexes: columns.filter(c => isIndexFn(c)),
     columns: columns
 })
 
 /**
- * 
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
@@ -85,12 +87,16 @@ const getColumns = (connection, table, convertColumnsFn) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
 
-            resolve(convertColumnsFn(columnsRaw, filterIndexes));
+            resolve(convertColumnsFn(columnsRaw, isIndex));
         });
     });
 }
 
-let filterIndexes = column => column.Key === 'MUL' || column.Key === 'UNI';
+/**
+ * @param {Object} column - A table column
+ * @returns {boolean}
+ */
+const isIndex = column => column.Key === 'MUL' || column.Key === 'UNI';
 
 /**
  * @param connection Object
@@ -126,14 +132,18 @@ let getContent = (connection, table, escapeCallback) => {
     });
 }
 
-let escapeQuotes = content => content.replace(/'/g, "\\'");
+/**
+ * @param {string} content - Any string
+ * @return {string}
+ */
+const escapeQuotes = content => content.replace(/'/g, "\\'");
 
 /**
  * @param connection Object
  * @param table String
  * @param config Object
  */
-let getDependencies = (connection, table, config) => {
+const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
     return new Promise((resolve, reject) => {
         const dependenciesQuery = `
             SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
@@ -149,23 +159,52 @@ let getDependencies = (connection, table, config) => {
         connection.query(dependenciesQuery, (err, results) => {
             if (err) return reject(err);
 
-            let dependencies = results.map(r => {
-                return {
-                    sourceTable: r['TABLE_NAME'],
-                    sourceColumn: r['COLUMN_NAME'],
-                    referencedTable: r['REFERENCED_TABLE_NAME'],
-                    referencedColumn: r['REFERENCED_COLUMN_NAME'],
-                    updateRule: r['UPDATE_RULE'],
-                    deleteRule: r['DELETE_RULE']
-                };
-            });
-
-            resolve(_.uniqBy(dependencies, 'sourceColumn'));
+            resolve(mapDependenciesFn(results, _));
         });
     });
 }
 
-let getProcedures = (connection, objectConverter, escapeCallback) => {
+/**
+ * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
+ * @param {Object} _ - lodash
+ * @return {Array}
+ */
+const mapDependencies = (dependencies, _) =>
+    _.uniqBy(dependencies.map(r => {
+        return {
+            sourceTable: r['TABLE_NAME'],
+            sourceColumn: r['COLUMN_NAME'],
+            referencedTable: r['REFERENCED_TABLE_NAME'],
+            referencedColumn: r['REFERENCED_COLUMN_NAME'],
+            updateRule: r['UPDATE_RULE'],
+            deleteRule: r['DELETE_RULE']
+        };
+    }), 'sourceColumn');
+
+/**
+ * @param {Object} connection 
+ * @param {Function} mapDefinitionFn 
+ */
+const getProcedures = (connection, mapDefinitionFn) => {
+    return new Promise((resolve, reject) => {
+        getProceduresMeta(connection)
+            .then(metas => {
+                let promises = metas.map(meta =>
+                    getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
+
+                Promise.all(promises)
+                    .then(resolve)
+                    .catch(reject);
+            })
+            .catch(reject);
+    });
+}
+
+/**
+ * @param {Object} connection
+ * @returns {Promise} 
+ */
+const getProceduresMeta = (connection) => {
     return new Promise((resolve, reject) => {
         const query = `
             SELECT *
@@ -175,36 +214,46 @@ let getProcedures = (connection, objectConverter, escapeCallback) => {
 
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
-            let procedures = [];
 
             if (proceduresRaw.length === 0) {
                 resolve([]);
             }
 
-            proceduresRaw.forEach((p, i) => {
-                connection.query('SHOW CREATE ' + p['ROUTINE_TYPE'].toUpperCase() + ' `' + p['ROUTINE_NAME'] + '`', (err, result) => {
-                    if (err) return reject(err);
-
-                    let tmp = { type: p['ROUTINE_TYPE'] };
-                    if (p['ROUTINE_TYPE'] === 'FUNCTION') {
-                        tmp.name = result[0]['Function'];
-                        tmp.definition = escapeCallback(result[0]['Create Function']);
-
-                    } else if (p['ROUTINE_TYPE'] === 'PROCEDURE') {
-                        tmp.name = result[0]['Procedure'];
-                        tmp.definition = escapeCallback(result[0]['Create Procedure']);
-                    }
-
-                    procedures.push(tmp);
-
-                    if (i === proceduresRaw.length - 1) {
-                        resolve(procedures);
-                    }
-                });
-            });
-
+            resolve(proceduresRaw);
         });
     });
+}
+
+/**
+ * @param {Object} connection 
+ * @param {string} name 
+ * @param {string} type 
+ * @param {Function} mapDefinitionFn 
+ */
+const getProcedureDefinition = (connection, name, type, mapDefinitionFn) => {
+    return new Promise((resolve, reject) => {
+        connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
+            if (err) return reject(err);
+
+            resolve(mapDefinitionFn(type, result[0], escapeQuotes));
+        });
+    });
+}
+
+/**
+ * @param {string} type 
+ * @param {Object} definition 
+ * @param {Function} escapeFn 
+ */
+const mapProcedureDefinition = (type, definition, escapeFn) => {
+    const createColumn = type.toUpperCase() === 'FUNCTION' ? 'Create Function' : 'Create Procedure';
+    const typeColumn = type.toUpperCase() === 'FUNCTION' ? 'Function' : 'Procedure';
+
+    return {
+        type,
+        name: definition[typeColumn],
+        definition: escapeFn(definition[createColumn])
+    };
 }
 
 /**
@@ -275,7 +324,7 @@ let getTableData = (connection, query, config) => {
                     });
 
                     let columnsPromise = query.getColumns(connection, table, query.convertColumns);
-                    let dependenciesPromise = query.getDependencies(connection, table, config);
+                    let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
                     let contentPromise = query.getContent(connection, table, query.escapeQuotes);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
@@ -313,9 +362,11 @@ module.exports = {
     getTriggers,
     getViewTables,
     convertProceduresToObjects,
-    filterIndexes,
+    isIndex,
     isTableIncluded,
     escapeQuotes,
     viewTableSanitize,
-    convertColumns
+    convertColumns,
+    mapDependencies,
+    mapProcedureDefinition
 }

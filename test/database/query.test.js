@@ -1,4 +1,5 @@
 const expect = require('chai').expect;
+const _ = require('lodash');
 
 const query = require('../../database/query');
 
@@ -46,7 +47,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getColumns(connection, table, query.filterIndexes)
+            query.getColumns(connection, table, query.convertColumns)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);
@@ -77,7 +78,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getDependencies(connection, 'table1', config)
+            query.getDependencies(connection, 'table1', config, query.mapDependencies, _)
                 .then(dependencies => {
                     expect(dependencies.length).to.be.equal(1);
 
