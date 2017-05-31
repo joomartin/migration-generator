@@ -36,4 +36,23 @@ ColumnInfoPhinx.prototype.mapOptions = function (options) {
     return mapped;
 }
 
+/**
+ * @param type String
+ */
+ColumnInfoPhinx.prototype.mapType = function (nativeType) {
+    return TYPES
+        .filter(t => t.native === nativeType.toLowerCase())
+        .map(t => t.mapped)
+        .shift() || nativeType.toLowerCase();
+}
+
+const TYPES = [
+    { native: 'varchar', mapped: 'string' },
+    { native: 'int', mapped: 'integer' },
+    { native: 'bigint', mapped: 'biginteger' },
+    { native: 'tinyint', mapped: 'integer' },
+    { native: 'decimal', mapped: 'decimal' },
+    { native: 'longtext', mapped: 'text' }
+];
+
 module.exports = ColumnInfoPhinx;

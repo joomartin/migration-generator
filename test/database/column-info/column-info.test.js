@@ -165,4 +165,12 @@ describe('ColumnInfo', () => {
             expect(mapped).to.be.equal(options);
         });
     });
+
+    describe('#mapType', () => {
+        it('should return the given type', () => {            
+            let mapped = (new ColumnInfo).mapType('int');
+
+            expect(mapped).to.be.equal('int');
+        });
+    });
 });

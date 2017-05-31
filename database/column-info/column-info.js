@@ -7,12 +7,31 @@ function ColumnInfo(field) {
     this.field = field;
 }
 
+ColumnInfo.prototype.mapType = function (nativeType) {
+    return nativeType;
+}
+
 ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
     return typeOptions;
 }
 
 ColumnInfo.prototype.mapOptions = function (options) {
     return options;
+}
+
+ColumnInfo.prototype.isTypeOf = function (actual, expected) {
+    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
+}
+
+ColumnInfo.prototype.isUnsigned = function (type) {
+    return type.includes('unsigned') || type.includes('UNSIGNED');
+}
+
+/**
+ * @return bool
+ */
+ColumnInfo.prototype.isPrimaryKey = function () {
+    return this.field['Key'] === 'PRI';
 }
 
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
@@ -38,14 +57,6 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     }
 
     return options;
-}
-
-ColumnInfo.prototype.isTypeOf = function (actual, expected) {
-    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
-}
-
-ColumnInfo.prototype.isUnsigned = function (type) {
-    return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
 /**
@@ -99,13 +110,6 @@ ColumnInfo.prototype.getOptions = function () {
     }
 
     return (_.isEmpty(options)) ? null : this.mapOptions(options);
-}
-
-/**
- * @return bool
- */
-ColumnInfo.prototype.isPrimaryKey = function () {
-    return this.field['Key'] === 'PRI';
 }
 
 module.exports = ColumnInfo;

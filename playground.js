@@ -11,7 +11,6 @@ const file = require('./file/file');
 
 const createColumnInfo = require('./database/column-info/factory');
 const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
-const createTypeMapper = require('./database/type-mapper/factory');
 const utils = require('./utils/utils');
 
 const typeMapper = createTypeMapper(config.migrationLib);

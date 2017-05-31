@@ -52,10 +52,10 @@ describe('ColumnInfoPhinx', () => {
 
             let options = info.getOptions();
 
-            expect(options).to.be.deep.equal({null: true});
+            expect(options).to.be.deep.equal({ null: true });
         });
     });
-    
+
     describe('#getType()', () => {
         it('should return int type with length', () => {
             // INT (10)
@@ -77,7 +77,7 @@ describe('ColumnInfoPhinx', () => {
             expect(type.name).to.be.equal('VARCHAR');
             expect(type.options.length).to.be.equal(100);
             expect(type.options.signed).to.be.undefined;
-            
+
         });
 
         it('should return text type', () => {
@@ -87,7 +87,7 @@ describe('ColumnInfoPhinx', () => {
             })).getType();
 
             expect(type.name).to.be.equal('TEXT');
-            expect(type.options.signed).to.be.undefined;            
+            expect(type.options.signed).to.be.undefined;
         });
 
         it('should return long text type', () => {
@@ -143,7 +143,7 @@ describe('ColumnInfoPhinx', () => {
 
             expect(type.name).to.be.equal('TINYINT');
             expect(type.options.length).to.be.equal(1);
-            expect(type.options.signed).to.be.true;    
+            expect(type.options.signed).to.be.true;
         });
     });
 
@@ -184,6 +184,28 @@ describe('ColumnInfoPhinx', () => {
             let mapped = (new ColumnInfoPhinx()).mapTypeOptions({}, type);
 
             expect(mapped.length).to.be.equal('MysqlAdapter::TEXT_LONG');
+        });
+    });
+
+    describe('#mapType', () => {
+        it('should map native mysql types to phinx specific types', () => {
+            mapped = (new ColumnInfoPhinx()).mapType('varchar');
+            expect(mapped).to.be.equal('string');
+            
+            mapped = (new ColumnInfoPhinx()).mapType('int');
+            expect(mapped).to.be.equal('integer');
+            
+            mapped = (new ColumnInfoPhinx()).mapType('bigint');
+            expect(mapped).to.be.equal('biginteger');
+            
+            mapped = (new ColumnInfoPhinx()).mapType('tinyint');
+            expect(mapped).to.be.equal('integer');
+            
+            mapped = (new ColumnInfoPhinx()).mapType('decimal');
+            expect(mapped).to.be.equal('decimal');
+            
+            mapped = (new ColumnInfoPhinx()).mapType('longtext');
+            expect(mapped).to.be.equal('text');
         });
     });
 });
