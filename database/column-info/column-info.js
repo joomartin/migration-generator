@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const utils = require('../../utils/utils');
 
 /**
  * @param field Array
@@ -44,17 +45,9 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
         options.length = length;
     }
 
-    if (precision) {
-        options.precision = parseInt(precision);
-    }
-
-    if (scale) {
-        options.scale = parseInt(scale);
-    }
-
-    if (unsigned !== null) {
-        options.unsigned = unsigned;
-    }
+    utils.setKey(options, 'precision', precision, parseInt);
+    utils.setKey(options, 'scale', scale, parseInt);
+    utils.setKey(options, 'unsigned', unsigned);
 
     return options;
 }
@@ -97,17 +90,9 @@ ColumnInfo.prototype.getOptions = function () {
         'null': true,
     };
 
-    if (this.field['Null'] === 'NO') {
-        options['null'] = false;
-    }
-
-    if (this.field['Default']) {
-        options['default'] = this.field['Default'];
-    }
-
-    if (this.field['Extra'] === 'auto_increment') {
-        options['auto_increment'] = true;
-    }
+    utils.setKey(options, 'null', false, undefined, () => this.field['Null'] === 'NO');
+    utils.setKey(options, 'default', this.field['Default']);
+    utils.setKey(options, 'auto_increment', true, undefined, () => this.field['Extra'] === 'auto_increment');
 
     return (_.isEmpty(options)) ? null : this.mapOptions(options);
 }

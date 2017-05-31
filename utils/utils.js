@@ -17,6 +17,17 @@ const getDate = () => {
 
 const getSerial = (number, width = 9) => _.padStart(number, width, 0);
 
+const setKey = (object, key, value, mapFn, evaulateFn) => {
+    if (evaulateFn !== undefined) {
+        if (evaulateFn()) {
+            object[key] = value;
+        }
+    } else if (value !== null && value !== undefined) {
+        let realValue = mapFn === undefined ? value : mapFn(value);        
+        object[key] = realValue;
+    }
+}
+
 const logHeader = (config) => {
     console.log(chalk.green('********************************************************'));
     console.log(chalk.green('*                                                      *'));
@@ -33,5 +44,5 @@ const logHeader = (config) => {
 
 module.exports = {
     sideEffect, getDate, logHeader,
-    getSerial
+    getSerial, setKey
 }
