@@ -76,7 +76,7 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('VARCHAR');
             expect(type.options.length).to.be.equal(100);
-            expect(type.options.signed).to.be.undefined;
+            expect(type.options.unsigned).to.be.undefined;
             
         });
 
@@ -141,6 +141,28 @@ describe('ColumnInfo', () => {
 
             expect(type.name).to.be.equal('TINYINT');
             expect(type.options.length).to.be.equal(1);
+        });
+    });
+
+    describe('#mapOptions', () => {
+        it('should return the given object', () => {
+            let options = {
+                auto_increment: true
+            };
+            let mapped = (new ColumnInfo).mapOptions(options);
+
+            expect(mapped).to.be.equal(options);
+        });
+    });
+
+    describe('#mapTypeOptions', () => {
+        it('should return the given object', () => {
+            let options = {
+                unsigned: true
+            };
+            let mapped = (new ColumnInfo).mapTypeOptions(options);
+
+            expect(mapped).to.be.equal(options);
         });
     });
 });

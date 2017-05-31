@@ -30,7 +30,7 @@ ColumnInfoPhinx.prototype.mapOptions = function (options) {
 
     if (original.auto_increment) {
         mapped.identity = original.auto_increment;
-        delete mapped.identity;
+        delete mapped.auto_increment;
     }
 
     return mapped;

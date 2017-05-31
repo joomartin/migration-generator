@@ -33,3 +33,6 @@ console.log(ci.getType());
 
 ci = new ColumnInfoPhinx({ Type: 'DECIMAL (10, 2) unsigned'});
 console.log(ci.getType());
+
+ci = new ColumnInfoPhinx({ Type: 'VARCHAR(100)'});
+console.log(ci.getType());
