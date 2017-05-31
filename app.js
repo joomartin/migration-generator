@@ -5,14 +5,12 @@ const chalk = require('chalk');
 const util = require('util');
 
 const connection = require('./database/connection');
-const createColumnInfo = require('./database/column-info/factory');
-const createTypeMapper = require('./database/type-mapper/factory');
+const columnInfoFactory = require('./database/column-info/factory');
 const query = require('./database/query');
 const file = require('./file/file');
 const utils = require('./utils/utils');
 
 const config = require('./config.json');
-const typeMapper = createTypeMapper(config.migrationLib);
  
 utils.logHeader(config);
 
@@ -40,7 +38,7 @@ let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
 let tableDataPromise = query.getTableData(connection, query, config)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
-    .then(tables => file.getTemplates(tables, typeMapper, config, createColumnInfo, ejs, file))
+    .then(tables => file.getTemplates(tables, config, columnInfoFactory, ejs, file))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
     .catch(err => console.log(chalk.bgRed(err)));
 
@@ -55,7 +53,7 @@ let foreignKeyTemplate = tableDataPromise
 
 Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise, foreignKeyTemplate])
     .then(res => {
-        connection.end()
+        connection.end();
         util.log(chalk.green(`All Done.`));
     })
     .catch(err => console.log(chalk.bgRed(err)));
