@@ -7,14 +7,37 @@ function ColumnInfo(field) {
     this.field = field;
 }
 
-ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, signed) {
+ColumnInfo.prototype.mapType = function (nativeType) {
+    return nativeType;
+}
+
+ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
+    return typeOptions;
+}
+
+ColumnInfo.prototype.mapOptions = function (options) {
+    return options;
+}
+
+ColumnInfo.prototype.isTypeOf = function (actual, expected) {
+    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
+}
+
+ColumnInfo.prototype.isUnsigned = function (type) {
+    return type.includes('unsigned') || type.includes('UNSIGNED');
+}
+
+/**
+ * @return bool
+ */
+ColumnInfo.prototype.isPrimaryKey = function () {
+    return this.field['Key'] === 'PRI';
+}
+
+ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
     let parts = this.field['Type'].split('(');
     let options = {};
     
-    if (parts[0].trim() === 'longtext') {
-        length = 'MysqlAdapter::TEXT_LONG';
-    }
-
     if (length && !isNaN(length)) {
         options.length = parseInt(length);
     } else if (length) {
@@ -29,19 +52,11 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
         options.scale = parseInt(scale);
     }
 
-    if (signed !== null) {
-        options.signed = signed;
+    if (unsigned !== null) {
+        options.unsigned = unsigned;
     }
 
     return options;
-}
-
-ColumnInfo.prototype.isTypeOf = function (actual, expected) {
-    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
-}
-
-ColumnInfo.prototype.isUnsigned = function (type) {
-    return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
 /**
@@ -54,10 +69,10 @@ ColumnInfo.prototype.getType = function () {
     let length = null;
     let scale = null;
     let precision = null;
-    let signed = null;
+    let unsigned = null;
 
     if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
-        signed = !this.isUnsigned(type);
+        unsigned = this.isUnsigned(type);
     }
 
     if (this.isTypeOf(type, 'decimal')) {
@@ -69,7 +84,8 @@ ColumnInfo.prototype.getType = function () {
 
     return {
         name: parts[0].trim(),
-        options: this.getTypeOptions(this.field['Type'], precision, scale, length, signed)
+        options: this.mapTypeOptions(
+            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned), type)
     };
 }
 
@@ -90,17 +106,10 @@ ColumnInfo.prototype.getOptions = function () {
     }
 
     if (this.field['Extra'] === 'auto_increment') {
-        options['identity'] = true;
+        options['auto_increment'] = true;
     }
 
-    return (_.isEmpty(options)) ? null : options;
-}
-
-/**
- * @return bool
- */
-ColumnInfo.prototype.isPrimaryKey = function () {
-    return this.field['Key'] === 'PRI';
+    return (_.isEmpty(options)) ? null : this.mapOptions(options);
 }
 
 module.exports = ColumnInfo;

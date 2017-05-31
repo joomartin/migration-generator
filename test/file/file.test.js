@@ -63,20 +63,23 @@ describe('File', () => {
     });
 
     describe('#getTemplate()', () => {
-        it('should get template for a table', () => {
+        it('should get template for a table', (done) => {
             let config = {
                 migrationLib: 'phinx'
             }
 
-            let createColumnInfo = field => ({
+            let columnInfoFactory = field => ({
                 isPrimaryKey() {
                     return true;
                 },
                 getType() {
-                    return {name: 'INTEGER'};
+                    return {name: 'INT'};
                 },
                 getOptions() {
                     return {unsigned: true};
+                },
+                mapType(nativeType) {
+                    return 'integer';
                 }
             });
 
@@ -96,15 +99,10 @@ describe('File', () => {
                 }
             }
 
-            let typeMapper = {
-                map() {
-                    return 'int';
-                }
-            }
-
-            file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)
+            file.getTemplate(table, config, columnInfoFactory, ejs)
                 .then(data => {
                     expect(data.table).to.be.equal('todos');
+                    done();
                 })
         });
     });

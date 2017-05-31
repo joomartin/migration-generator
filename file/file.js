@@ -9,8 +9,8 @@ let getFileNames = (date, tables, file, padIndex) =>
 let getFileName = (date, table, index) => 
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
-let getTemplates = (tables, typeMapper, config, createColumnInfo, ejs, file) =>  
-    Promise.all(tables.map(table => file.getTemplate(table, typeMapper, config, createColumnInfo, ejs)));
+let getTemplates = (tables, config, columnInfoFactory, ejs, file) =>  
+    Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs)));
 
 let generateFiles = (contents, fileNames, config, fs, file) => 
     Promise.all(contents.map((content, index) => 
@@ -20,12 +20,11 @@ let generateFiles = (contents, fileNames, config, fs, file) =>
 
 /**
  * @param table Object
- * @param typeMapper Object
  * @param config Object
- * @param createColumnInfo Function
+ * @param columnInfoFactory Function
  * @param ejs Object
  */
-let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
+let getTemplate = (table, config, columnInfoFactory, ejs) => {
     return new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
@@ -33,7 +32,7 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
         let primaryKey = [];
 
         const fieldsData = table.columns.map(f => {
-            const columnInfo = createColumnInfo(f);
+            const columnInfo = columnInfoFactory(config, f);
             const options = columnInfo.getOptions();
 
             if (columnInfo.isPrimaryKey()) {
@@ -41,7 +40,8 @@ let getTemplate = (table, typeMapper, config, createColumnInfo, ejs) => {
             }
 
             let typeObj = columnInfo.getType();
-            typeObj.name = typeMapper.map(typeObj.name);
+            // typeObj.name = typeMapper.map(typeObj.name);
+            typeObj.name = columnInfo.mapType(typeObj.name);
 
             return {
                 name: f['Field'],

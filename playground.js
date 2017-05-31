@@ -10,7 +10,7 @@ const config = require('./config.json');
 const file = require('./file/file');
 
 const createColumnInfo = require('./database/column-info/factory');
-const createTypeMapper = require('./database/type-mapper/factory');
+const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
 const utils = require('./utils/utils');
 
 const typeMapper = createTypeMapper(config.migrationLib);
@@ -23,8 +23,15 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-let ci = createColumnInfo({ Type: 'INT (11)'});
+
+let ci = new ColumnInfoPhinx({ Type: 'INT (10) UNSIGNED'});
 console.log(ci.getType());
 
-ci = createColumnInfo({ Type: 'INT (10) UNSIGNED'});
+ci = new ColumnInfoPhinx({ Type: 'LONGTEXT'});
+console.log(ci.getType());
+
+ci = new ColumnInfoPhinx({ Type: 'DECIMAL (10, 2) unsigned'});
+console.log(ci.getType());
+
+ci = new ColumnInfoPhinx({ Type: 'VARCHAR(100)'});
 console.log(ci.getType());
