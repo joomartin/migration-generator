@@ -188,10 +188,10 @@ const mapDependencies = (dependencies, _) =>
 const getProcedures = (connection, mapDefinitionFn) => {
     return new Promise((resolve, reject) => {
         getProceduresMeta(connection)
-            .then(metas => {
-                let promises = metas.map(meta =>
-                    getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
-
+            .then(metas => 
+                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
+            )
+            .then(promises => {
                 Promise.all(promises)
                     .then(resolve)
                     .catch(reject);
@@ -254,24 +254,6 @@ const mapProcedureDefinition = (type, definition, escapeFn) => {
         name: definition[typeColumn],
         definition: escapeFn(definition[createColumn])
     };
-}
-
-/**
- * @param procedures Object
- * @return Object
- */
-let convertProceduresToObjects = (proceduresRaw) => {
-    let procedures = {};
-
-    proceduresRaw.forEach(p => {
-        procedures[p['SPECIFIC_NAME']] = {
-            type: p['ROUTINE_TYPE'],
-            definition: p['ROUTINE_DEFINITION'],
-            definer: p['DEFINER']
-        };
-    });
-
-    return procedures;
 }
 
 let getTriggers = (connection, escapeCallback, _) => {
@@ -361,7 +343,6 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    convertProceduresToObjects,
     isIndex,
     isTableIncluded,
     escapeQuotes,
