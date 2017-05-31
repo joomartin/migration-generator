@@ -5,9 +5,10 @@ const TableContent = require('./stream/table-content');
 /**
  * @param connection Object
  * @param config Object
+ * @param filterCallback Function
  * @return Promise
  */
-let getTables = (connection, config, filterCallback) => {
+const getTables = (connection, config, filterCallback) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
@@ -18,59 +19,73 @@ let getTables = (connection, config, filterCallback) => {
 }
 
 /**
- * @param connection Object
- * @return Promise
+ * 
+ * @param {Array} viewTables - Raw view tables queried from database
+ * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
+ * @param {Function} escapeQuotesFn - A callback that escape quotes
+ * @param {Object} _ - lodash
+ * @return {Array} - Sanitized view tables
  */
-let getViewTables = (connection, escapeCallback) => {
+const viewTableSanitize = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _) =>
+    viewTables.map(vt => {
+        let viewTable = _.clone(vt);
+        viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
+            database, escapeQuotesFn(vt.VIEW_DEFINITION));
+
+        return viewTable;
+    });
+
+/**
+ * @param {Object} connection - Database connection
+ * @param {Function} sanitizeFn - A callback that sanitize the raw output from database
+ */
+const getViewTables = (connection, sanitizeFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            let sanitized = viewTablesRaw.map(vt => {
-                let escaped = escapeCallback(vt.VIEW_DEFINITION);
-                vt.VIEW_DEFINITION = clearSourceDatabaseName(connection.config.database, escaped);
-
-                return vt;
-            });
-
-            resolve(sanitized);
+            resolve(sanitizeFn(
+                viewTablesRaw, replaceInContent, escapeQuotes, connection.config.database, _));
         });
     });
 }
 
 /**
- * @param {string} database 
- * @param {string} content 
+ * @param {string} value - Searched value in content to replace
+ * @param {string} content - Content to search value in
  */
-let clearSourceDatabaseName = (database, content) => {
-    let pattern = new RegExp('`' + database + '`.', 'g')
+const replaceInContent = (value, content) => {
+    let pattern = new RegExp('`' + value + '`.', 'g')
     let tmp = content;
 
     return tmp.replace(pattern, '');
 }
 
 /**
- * @param tablesRaw Array
- * @param config Object
- * @return Array
+ * @param {Object} table
+ * @param {Object} config
+ * @return {Array}
  */
-let isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
+const isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
+
+const convertColumns = (columns, indexFilterFn) => ({
+    indexes: columns.filter(c => indexFilterFn(c)),
+    columns: columns
+})
 
 /**
- * @param connection Object
- * @param table String
- * @return Promise
+ * 
+ * @param {Object} connection - Database connection
+ * @param {string} table - Table name
+ * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
+ * @return {Promise}
  */
-let getColumns = (connection, table, indexFilterCallback) => {
+const getColumns = (connection, table, convertColumnsFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
-            let result = {
-                indexes: columnsRaw.filter(c => indexFilterCallback(c)),
-                columns: columnsRaw
-            };
 
-            resolve(result);
+            resolve(convertColumnsFn(columnsRaw, filterIndexes));
         });
     });
 }
@@ -259,7 +274,7 @@ let getTableData = (connection, query, config) => {
                         dependencies: []
                     });
 
-                    let columnsPromise = query.getColumns(connection, table, query.filterIndexes);
+                    let columnsPromise = query.getColumns(connection, table, query.convertColumns);
                     let dependenciesPromise = query.getDependencies(connection, table, config);
                     let contentPromise = query.getContent(connection, table, query.escapeQuotes);
 
@@ -300,5 +315,7 @@ module.exports = {
     convertProceduresToObjects,
     filterIndexes,
     isTableIncluded,
-    escapeQuotes
+    escapeQuotes,
+    viewTableSanitize,
+    convertColumns
 }

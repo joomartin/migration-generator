@@ -376,7 +376,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, query.escapeQuotes)
+            query.getViewTables(connection, query.viewTableSanitize)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");

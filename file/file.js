@@ -40,7 +40,6 @@ let getTemplate = (table, config, columnInfoFactory, ejs) => {
             }
 
             let typeObj = columnInfo.getType();
-            // typeObj.name = typeMapper.map(typeObj.name);
             typeObj.name = columnInfo.mapType(typeObj.name);
 
             return {
