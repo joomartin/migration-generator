@@ -53,7 +53,7 @@ let foreignKeyTemplate = tableDataPromise
 
 Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise, foreignKeyTemplate])
     .then(res => {
-        connection.end()
+        connection.end();
         util.log(chalk.green(`All Done.`));
     })
     .catch(err => console.log(chalk.bgRed(err)));
