@@ -200,7 +200,7 @@ describe('Query', () => {
 
             let escapeCallback = (s) => s;
 
-            query.getProcedures(connection, query.convertProceduresToObjects, escapeCallback)
+            query.getProcedures(connection, query.mapProcedureDefinition)
                 .then(res => {
                     expect(res.length).to.be.equal(2);    
 

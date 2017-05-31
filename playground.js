@@ -21,5 +21,5 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-query.getProcedures(connection, query.mapProcedureDefinition)
+query.getTriggers(connection, query.escapeQuotes, _)
     .then(console.log);

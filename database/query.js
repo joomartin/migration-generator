@@ -188,7 +188,7 @@ const mapDependencies = (dependencies, _) =>
 const getProcedures = (connection, mapDefinitionFn) => {
     return new Promise((resolve, reject) => {
         getProceduresMeta(connection)
-            .then(metas => 
+            .then(metas =>
                 metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
             )
             .then(promises => {
@@ -256,31 +256,41 @@ const mapProcedureDefinition = (type, definition, escapeFn) => {
     };
 }
 
-let getTriggers = (connection, escapeCallback, _) => {
+/**
+ * @param {string} database - Name of database
+ * @param {Array} triggers - List of triggers in raw format
+ * @param {Function} escapeFn - Callback that escape quotes
+ * @param {Object} _ - lodash
+ */
+const mapTriggers = (database, triggers, escapeFn, _) => {
+    let mapped = {};
+    triggers.forEach(t => {
+        if (!_.has(mapped, t.Table)) {
+            _.set(mapped, t.Table, []);
+        }
+
+        mapped[t.Table].push({
+            name: t.Trigger,
+            event: t.Event,
+            timing: t.Timing,
+            statement: escapeFn(t.Statement),
+            definer: t.Definer,
+            table: t.Table,
+            database: database
+        });
+    });
+
+    return mapped;
+}
+
+const getTriggers = (connection, escapeFn, _) => {
     return new Promise((resolve, reject) => {
         const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
 
         connection.query(query, (err, triggers) => {
             if (err) return reject(err);
 
-            let escaped = {};
-            triggers.forEach(t => {
-                if (!_.has(escaped, t.Table)) {
-                    _.set(escaped, t.Table, []);
-                }
-
-                escaped[t.Table].push({
-                    name: t.Trigger,
-                    event: t.Event,
-                    timing: t.Timing,
-                    statement: escapeCallback(t.Statement),
-                    definer: t.Definer,
-                    table: t.Table,
-                    database: connection.config.database
-                });
-            });
-
-            resolve(escaped);
+            resolve(mapTriggers(connection.config.database, triggers, escapeFn, _));
         });
     });
 }
@@ -349,5 +359,6 @@ module.exports = {
     viewTableSanitize,
     convertColumns,
     mapDependencies,
-    mapProcedureDefinition
+    mapProcedureDefinition,
+    replaceInContent
 }

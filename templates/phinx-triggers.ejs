@@ -12,7 +12,7 @@ class <%= migrationClass %> extends AbstractMigration
                 DEFINER = <%- trigger.definer %>
                 TRIGGER `<%= trigger.name %>`
                 <%= trigger.timing %> <%= trigger.event %>
-                ON `<%= trigger.database %>`.`<%= trigger.table %>` FOR EACH ROW
+                ON `<%= trigger.table %>` FOR EACH ROW
                 <%- trigger.statement %>
                 ');
             <% }); %>        
