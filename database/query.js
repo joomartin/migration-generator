@@ -55,12 +55,6 @@ const getColumns = (connection, table, convertColumnsFn, filterIndexesFn) => {
 }
 
 /**
- * @param {Array} columns - Raw mysql columns
- * @return {Array} 
- */
-const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
-
-/**
  * @param {TableContent} content$ - Readable stream that reads content of a tablo
  * @param {Function} escapeFn - A callback that escaps quotes
  * @param {Function} processFn - A callback that processes the raw output
@@ -300,7 +294,7 @@ const getTableData = (connection, query, config, queryProcess) => {
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, query.filterIndexes);
+                    let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
                     let contentPromise = query.getContent(content$, query.escapeQuotes, query.processContent);
 
@@ -344,6 +338,5 @@ module.exports = {
     getProcedureDefinition,
     mapProcedureDefinition,
     mapTriggers,
-    filterIndexes,
     processContent
 }

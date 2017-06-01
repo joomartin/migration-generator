@@ -65,7 +65,7 @@ describe('QueryProcess', () => {
                 { Field: 'id' }, { Field: 'name' }
             ];
             const indexFilterFn = (columns) => columns;
-            
+
             const seperated = queryProcess.seperateColumns(columns, indexFilterFn);
 
             expect(seperated.columns.length).to.be.equal(2);
@@ -74,6 +74,22 @@ describe('QueryProcess', () => {
             expect(seperated.columns).to.be.deep.equal(columns);
             expect(seperated.indexes).to.be.deep.equal(columns);
             
+        });
+    });
+
+    describe('#filterIndexes()', () => {
+        it('should return all indexes from an array of columns', () => {
+            const columns = [
+                { Field: 'id', Key: 'PRI' }, { Field: 'name' }, 
+                { Field: 'user_id', Key: 'MUL' }, { Field: 'serial', Key: 'UNI' }
+            ];
+
+            const indexes = queryProcess.filterIndexes(columns);
+
+            expect(indexes.length).to.be.equal(2);
+            expect(indexes).to.be.deep.equal([
+                { Field: 'user_id', Key: 'MUL' }, { Field: 'serial', Key: 'UNI' }
+            ]);
         });
     });
 });

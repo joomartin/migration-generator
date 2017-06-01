@@ -38,6 +38,12 @@ const seperateColumns = (columns, filterIndexesFn) => ({
     columns: columns
 });
 
+/**
+ * @param {Array} columns - Raw mysql columns
+ * @return {Array} 
+ */
+const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
+
 module.exports = {
-    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes
 }
