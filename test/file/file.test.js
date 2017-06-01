@@ -215,4 +215,28 @@ describe('File', () => {
                 .catch(console.log);
         });
     });
+
+    describe('#getFileNames()', () => {
+        it('should get file names', () => {
+            const tables = [{table: 'table 1'}];
+            const padIndex = (index) => index;
+            const fileMock = {
+                getFileName() {
+                    expect(true).to.be.true;
+                }
+            };
+
+            file.getFileNames(null, tables, fileMock, padIndex);
+        });
+    });
+
+    describe('#getFileName()', () => {
+        it('should get file names', () => {
+            const table = 'table1';
+            const index = 1;
+
+            const fileName = file.getFileName(null, table, index);
+            expect(fileName).to.include('1_create_table1_table.php');
+        });
+    });
 });
