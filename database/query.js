@@ -280,6 +280,12 @@ const mapTriggers = (database, triggers, escapeFn, _) => {
     return mapped;
 }
 
+/**
+ * @param {Object} connection - Database connection
+ * @param {Function} mapFn - A callback that maps raw results
+ * @param {Function} escapeFn - A callback that escape quotes
+ * @param {Object} _ - lodash
+ */
 const getTriggers = (connection, mapFn, escapeFn, _) => {
     return new Promise((resolve, reject) => {
         const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
