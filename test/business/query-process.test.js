@@ -148,4 +148,26 @@ describe('QueryProcess', () => {
             ]);
         });
     });
+
+    describe('#normalizeProcedureDefinition()', () => {
+        it('should call escape function, and returns a mapped object', () => {
+            const definition = {
+                'Procedure': 'Procedure_Name',
+                'Create Procedure': 'Procedure body'
+            };
+            const escapeFn = (content) => {
+                expect(content).to.be.equal('Procedure body');
+                return content;
+            };
+            const _ = {
+                upperFirst(text) {
+                    expect(text).to.be.equal('procedure');
+                    return 'Procedure';
+                }
+            };
+
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition('PROCEDURE', definition, escapeFn, _);
+
+        });
+    });
 });

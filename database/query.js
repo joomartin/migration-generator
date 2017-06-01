@@ -111,11 +111,11 @@ const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Promise} - Contains array
  */
-const getProcedures = (connection, mapDefinitionFn, escapeFn) => {
+const getProcedures = (connection, normalizeDefinitionFn, escapeFn, _) => {
     return new Promise((resolve, reject) => {
         getProceduresMeta(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn, escapeFn))
+                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn, escapeFn, _))
             )
             .then(promises => {
                 Promise.all(promises)
@@ -154,12 +154,13 @@ const getProceduresMeta = (connection) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, name, type, mapDefinitionFn, escapeFn) => {
+const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, escapeFn, _) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
 
-            resolve(mapDefinitionFn(type, result[0], escapeFn));
+            
+            resolve(normalizeDefinitionFn(type, result[0], escapeFn, _));
         });
     });
 }
@@ -288,6 +289,5 @@ module.exports = {
     getViewTables,
     getProceduresMeta,
     getProcedureDefinition,
-    mapProcedureDefinition,
     mapTriggers
 }

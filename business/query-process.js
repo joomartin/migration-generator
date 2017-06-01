@@ -83,7 +83,23 @@ const mapDependencies = (dependencies, _) =>
         };
     }), 'sourceColumn');
 
+/**
+ * @param {string} type - Procedure or function
+ * @param {Object} definition - Definition
+ * @param {Function} escapeFn - A callback that escapes quotes
+ * @return {Object}
+ */
+const normalizeProcedureDefinition = (type, definition, escapeFn, _) => {
+    const typeUpperFirst = _.upperFirst(type.toLowerCase());
+
+    return {
+        type,
+        name: definition[typeUpperFirst],
+        definition: escapeFn(definition[`Create ${typeUpperFirst}`])
+    };
+}
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies
+    escapeRows, mapDependencies, normalizeProcedureDefinition
 }

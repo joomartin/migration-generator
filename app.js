@@ -24,7 +24,7 @@ let viewTablesPromise = query.getViewTables(connection, queryProcess.replaceData
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.mapProcedureDefinition, utils.escapeQuotes)
+let proceduresPromise = query.getProcedures(connection, queryProcess.normalizeProcedureDefinition, utils.escapeQuotes, _)
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
