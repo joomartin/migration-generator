@@ -195,7 +195,7 @@ describe('Query', () => {
             const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
                 _, utils.escapeQuotes);
 
-            query.getProcedures(connection, normalizeProcedureDefinitionFn)
+            query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
