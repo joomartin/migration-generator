@@ -49,7 +49,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getColumns(connection, table, query.convertColumns, query.filterIndexes)
+            query.getColumns(connection, table, queryProcess.seperateColumns, query.filterIndexes)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);

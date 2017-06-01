@@ -58,4 +58,22 @@ describe('QueryProcess', () => {
             expect(replaced).to.be.equal('SELECT * FROM `test-table`');
         });
     });
+
+    describe('#seperateColumns()', () => {
+        it('should return the an array with seperated indexes and columns keys', () => {
+            const columns = [
+                { Field: 'id' }, { Field: 'name' }
+            ];
+            const indexFilterFn = (columns) => columns;
+            
+            const seperated = queryProcess.seperateColumns(columns, indexFilterFn);
+
+            expect(seperated.columns.length).to.be.equal(2);
+            expect(seperated.indexes.length).to.be.equal(2);
+
+            expect(seperated.columns).to.be.deep.equal(columns);
+            expect(seperated.indexes).to.be.deep.equal(columns);
+            
+        });
+    });
 });

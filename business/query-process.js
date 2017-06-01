@@ -28,6 +28,16 @@ const sanitizeViewTables = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, d
  */
 const replaceDatabaseInContent = (database, content) => content.replace(new RegExp('`' + database + '`.', 'g'), '');
 
+/**
+ * @param {Array} columns - Collection of table column objects
+ * @param {Function} filterIndexesFn - A callback that filter out index columns
+ * @return {Object}
+ */
+const seperateColumns = (columns, filterIndexesFn) => ({
+    indexes: filterIndexesFn(columns),
+    columns: columns
+});
+
 module.exports = {
-    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns
 }

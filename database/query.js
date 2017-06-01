@@ -39,17 +39,6 @@ const getViewTables = (connection, replaceDatabaseNameFn, escapeFn, sanitizeFn, 
 }
 
 /**
- * @param {Array} columns - Collection of table column objects
- * @param {Function} filterIndexesFn - A callback that filter out index columns
- * @return {Object}
- */
-const convertColumns = (columns, filterIndexesFn) => ({
-    indexes: filterIndexesFn(columns),
-    columns: columns
-})
-
-
-/**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
@@ -311,7 +300,7 @@ const getTableData = (connection, query, config, queryProcess) => {
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    let columnsPromise = query.getColumns(connection, table, query.convertColumns, query.filterIndexes);
+                    let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
                     let contentPromise = query.getContent(content$, query.escapeQuotes, query.processContent);
 
@@ -350,7 +339,6 @@ module.exports = {
     getTriggers,
     getViewTables,
     escapeQuotes,
-    convertColumns,
     mapDependencies,
     getProceduresMeta,
     getProcedureDefinition,
