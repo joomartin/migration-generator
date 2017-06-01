@@ -165,4 +165,29 @@ describe('File', () => {
                 .catch(err => console.log(err));
         });
     });
+
+    describe('#getProcedureTemplate()', () => {
+        it('should get template for procedures', (done) => {
+            const procedures = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-procedures.ejs');
+                    expect(options).to.include({ procedures });
+                    callback(null, 'html content');
+                }
+            };
+
+            file.getProcedureTemplate(procedures, config, ejs)
+                .then(html => {
+                    expect(html).to.be.equal('html content');
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
 });

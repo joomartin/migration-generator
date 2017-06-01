@@ -411,4 +411,31 @@ describe('Query', () => {
                 });
         });
     });
+
+    describe('#getTriggers', () => {
+        it('should query view tables and call sanitize function', (done) => {
+            const triggersMock = [
+                { name: 'trigger1' }
+            ];
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW TRIGGERS FROM `database`");
+                    callback(null, triggersMock);
+                }
+            };
+            const mapFn = (database, triggersRaw) => {
+                expect(triggersRaw).to.be.equal(triggersMock);
+                return triggersRaw;
+            }
+
+            query.getTriggers(connection, mapFn)
+                .then(triggers => {
+                    expect(triggers).to.be.equal(triggersMock)
+                    done();
+                });
+        });
+    });
 });
