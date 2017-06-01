@@ -135,7 +135,7 @@ describe('QueryProcess', () => {
                 }
             };
 
-            const mapped = queryProcess.mapDependencies(dependencies, _);
+            const mapped = queryProcess.mapDependencies(_, dependencies);
             expect(mapped).to.be.deep.equal([
                 {
                     sourceTable: 'todos',

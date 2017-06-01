@@ -85,7 +85,7 @@ const getContent = (content$, processFn) => {
  * @param {Object} _ - lodash
  * @returns {Promise} - Contains array
  */
-const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
+const getDependencies = (connection, table, config, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
         const dependenciesQuery = `
             SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
@@ -101,7 +101,7 @@ const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
         connection.query(dependenciesQuery, (err, results) => {
             if (err) return reject(err);
 
-            resolve(mapDependenciesFn(results, _));
+            resolve(mapDependenciesFn(results));
         });
     });
 }
@@ -207,9 +207,10 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
+                    const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
-                    let dependenciesPromise = query.getDependencies(connection, table, config, queryProcess.mapDependencies, _);
+                    let dependenciesPromise = query.getDependencies(connection, table, config, mapDependenciesFn);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])

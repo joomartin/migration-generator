@@ -71,7 +71,7 @@ const escapeRows = (escapeFn, rows) => {
  * @param {Object} _ - lodash
  * @return {Array}
  */
-const mapDependencies = (dependencies, _) =>
+const mapDependencies = (_, dependencies) =>
     _.uniqBy(dependencies.map(r => {
         return {
             sourceTable: r['TABLE_NAME'],

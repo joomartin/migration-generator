@@ -9,7 +9,10 @@ const seperateColumnsFactory = (filterIndexesFn) =>
 const escapeRowsFactory = (escapeFn) => 
     queryProcess.escapeRows.bind(null, escapeFn);
 
+const mapDependenciesFactory = (_) => 
+    queryProcess.mapDependencies.bind(null, _);
 
 module.exports = {
-    sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory
+    sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory,
+    mapDependenciesFactory
 }
