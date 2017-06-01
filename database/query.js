@@ -159,7 +159,7 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) =
     return new Promise((resolve, reject) => {
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
-            
+
             resolve(normalizeDefinitionFn(type, result[0]));
         });
     });
@@ -171,14 +171,14 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) =
  * @param {Function} escapeFn - A callback that escape quotes
  * @param {Object} _ - lodash
  */
-const getTriggers = (connection, mapFn, escapeFn, _) => {
+const getTriggers = (connection, mapFn) => {
     return new Promise((resolve, reject) => {
         const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
 
         connection.query(query, (err, triggers) => {
             if (err) return reject(err);
 
-            resolve(mapFn(connection.config.database, triggers, escapeFn, _));
+            resolve(mapFn(connection.config.database, triggers));
         });
     });
 }

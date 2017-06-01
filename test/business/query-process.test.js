@@ -171,7 +171,7 @@ describe('QueryProcess', () => {
         });
     });
 
-    describe('#normalizeProcedureDefinition()', () => {
+    describe('#mapTriggers()', () => {
         it('should call escape function, and returns a mapped object', () => {
             const triggers = [
                 {
@@ -192,7 +192,7 @@ describe('QueryProcess', () => {
                 }
             };
 
-            const mappedTriggers = queryProcess.mapTriggers('database', triggers, escapeFn, _);
+            const mappedTriggers = queryProcess.mapTriggers(_, escapeFn, 'database', triggers);
             expect(mappedTriggers.todos).to.be.deep.equal([
                 {
                     name: 'trigger1',

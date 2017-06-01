@@ -106,7 +106,7 @@ const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
  * @param {Object} _ - lodash
  * @return {Object}
  */
-const mapTriggers = (database, triggers, escapeFn, _) => {
+const mapTriggers = (_, escapeFn, database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
         if (!_.has(mapped, t.Table)) {

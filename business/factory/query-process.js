@@ -15,7 +15,10 @@ const mapDependenciesFactory = (_) =>
 const normalizeProcedureDefinitionFactory = (_, escapeFn) =>
     queryProcess.normalizeProcedureDefinition.bind(null, _, escapeFn);
 
+const mapTriggersFactory = (_, escapeFn) => 
+    queryProcess.mapTriggers.bind(null, _, escapeFn);
+
 module.exports = {
     sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory,
-    mapDependenciesFactory, normalizeProcedureDefinitionFactory
+    mapDependenciesFactory, normalizeProcedureDefinitionFactory, mapTriggersFactory
 }
