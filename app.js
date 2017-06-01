@@ -30,7 +30,7 @@ let proceduresPromise = query.getProcedures(connection, queryProcess.normalizePr
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, query.mapTriggers, utils.escapeQuotes, _)
+let triggersPromise = query.getTriggers(connection, queryProcess.mapTriggers, utils.escapeQuotes, _)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))

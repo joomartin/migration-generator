@@ -99,7 +99,35 @@ const normalizeProcedureDefinition = (type, definition, escapeFn, _) => {
     };
 }
 
+/**
+ * @param {string} database - Name of database
+ * @param {Array} triggers - List of triggers in raw format
+ * @param {Function} escapeFn - Callback that escape quotes
+ * @param {Object} _ - lodash
+ * @return {Object}
+ */
+const mapTriggers = (database, triggers, escapeFn, _) => {
+    let mapped = {};
+    triggers.forEach(t => {
+        if (!_.has(mapped, t.Table)) {
+            _.set(mapped, t.Table, []);
+        }
+
+        mapped[t.Table].push({
+            name: t.Trigger,
+            event: t.Event,
+            timing: t.Timing,
+            statement: escapeFn(t.Statement),
+            definer: t.Definer,
+            table: t.Table,
+            database: database
+        });
+    });
+
+    return mapped;
+}
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers
 }

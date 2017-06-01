@@ -166,33 +166,6 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, e
 }
 
 /**
- * @param {string} database - Name of database
- * @param {Array} triggers - List of triggers in raw format
- * @param {Function} escapeFn - Callback that escape quotes
- * @param {Object} _ - lodash
- */
-const mapTriggers = (database, triggers, escapeFn, _) => {
-    let mapped = {};
-    triggers.forEach(t => {
-        if (!_.has(mapped, t.Table)) {
-            _.set(mapped, t.Table, []);
-        }
-
-        mapped[t.Table].push({
-            name: t.Trigger,
-            event: t.Event,
-            timing: t.Timing,
-            statement: escapeFn(t.Statement),
-            definer: t.Definer,
-            table: t.Table,
-            database: database
-        });
-    });
-
-    return mapped;
-}
-
-/**
  * @param {Object} connection - Database connection
  * @param {Function} mapFn - A callback that maps raw results
  * @param {Function} escapeFn - A callback that escape quotes
@@ -211,7 +184,6 @@ const getTriggers = (connection, mapFn, escapeFn, _) => {
 }
 
 /**
- * 
  * @param {Object} connection 
  * @param {Object} query 
  * @param {Object} config 
@@ -271,6 +243,5 @@ module.exports = {
     getTriggers,
     getViewTables,
     getProceduresMeta,
-    getProcedureDefinition,
-    mapTriggers
+    getProcedureDefinition
 }

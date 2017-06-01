@@ -76,14 +76,14 @@ describe('QueryProcess', () => {
 
             expect(seperated.columns).to.be.deep.equal(columns);
             expect(seperated.indexes).to.be.deep.equal(columns);
-            
+
         });
     });
 
     describe('#filterIndexes()', () => {
         it('should return all indexes from an array of columns', () => {
             const columns = [
-                { Field: 'id', Key: 'PRI' }, { Field: 'name' }, 
+                { Field: 'id', Key: 'PRI' }, { Field: 'name' },
                 { Field: 'user_id', Key: 'MUL' }, { Field: 'serial', Key: 'UNI' }
             ];
 
@@ -99,10 +99,10 @@ describe('QueryProcess', () => {
     describe('#escapeRows()', () => {
         it('should foreach rows and escape string content', () => {
             const rows = [
-                { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 }, 
+                { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 },
             ];
 
-            const escapeFn = (content) => {
+            const escapeFn = (content) =>  {
                 expect(['Item #1', 'Item #2'].some(i => i === content)).to.be.true;
                 expect(typeof content).to.be.equal('string');
 
@@ -168,6 +168,42 @@ describe('QueryProcess', () => {
 
             const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition('PROCEDURE', definition, escapeFn, _);
 
+        });
+    });
+
+    describe('#normalizeProcedureDefinition()', () => {
+        it('should call escape function, and returns a mapped object', () => {
+            const triggers = [
+                {
+                    Trigger: 'trigger1', Event: 'INSERT', Timing: 'AFTER',
+                    Statement: 'SET @foo = 1', Definer: 'root@localhost', Table: 'todos'
+                }
+            ];
+            const escapeFn = (content) => {
+                expect(content).to.be.equal('SET @foo = 1');
+                return content;
+            };
+            const _ = {
+                has() {
+                    return false;
+                },
+                set(arr, key, val) {
+                    arr[key] = val;
+                }
+            };
+
+            const mappedTriggers = queryProcess.mapTriggers('database', triggers, escapeFn, _);
+            expect(mappedTriggers.todos).to.be.deep.equal([
+                {
+                    name: 'trigger1',
+                    event: 'INSERT',
+                    timing: 'AFTER',
+                    statement: 'SET @foo = 1',
+                    definer: 'root@localhost',
+                    table: 'todos',
+                    database: 'database'
+                }
+            ]);
         });
     });
 });
