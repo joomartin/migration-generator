@@ -106,23 +106,6 @@ const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
 }
 
 /**
- * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
- * @param {Object} _ - lodash
- * @return {Array}
- */
-const mapDependencies = (dependencies, _) =>
-    _.uniqBy(dependencies.map(r => {
-        return {
-            sourceTable: r['TABLE_NAME'],
-            sourceColumn: r['COLUMN_NAME'],
-            referencedTable: r['REFERENCED_TABLE_NAME'],
-            referencedColumn: r['REFERENCED_COLUMN_NAME'],
-            updateRule: r['UPDATE_RULE'],
-            deleteRule: r['DELETE_RULE']
-        };
-    }), 'sourceColumn');
-
-/**
  * @param {Object} connection - Database connection
  * @param {Function} mapDefinitionFn - A callback that maps definitions
  * @param {Function} escapeFn - A callback that escapes quotes
@@ -266,7 +249,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
                     let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes);
-                    let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
+                    let dependenciesPromise = query.getDependencies(connection, table, config, queryProcess.mapDependencies, _);
                     let contentPromise = query.getContent(content$, utils.escapeQuotes, queryProcess.escapeRows);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
@@ -303,7 +286,6 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    mapDependencies,
     getProceduresMeta,
     getProcedureDefinition,
     mapProcedureDefinition,

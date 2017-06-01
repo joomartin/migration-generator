@@ -81,7 +81,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getDependencies(connection, 'table1', config, query.mapDependencies, _)
+            query.getDependencies(connection, 'table1', config, queryProcess.mapDependencies, _)
                 .then(dependencies => {
                     expect(dependencies.length).to.be.equal(1);
 
