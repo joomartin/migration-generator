@@ -1,6 +1,7 @@
 const _ = require('lodash');
 
 const TableContent = require('./stream/table-content');
+const queryProcessFactory = require('../business/factory/query-process');
 
 /**
  * @param {Object} connection - Database connection
@@ -43,12 +44,12 @@ const getViewTables = (connection, sanitizeFn) => {
  * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
  * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, convertColumnsFn, filterIndexesFn) => {
+const getColumns = (connection, table, seperateColumnsFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
 
-            resolve(convertColumnsFn(columnsRaw, filterIndexesFn));
+            resolve(seperateColumnsFn(columnsRaw));
         });
     });
 }
@@ -158,7 +159,7 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, e
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
 
-            
+
             resolve(normalizeDefinitionFn(type, result[0], escapeFn, _));
         });
     });
@@ -203,7 +204,10 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes);
+                    const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(
+                        queryProcess.filterIndexes);
+
+                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
                     let dependenciesPromise = query.getDependencies(connection, table, config, queryProcess.mapDependencies, _);
                     let contentPromise = query.getContent(content$, utils.escapeQuotes, queryProcess.escapeRows);
 

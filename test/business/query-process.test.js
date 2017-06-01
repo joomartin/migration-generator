@@ -69,7 +69,7 @@ describe('QueryProcess', () => {
                 return columnsToBeFiltered;
             };
 
-            const seperated = queryProcess.seperateColumns(columns, indexFilterFn);
+            const seperated = queryProcess.seperateColumns(indexFilterFn, columns);
 
             expect(seperated.columns.length).to.be.equal(2);
             expect(seperated.indexes.length).to.be.equal(2);

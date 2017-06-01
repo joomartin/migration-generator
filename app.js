@@ -22,6 +22,8 @@ let allTables = [];
 const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
     _, connection.config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
 
+
+
 let viewTablesPromise = query.getViewTables(connection, sanitizeFn)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))

@@ -33,7 +33,7 @@ const replaceDatabaseInContent = (database, content) => content.replace(new RegE
  * @param {Function} filterIndexesFn - A callback that filter out index columns
  * @return {Object}
  */
-const seperateColumns = (columns, filterIndexesFn) => ({
+const seperateColumns = (filterIndexesFn, columns) => ({
     indexes: filterIndexesFn(columns),
     columns: columns
 });
