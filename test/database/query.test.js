@@ -23,7 +23,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getTables(connection, config, query.isTableIncluded)
+            query.getTables(connection, config, query.filterExcluededTables)
                 .then(res => {
                     expect(res.length).to.be.equal(2)
                     done();
@@ -95,18 +95,19 @@ describe('Query', () => {
         });
     });
 
-    describe('#isTableIncluded', () => {
-        it('should return true if a table is not excluded by config', () => {
-            let config = {
+    describe('#filterExcluededTables', () => {
+        it('should return filtered tables based on config excluded tables property', () => {
+            const config = {
                 excludedTables: ['migrations'],
                 database: 'test'
             };
+            const tables = [
+                { 'Tables_in_test': 'migrations' }, { 'Tables_in_test': 'table1' }, { 'Tables_in_test': 'table2' }
+            ];
 
-            let filter = query.isTableIncluded({ Tables_in_test: 'migrations' }, config);
-            expect(filter).to.be.false;
-
-            filter = query.isTableIncluded({ Tables_in_test: 'test1' }, config);
-            expect(filter).to.be.true;
+            const filteredTables = query.filterExcluededTables(tables, config, query.filterExcluededTables);
+            expect(filteredTables.length).to.be.equal(2);
+            expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
         });
     });
 
@@ -202,7 +203,7 @@ describe('Query', () => {
 
             query.getProcedures(connection, query.mapProcedureDefinition)
                 .then(res => {
-                    expect(res.length).to.be.equal(2);    
+                    expect(res.length).to.be.equal(2);
 
                     expect(res[0].type).to.be.equal('PROCEDURE');
                     expect(res[0].definition).to.be.equal('SOME PROCEDURE');

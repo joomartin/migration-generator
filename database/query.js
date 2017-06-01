@@ -8,15 +8,22 @@ const TableContent = require('./stream/table-content');
  * @param filterCallback Function
  * @return Promise
  */
-const getTables = (connection, config, filterCallback) => {
+const getTables = (connection, config, filterFn) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
-            resolve(tablesRaw.filter(t => filterCallback(t, config)));
+            resolve(filterFn(tablesRaw, config));
         });
     });
 }
+
+/**
+ * @param {Array} tables - List of tables. Raw mysql results
+ * @param {Object} config - Config
+ * @return {Array} - Filtered tables
+ */
+const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
 
 /**
  * @param {Array} viewTables - Raw view tables queried from database
@@ -59,13 +66,6 @@ const replaceInContent = (value, content) => {
 
     return tmp.replace(pattern, '');
 }
-
-/**
- * @param {Object} table
- * @param {Object} config
- * @return {Array}
- */
-const isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
 
 /**
  * @param {Array} columns - Collection of table column objects
@@ -354,7 +354,7 @@ module.exports = {
     getTriggers,
     getViewTables,
     isIndex,
-    isTableIncluded,
+    filterExcluededTables,
     escapeQuotes,
     viewTableSanitize,
     convertColumns,
