@@ -2,6 +2,7 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 
 const query = require('../../database/query');
+const TableContent = require('../../database/stream/table-content');
 
 describe('Query', () => {
     describe('#getTables()', () => {
@@ -137,7 +138,9 @@ describe('Query', () => {
                 return content;
             }
 
-            query.getContent(connection, 'todos', escapeQuotes)
+            const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
+
+            query.getContent(connection, 'todos', content$, escapeQuotes, query.processContent)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -201,7 +204,7 @@ describe('Query', () => {
 
             let escapeCallback = (s) => s;
 
-            query.getProcedures(connection, query.mapProcedureDefinition)
+            query.getProcedures(connection, query.mapProcedureDefinition, query.escapeQuotes)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
