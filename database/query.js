@@ -45,13 +45,13 @@ const viewTableSanitize = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, da
  * @param {Object} connection - Database connection
  * @param {Function} sanitizeFn - A callback that sanitize the raw output from database
  */
-const getViewTables = (connection, sanitizeFn) => {
+const getViewTables = (connection, replaceDatabaseNameFn, escapeFn, sanitizeFn, _) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
             resolve(sanitizeFn(
-                viewTablesRaw, replaceInContent, escapeQuotes, connection.config.database, _));
+                viewTablesRaw, replaceDatabaseNameFn, escapeFn, connection.config.database, _));
         });
     });
 }
@@ -69,12 +69,13 @@ const replaceInContent = (value, content) => {
 
 /**
  * @param {Array} columns - Collection of table column objects
- * @param {Function} isIndexFn - A callback that filter out index column
+ * @param {Function} filterIndexesFn - A callback that filter out index columns
  */
-const convertColumns = (columns, isIndexFn) => ({
-    indexes: columns.filter(c => isIndexFn(c)),
+const convertColumns = (columns, filterIndexesFn) => ({
+    indexes: filterIndexesFn(columns),
     columns: columns
 })
+
 
 /**
  * @param {Object} connection - Database connection
@@ -82,21 +83,21 @@ const convertColumns = (columns, isIndexFn) => ({
  * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
  * @return {Promise}
  */
-const getColumns = (connection, table, convertColumnsFn) => {
+const getColumns = (connection, table, convertColumnsFn, filterIndexesFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
 
-            resolve(convertColumnsFn(columnsRaw, isIndex));
+            resolve(convertColumnsFn(columnsRaw, filterIndexesFn));
         });
     });
 }
 
 /**
- * @param {Object} column - A table column
- * @returns {boolean}
+ * @param {Array} columns - Raw mysql columns
+ * @return {Array} 
  */
-const isIndex = column => column.Key === 'MUL' || column.Key === 'UNI';
+const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
 
 /**
  * @param connection Object
@@ -283,14 +284,14 @@ const mapTriggers = (database, triggers, escapeFn, _) => {
     return mapped;
 }
 
-const getTriggers = (connection, escapeFn, _) => {
+const getTriggers = (connection, mapFn, escapeFn, _) => {
     return new Promise((resolve, reject) => {
         const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
 
         connection.query(query, (err, triggers) => {
             if (err) return reject(err);
 
-            resolve(mapTriggers(connection.config.database, triggers, escapeFn, _));
+            resolve(mapFn(connection.config.database, triggers, escapeFn, _));
         });
     });
 }
@@ -306,7 +307,7 @@ let getTableData = (connection, query, config) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, query.isTableIncluded)
+        query.getTables(connection, config, query.filterExcluededTables)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -315,7 +316,7 @@ let getTableData = (connection, query, config) => {
                         dependencies: []
                     });
 
-                    let columnsPromise = query.getColumns(connection, table, query.convertColumns);
+                    let columnsPromise = query.getColumns(connection, table, query.convertColumns, query.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
                     let contentPromise = query.getContent(connection, table, query.escapeQuotes);
 
@@ -353,12 +354,13 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    isIndex,
     filterExcluededTables,
     escapeQuotes,
     viewTableSanitize,
     convertColumns,
     mapDependencies,
     mapProcedureDefinition,
-    replaceInContent
+    replaceInContent,
+    mapTriggers,
+    filterIndexes
 }

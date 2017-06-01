@@ -17,7 +17,7 @@ utils.logHeader(config);
 let fileNames = [];
 let allTables = [];
 
-let viewTablesPromise = query.getViewTables(connection, query.viewTableSanitize)
+let viewTablesPromise = query.getViewTables(connection, query.replaceInContent, query.escapeQuotes, query.viewTableSanitize, _)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
@@ -29,7 +29,7 @@ let proceduresPromise = query.getProcedures(connection, query.mapProcedureDefini
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, query.escapeQuotes, _)
+let triggersPromise = query.getTriggers(connection, query.mapTriggers, query.escapeQuotes, _)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))

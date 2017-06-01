@@ -47,7 +47,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getColumns(connection, table, query.convertColumns)
+            query.getColumns(connection, table, query.convertColumns, query.filterIndexes)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);
@@ -378,7 +378,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, query.viewTableSanitize)
+            query.getViewTables(connection, query.replaceInContent, query.escapeQuotes, query.viewTableSanitize, _)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
