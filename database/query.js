@@ -85,7 +85,7 @@ const getContent = (content$, processFn) => {
  * @param {Object} _ - lodash
  * @returns {Promise} - Contains array
  */
-const getDependencies = (connection, table, config, mapDependenciesFn) => {
+const getDependencies = (connection, table, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
         const dependenciesQuery = `
             SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
@@ -93,8 +93,8 @@ const getDependencies = (connection, table, config, mapDependenciesFn) => {
             ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
             
             WHERE
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${config.database}' AND
-                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${config.database}' AND
+                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
+                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
                 INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
         `;
 
@@ -209,7 +209,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                     const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
-                    let dependenciesPromise = query.getDependencies(connection, table, config, mapDependenciesFn);
+                    let dependenciesPromise = query.getDependencies(connection, table, mapDependenciesFn);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])

@@ -64,11 +64,10 @@ describe('Query', () => {
 
     describe('#getDependencies()', () => {
         it('should return all dependencies for a table', (done) => {
-            let config = {
-                database: 'database'
-            };
-
-            let connection = {
+            const connection = {
+                config: {
+                    database: 'database'
+                },
                 query(queryString, callback) {
                     callback(undefined, [
                         {
@@ -85,7 +84,7 @@ describe('Query', () => {
 
             const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
 
-            query.getDependencies(connection, 'table1', config, mapDependenciesFn)
+            query.getDependencies(connection, 'table1', mapDependenciesFn)
                 .then(dependencies => {
                     expect(dependencies.length).to.be.equal(1);
 
