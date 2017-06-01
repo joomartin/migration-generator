@@ -18,7 +18,7 @@ utils.logHeader(config);
 let fileNames = [];
 let allTables = [];
 
-let viewTablesPromise = query.getViewTables(connection, query.replaceInContent, query.escapeQuotes, queryProcess.sanitizeViewTables, _)
+let viewTablesPromise = query.getViewTables(connection, queryProcess.replaceDatabaseInContent, query.escapeQuotes, queryProcess.sanitizeViewTables, _)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))

@@ -39,18 +39,6 @@ const getViewTables = (connection, replaceDatabaseNameFn, escapeFn, sanitizeFn, 
 }
 
 /**
- * @param {string} value - Searched value in content to replace
- * @param {string} content - Content to search value in
- * @return {string}
- */
-const replaceInContent = (value, content) => {
-    let pattern = new RegExp('`' + value + '`.', 'g')
-    let tmp = content;
-
-    return tmp.replace(pattern, '');
-}
-
-/**
  * @param {Array} columns - Collection of table column objects
  * @param {Function} filterIndexesFn - A callback that filter out index columns
  * @return {Object}
@@ -367,7 +355,6 @@ module.exports = {
     getProceduresMeta,
     getProcedureDefinition,
     mapProcedureDefinition,
-    replaceInContent,
     mapTriggers,
     filterIndexes,
     processContent
