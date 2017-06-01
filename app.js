@@ -18,25 +18,25 @@ utils.logHeader(config);
 let fileNames = [];
 let allTables = [];
 
-let viewTablesPromise = query.getViewTables(connection, queryProcess.replaceDatabaseInContent, query.escapeQuotes, queryProcess.sanitizeViewTables, _)
+let viewTablesPromise = query.getViewTables(connection, queryProcess.replaceDatabaseInContent, utils.escapeQuotes, queryProcess.sanitizeViewTables, _)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.mapProcedureDefinition, query.escapeQuotes)
+let proceduresPromise = query.getProcedures(connection, query.mapProcedureDefinition, utils.escapeQuotes)
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, query.mapTriggers, query.escapeQuotes, _)
+let triggersPromise = query.getTriggers(connection, query.mapTriggers, utils.escapeQuotes, _)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let tableDataPromise = query.getTableData(connection, query, config, queryProcess)
+let tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
     .then(tables => file.getTemplates(tables, config, columnInfoFactory, ejs, file))

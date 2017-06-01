@@ -28,6 +28,12 @@ const setKey = (object, key, value, mapFn, evaulateFn) => {
     }
 }
 
+/**
+ * @param {string} content - Any string
+ * @return {string}
+ */
+const escapeQuotes = content => content.replace(/'/g, "\\'");
+
 const logHeader = (config) => {
     console.log(chalk.green('********************************************************'));
     console.log(chalk.green('*                                                      *'));
@@ -44,5 +50,5 @@ const logHeader = (config) => {
 
 module.exports = {
     sideEffect, getDate, logHeader,
-    getSerial, setKey
+    getSerial, setKey, escapeQuotes
 }

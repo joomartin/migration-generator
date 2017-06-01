@@ -77,34 +77,6 @@ const getContent = (content$, escapeFn, processFn) => {
 }
 
 /**
- * @param {Array} rows - raw mysql content
- * @param {Function} escapeFn - A callback that escapes quotes
- * @return {Array}
- */
-// const processContent = (rows, escapeFn) => {
-//     let escapedRows = [];
-//     rows.forEach(r => {
-//         let escapedRow = [];
-//         for (key in r) {
-//             escapedRow[key] = r[key];
-//             if (typeof r[key] === 'string') {
-//                 escapedRow[key] = escapeFn(r[key]);
-//             }
-//         }
-
-//         escapedRows.push(escapedRow);
-//     });
-
-//     return escapedRows;
-// }
-
-/**
- * @param {string} content - Any string
- * @return {string}
- */
-const escapeQuotes = content => content.replace(/'/g, "\\'");
-
-/**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Object} config - App config
@@ -277,7 +249,7 @@ const getTriggers = (connection, mapFn, escapeFn, _) => {
  * @param {Object} query 
  * @param {Object} config 
  */
-const getTableData = (connection, query, config, queryProcess) => {
+const getTableData = (connection, query, config, queryProcess, utils) => {
     return new Promise((resolve, reject) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
@@ -295,7 +267,7 @@ const getTableData = (connection, query, config, queryProcess) => {
 
                     let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
-                    let contentPromise = query.getContent(content$, query.escapeQuotes, queryProcess.escapeRows);
+                    let contentPromise = query.getContent(content$, utils.escapeQuotes, queryProcess.escapeRows);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
@@ -331,7 +303,6 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    escapeQuotes,
     mapDependencies,
     getProceduresMeta,
     getProcedureDefinition,

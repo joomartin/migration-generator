@@ -4,6 +4,7 @@ const _ = require('lodash');
 const query = require('../../database/query');
 const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
+const utils = require('../../utils/utils');
 
 describe('Query', () => {
     describe('#getTables()', () => {
@@ -189,7 +190,7 @@ describe('Query', () => {
 
             let escapeCallback = (s) => s;
 
-            query.getProcedures(connection, query.mapProcedureDefinition, query.escapeQuotes)
+            query.getProcedures(connection, query.mapProcedureDefinition, utils.escapeQuotes)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -344,7 +345,7 @@ describe('Query', () => {
     describe('#escapeQuotes()', () => {
         it('should escape quotes', () => {
             let obj = { id: 1, name: "it has 'quotes'" };
-            let escaped = query.escapeQuotes(JSON.stringify(obj));
+            let escaped = utils.escapeQuotes(JSON.stringify(obj));
 
             let temp = "\\'quotes\\'";
             expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
@@ -366,7 +367,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, queryProcess.replaceDatabaseInContent, query.escapeQuotes, queryProcess.sanitizeViewTables, _)
+            query.getViewTables(connection, queryProcess.replaceDatabaseInContent, utils.escapeQuotes, queryProcess.sanitizeViewTables, _)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
