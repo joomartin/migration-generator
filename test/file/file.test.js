@@ -190,4 +190,29 @@ describe('File', () => {
                 .catch(console.log);
         });
     });
+
+    describe('#getTriggersTemplate()', () => {
+        it('should get template for triggers', (done) => {
+            const triggers = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-triggers.ejs');
+                    expect(options).to.include({ triggersByTables: triggers });
+                    callback(null, 'html content');
+                }
+            };
+
+            file.getTriggersTemplate(triggers, config, ejs)
+                .then(html => {
+                    expect(html).to.be.equal('html content');
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
 });
