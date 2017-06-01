@@ -166,23 +166,6 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, e
 }
 
 /**
- * @param {string} type - Procedure or function
- * @param {Object} definition - Definition
- * @param {Function} escapeFn - A callback that escapes quotes
- * @return {Object}
- */
-const mapProcedureDefinition = (type, definition, escapeFn) => {
-    const createColumn = type.toUpperCase() === 'FUNCTION' ? 'Create Function' : 'Create Procedure';
-    const typeColumn = type.toUpperCase() === 'FUNCTION' ? 'Function' : 'Procedure';
-
-    return {
-        type,
-        name: definition[typeColumn],
-        definition: escapeFn(definition[createColumn])
-    };
-}
-
-/**
  * @param {string} database - Name of database
  * @param {Array} triggers - List of triggers in raw format
  * @param {Function} escapeFn - Callback that escape quotes
