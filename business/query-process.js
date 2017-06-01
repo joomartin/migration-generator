@@ -21,6 +21,13 @@ const sanitizeViewTables = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, d
         return viewTable;
     });
 
+/**
+ * @param {string} value - Searched value in content to replace
+ * @param {string} content - Content to search value in
+ * @return {string}
+ */
+const replaceDatabaseInContent = (database, content) => content.replace(new RegExp('`' + database + '`.', 'g'), '');
+
 module.exports = {
-    filterExcluededTables, sanitizeViewTables
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent
 }

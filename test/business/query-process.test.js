@@ -13,7 +13,7 @@ describe('QueryProcess', () => {
             ];
 
             const filteredTables = queryProcess.filterExcluededTables(tables, config)
-            
+
             expect(filteredTables.length).to.be.equal(2);
             expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
         });
@@ -46,6 +46,16 @@ describe('QueryProcess', () => {
                 viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
+        });
+    });
+
+    describe('#replaceDatabaseInContent()', () => {
+        it('should return the given content, without the given database name', () => {
+            const content = 'SELECT * FROM `test-database`.`test-table`';
+            const database = 'test-database';
+
+            const replaced = queryProcess.replaceDatabaseInContent(database, content);
+            expect(replaced).to.be.equal('SELECT * FROM `test-table`');
         });
     });
 });
