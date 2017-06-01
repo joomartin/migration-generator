@@ -19,22 +19,6 @@ const getTables = (connection, config, filterFn) => {
 }
 
 /**
- * @param {Array} viewTables - Raw view tables queried from database
- * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
- * @param {Function} escapeQuotesFn - A callback that escape quotes
- * @param {Object} _ - lodash
- * @return {Array} - Sanitized view tables
- */
-const viewTableSanitize = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _) =>
-    viewTables.map(vt => {
-        let viewTable = _.clone(vt);
-        viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
-            database, escapeQuotesFn(vt.VIEW_DEFINITION));
-
-        return viewTable;
-    });
-
-/**
  * 
  * @param {Object} connection - Database connection
  * @param {Function} replaceDatabaseNameFn - A calback that replaces source database name fom view definition
@@ -378,7 +362,6 @@ module.exports = {
     getTriggers,
     getViewTables,
     escapeQuotes,
-    viewTableSanitize,
     convertColumns,
     mapDependencies,
     getProceduresMeta,
