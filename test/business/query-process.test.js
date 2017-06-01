@@ -166,7 +166,7 @@ describe('QueryProcess', () => {
                 }
             };
 
-            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition('PROCEDURE', definition, escapeFn, _);
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, 'PROCEDURE', definition);
 
         });
     });

@@ -89,7 +89,7 @@ const mapDependencies = (_, dependencies) =>
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Object}
  */
-const normalizeProcedureDefinition = (type, definition, escapeFn, _) => {
+const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
     const typeUpperFirst = _.upperFirst(type.toLowerCase());
 
     return {

@@ -83,7 +83,9 @@ describe('Query', () => {
                 }
             }
 
-            query.getDependencies(connection, 'table1', config, queryProcess.mapDependencies, _)
+            const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+
+            query.getDependencies(connection, 'table1', config, mapDependenciesFn)
                 .then(dependencies => {
                     expect(dependencies.length).to.be.equal(1);
 
@@ -191,8 +193,10 @@ describe('Query', () => {
             }
 
             let escapeCallback = (s) => s;
+            const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
+                _, utils.escapeQuotes);
 
-            query.getProcedures(connection, queryProcess.normalizeProcedureDefinition, utils.escapeQuotes, _)
+            query.getProcedures(connection, normalizeProcedureDefinitionFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 

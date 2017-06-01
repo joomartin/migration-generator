@@ -12,7 +12,10 @@ const escapeRowsFactory = (escapeFn) =>
 const mapDependenciesFactory = (_) => 
     queryProcess.mapDependencies.bind(null, _);
 
+const normalizeProcedureDefinitionFactory = (_, escapeFn) =>
+    queryProcess.normalizeProcedureDefinition.bind(null, _, escapeFn);
+
 module.exports = {
     sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory,
-    mapDependenciesFactory
+    mapDependenciesFactory, normalizeProcedureDefinitionFactory
 }

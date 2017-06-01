@@ -112,11 +112,11 @@ const getDependencies = (connection, table, config, mapDependenciesFn) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Promise} - Contains array
  */
-const getProcedures = (connection, normalizeDefinitionFn, escapeFn, _) => {
+const getProcedures = (connection, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
         getProceduresMeta(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn, escapeFn, _))
+                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
             )
             .then(promises => {
                 Promise.all(promises)
@@ -155,13 +155,12 @@ const getProceduresMeta = (connection) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, escapeFn, _) => {
+const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
-
-
-            resolve(normalizeDefinitionFn(type, result[0], escapeFn, _));
+            
+            resolve(normalizeDefinitionFn(type, result[0]));
         });
     });
 }
