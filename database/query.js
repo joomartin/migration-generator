@@ -19,13 +19,6 @@ const getTables = (connection, config, filterFn) => {
 }
 
 /**
- * @param {Array} tables - List of tables. Raw mysql results
- * @param {Object} config - App config
- * @return {Array} - Filtered tables
- */
-const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
-
-/**
  * @param {Array} viewTables - Raw view tables queried from database
  * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
  * @param {Function} escapeQuotesFn - A callback that escape quotes
@@ -330,12 +323,12 @@ const getTriggers = (connection, mapFn, escapeFn, _) => {
  * @param {Object} query 
  * @param {Object} config 
  */
-const getTableData = (connection, query, config) => {
+const getTableData = (connection, query, config, queryProcess) => {
     return new Promise((resolve, reject) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, query.filterExcluededTables)
+        query.getTables(connection, config, queryProcess.filterExcluededTables)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -384,7 +377,6 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    filterExcluededTables,
     escapeQuotes,
     viewTableSanitize,
     convertColumns,

@@ -9,6 +9,7 @@ const columnInfoFactory = require('./database/column-info/factory');
 const query = require('./database/query');
 const file = require('./file/file');
 const utils = require('./utils/utils');
+const queryProcess = require('./business/query-process');
 
 const config = require('./config.json');
  
@@ -35,7 +36,7 @@ let triggersPromise = query.getTriggers(connection, query.mapTriggers, query.esc
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let tableDataPromise = query.getTableData(connection, query, config)
+let tableDataPromise = query.getTableData(connection, query, config, queryProcess)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
     .then(tables => file.getTemplates(tables, config, columnInfoFactory, ejs, file))

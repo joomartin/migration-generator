@@ -2,6 +2,7 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 
 const query = require('../../database/query');
+const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
 
 describe('Query', () => {
@@ -24,7 +25,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getTables(connection, config, query.filterExcluededTables)
+            query.getTables(connection, config, queryProcess.filterExcluededTables)
                 .then(res => {
                     expect(res.length).to.be.equal(2)
                     done();
@@ -93,22 +94,6 @@ describe('Query', () => {
                     done();
                 })
                 .catch(err => (console.log(err)));
-        });
-    });
-
-    describe('#filterExcluededTables', () => {
-        it('should return filtered tables based on config excluded tables property', () => {
-            const config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
-            const tables = [
-                { 'Tables_in_test': 'migrations' }, { 'Tables_in_test': 'table1' }, { 'Tables_in_test': 'table2' }
-            ];
-
-            const filteredTables = query.filterExcluededTables(tables, config, query.filterExcluededTables);
-            expect(filteredTables.length).to.be.equal(2);
-            expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
         });
     });
 
