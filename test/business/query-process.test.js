@@ -60,11 +60,14 @@ describe('QueryProcess', () => {
     });
 
     describe('#seperateColumns()', () => {
-        it('should return the an array with seperated indexes and columns keys', () => {
+        it('should call filtering function to columns and return a seperated array by columns and indexes', () => {
             const columns = [
                 { Field: 'id' }, { Field: 'name' }
             ];
-            const indexFilterFn = (columns) => columns;
+            const indexFilterFn = (columnsToBeFiltered) => {
+                expect(columnsToBeFiltered).to.be.deep.equal(columns);
+                return columnsToBeFiltered;
+            };
 
             const seperated = queryProcess.seperateColumns(columns, indexFilterFn);
 
@@ -90,6 +93,25 @@ describe('QueryProcess', () => {
             expect(indexes).to.be.deep.equal([
                 { Field: 'user_id', Key: 'MUL' }, { Field: 'serial', Key: 'UNI' }
             ]);
+        });
+    });
+
+    describe('#escapeRows()', () => {
+        it('should foreach rows and escape string content', () => {
+            const rows = [
+                { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 }, 
+            ];
+
+            const escapeFn = (content) => {
+                expect(['Item #1', 'Item #2'].some(i => i === content)).to.be.true;
+                expect(typeof content).to.be.equal('string');
+
+                return content;
+            }
+
+            const escaped = queryProcess.escapeRows(rows, escapeFn);
+
+            expect(escaped.length).to.be.equal(2);
         });
     });
 });

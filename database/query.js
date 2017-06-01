@@ -81,23 +81,22 @@ const getContent = (content$, escapeFn, processFn) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Array}
  */
-const processContent = (rows, escapeFn) => {
-    let escapedRows = [];
-    rows.forEach(r => {
-        let escapedRow = [];
-        for (key in r) {
-            escapedRow[key] = r[key];
-            if (typeof r[key] === 'string') {
-                escapedRow[key] = escapeFn(r[key]);
-            }
-        }
+// const processContent = (rows, escapeFn) => {
+//     let escapedRows = [];
+//     rows.forEach(r => {
+//         let escapedRow = [];
+//         for (key in r) {
+//             escapedRow[key] = r[key];
+//             if (typeof r[key] === 'string') {
+//                 escapedRow[key] = escapeFn(r[key]);
+//             }
+//         }
 
-        escapedRows.push(escapedRow);
-    });
+//         escapedRows.push(escapedRow);
+//     });
 
-    return escapedRows;
-}
-
+//     return escapedRows;
+// }
 
 /**
  * @param {string} content - Any string
@@ -296,7 +295,7 @@ const getTableData = (connection, query, config, queryProcess) => {
 
                     let columnsPromise = query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes);
                     let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
-                    let contentPromise = query.getContent(content$, query.escapeQuotes, query.processContent);
+                    let contentPromise = query.getContent(content$, query.escapeQuotes, queryProcess.escapeRows);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {
@@ -337,6 +336,5 @@ module.exports = {
     getProceduresMeta,
     getProcedureDefinition,
     mapProcedureDefinition,
-    mapTriggers,
-    processContent
+    mapTriggers
 }

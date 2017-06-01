@@ -125,7 +125,7 @@ describe('Query', () => {
 
             const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
 
-            query.getContent(content$, escapeQuotes, query.processContent)
+            query.getContent(content$, escapeQuotes, queryProcess.escapeRows)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 

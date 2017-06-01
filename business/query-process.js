@@ -44,6 +44,29 @@ const seperateColumns = (columns, filterIndexesFn) => ({
  */
 const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
 
+/**
+ * @param {Array} rows - raw mysql content
+ * @param {Function} escapeFn - A callback that escapes quotes
+ * @return {Array}
+ */
+const escapeRows = (rows, escapeFn) => {
+    let escapedRows = [];
+    rows.forEach(r => {
+        let escapedRow = [];
+        for (key in r) {
+            escapedRow[key] = r[key];
+            if (typeof r[key] === 'string') {
+                escapedRow[key] = escapeFn(r[key]);
+            }
+        }
+
+        escapedRows.push(escapedRow);
+    });
+
+    return escapedRows;
+}
+
 module.exports = {
-    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
+    escapeRows
 }
