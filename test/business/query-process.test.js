@@ -43,7 +43,7 @@ describe('QueryProcess', () => {
             }
 
             const sanitized = queryProcess.sanitizeViewTables(
-                viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _);
+                _, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
         });

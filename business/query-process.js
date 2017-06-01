@@ -12,7 +12,7 @@ const filterExcluededTables = (tables, config) => tables.filter(t => !config.exc
  * @param {Object} _ - lodash
  * @return {Array} - Sanitized view tables
  */
-const sanitizeViewTables = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _) =>
+const sanitizeViewTables = (_, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
     viewTables.map(vt => {
         let viewTable = _.clone(vt);
         viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(

@@ -27,13 +27,12 @@ const getTables = (connection, config, filterFn) => {
  * @param {Object} _ - lodash
  * @return {Promise} - Contains array
  */
-const getViewTables = (connection, replaceDatabaseNameFn, escapeFn, sanitizeFn, _) => {
+const getViewTables = (connection, sanitizeFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            resolve(sanitizeFn(
-                viewTablesRaw, replaceDatabaseNameFn, escapeFn, connection.config.database, _));
+            resolve(sanitizeFn(viewTablesRaw));
         });
     });
 }

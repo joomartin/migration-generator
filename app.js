@@ -12,13 +12,17 @@ const utils = require('./utils/utils');
 const queryProcess = require('./business/query-process');
 
 const config = require('./config.json');
+const queryProcessFactory = require('./business/factory/query-process');
  
 utils.logHeader(config);
 
 let fileNames = [];
 let allTables = [];
 
-let viewTablesPromise = query.getViewTables(connection, queryProcess.replaceDatabaseInContent, utils.escapeQuotes, queryProcess.sanitizeViewTables, _)
+const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
+    _, connection.config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+
+let viewTablesPromise = query.getViewTables(connection, sanitizeFn)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))

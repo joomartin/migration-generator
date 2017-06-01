@@ -5,6 +5,7 @@ const query = require('../../database/query');
 const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
 const utils = require('../../utils/utils');
+const queryProcessFactory = require('../../business/factory/query-process');
 
 describe('Query', () => {
     describe('#getTables()', () => {
@@ -354,7 +355,7 @@ describe('Query', () => {
 
     describe('#getViewTables()', () => {
         it('should query database for view tables', (done) => {
-            let connection = {
+            const connection = {
                 config: { database: 'test' },
                 query(queryString, callback) {
 
@@ -367,7 +368,10 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, queryProcess.replaceDatabaseInContent, utils.escapeQuotes, queryProcess.sanitizeViewTables, _)
+            const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
+                _, 'test', queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+
+            query.getViewTables(connection, sanitizeFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
