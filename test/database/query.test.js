@@ -384,4 +384,31 @@ describe('Query', () => {
                 .catch(err => console.log(err));
         });
     });
+
+    describe('#getViewTables', () => {
+        it('should query view tables and call sanitize function', (done) => {
+            const views = [
+                { name: 'view1' }
+            ];
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'database'");
+                    callback(null, views);
+                }
+            };
+            const sanitizeFn = (viewsRaw) => {
+                expect(viewsRaw).to.be.equal(views);
+                return viewsRaw;
+            }
+
+            query.getViewTables(connection, sanitizeFn)
+                .then(viewTables => {
+                    expect(viewTables).to.be.equal(views)
+                    done();
+                });
+        });
+    });
 });

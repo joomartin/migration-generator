@@ -216,7 +216,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                         .then(([columns, dependencies, content]) => {
                             tableData[index].columns = columns.columns;
                             tableData[index].indexes = columns.indexes;
-                            tableData[index].dependencies = dependencies;                            
+                            tableData[index].dependencies = dependencies;
                             tableData[index].content = content;
 
                             if (index === tables.length - 1) {
