@@ -186,11 +186,11 @@ const mapDependencies = (dependencies, _) =>
  * @param {Object} connection 
  * @param {Function} mapDefinitionFn 
  */
-const getProcedures = (connection, mapDefinitionFn) => {
+const getProcedures = (connection, mapDefinitionFn, escapeFn) => {
     return new Promise((resolve, reject) => {
         getProceduresMeta(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
+                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn, escapeFn))
             )
             .then(promises => {
                 Promise.all(promises)
@@ -216,10 +216,6 @@ const getProceduresMeta = (connection) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            if (proceduresRaw.length === 0) {
-                resolve([]);
-            }
-
             resolve(proceduresRaw);
         });
     });
@@ -231,12 +227,12 @@ const getProceduresMeta = (connection) => {
  * @param {string} type 
  * @param {Function} mapDefinitionFn 
  */
-const getProcedureDefinition = (connection, name, type, mapDefinitionFn) => {
+const getProcedureDefinition = (connection, name, type, mapDefinitionFn, escapeFn) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
 
-            resolve(mapDefinitionFn(type, result[0], escapeQuotes));
+            resolve(mapDefinitionFn(type, result[0], escapeFn));
         });
     });
 }
@@ -359,6 +355,8 @@ module.exports = {
     viewTableSanitize,
     convertColumns,
     mapDependencies,
+    getProceduresMeta,
+    getProcedureDefinition,
     mapProcedureDefinition,
     replaceInContent,
     mapTriggers,
