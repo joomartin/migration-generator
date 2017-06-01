@@ -140,7 +140,7 @@ describe('Query', () => {
 
             const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
 
-            query.getContent(connection, 'todos', content$, escapeQuotes, query.processContent)
+            query.getContent(content$, escapeQuotes, query.processContent)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -222,7 +222,7 @@ describe('Query', () => {
         });
     });
 
-    describe('#getTableData()', () => {
+    xdescribe('#getTableData()', () => {
         it('it returns all table data', (done) => {
             let connectionMock = {};
             let config = {
