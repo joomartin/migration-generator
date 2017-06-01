@@ -13,8 +13,39 @@ describe('QueryProcess', () => {
             ];
 
             const filteredTables = queryProcess.filterExcluededTables(tables, config)
+            
             expect(filteredTables.length).to.be.equal(2);
             expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
+        });
+    });
+
+    describe('#sanitizeViewTables()', () => {
+        it('should sanitize given view tables', () => {
+            const viewTables = [
+                { VIEW_DEFINITION: 'view table #1' }, { VIEW_DEFINITION: 'view table #2' }
+            ];
+            const definitions = viewTables.map(vt => vt.VIEW_DEFINITION);
+            const replaceDatabaseNameFn = (database, content) => {
+                expect(database).to.be.equal('test-database');
+                return content;
+            };
+            const escapeQuotesFn = (content) => {
+                expect(definitions).include(content);
+                return content;
+            };
+
+            const database = 'test-database';
+            const _ = {
+                clone(obj) {
+                    expect(viewTables).include(obj);
+                    return obj;
+                }
+            }
+
+            const sanitized = queryProcess.sanitizeViewTables(
+                viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _);
+
+            expect(sanitized.length).to.be.equal(viewTables.length);
         });
     });
 });
