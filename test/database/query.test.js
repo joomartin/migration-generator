@@ -51,7 +51,8 @@ describe('Query', () => {
                 }
             }
 
-            query.getColumns(connection, table, queryProcess.seperateColumns, queryProcess.filterIndexes)
+            const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
+            query.getColumns(connection, table, seperateColumnsFn)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);

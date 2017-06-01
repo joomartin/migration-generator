@@ -2,6 +2,7 @@ const _ = require('lodash');
 
 const TableContent = require('./stream/table-content');
 const queryProcessFactory = require('../business/factory/query-process');
+const utils = require('../utils/utils');
 
 /**
  * @param {Object} connection - Database connection
@@ -60,7 +61,7 @@ const getColumns = (connection, table, seperateColumnsFn) => {
  * @param {Function} processFn - A callback that processes the raw output
  * @return {Promise} - Contains array
  */
-const getContent = (content$, escapeFn, processFn) => {
+const getContent = (content$, processFn) => {
     return new Promise((resolve, reject) => {
         let rows = [];
 
@@ -71,7 +72,7 @@ const getContent = (content$, escapeFn, processFn) => {
         });
 
         content$.on('end', () => {
-            resolve(processFn(rows, escapeFn));
+            resolve(processFn(rows));
         });
     });
 }
@@ -204,12 +205,12 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(
-                        queryProcess.filterIndexes);
+                    const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
+                    const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
                     let dependenciesPromise = query.getDependencies(connection, table, config, queryProcess.mapDependencies, _);
-                    let contentPromise = query.getContent(content$, utils.escapeQuotes, queryProcess.escapeRows);
+                    let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(values => {

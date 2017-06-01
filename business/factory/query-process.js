@@ -6,6 +6,10 @@ const sanitizeViewTablesFactory = (_, database, replaceDatabaseNameFn, escapeQuo
 const seperateColumnsFactory = (filterIndexesFn) => 
     queryProcess.seperateColumns.bind(null, filterIndexesFn);
 
+const escapeRowsFactory = (escapeFn) => 
+    queryProcess.escapeRows.bind(null, escapeFn);
+
+
 module.exports = {
-    sanitizeViewTablesFactory, seperateColumnsFactory
+    sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory
 }

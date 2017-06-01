@@ -49,7 +49,7 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Array}
  */
-const escapeRows = (rows, escapeFn) => {
+const escapeRows = (escapeFn, rows) => {
     let escapedRows = [];
     rows.forEach(r => {
         let escapedRow = [];

@@ -109,7 +109,7 @@ describe('QueryProcess', () => {
                 return content;
             }
 
-            const escaped = queryProcess.escapeRows(rows, escapeFn);
+            const escaped = queryProcess.escapeRows(escapeFn, rows);
 
             expect(escaped.length).to.be.equal(2);
         });
