@@ -112,11 +112,11 @@ const getDependencies = (connection, table, mapDependenciesFn) => {
  * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Promise} - Contains array
  */
-const getProcedures = (connection, normalizeDefinitionFn) => {
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
-        getProceduresMeta(connection)
+        getProceduresMetaFn(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
             )
             .then(promises => {
                 Promise.all(promises)
@@ -213,21 +213,15 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
-                        .then(values => {
-                            values.forEach(v => {
-                                if (_.get(v, ['columns'], null)) {                  // Columns
-                                    tableData[index].columns = v.columns;
-                                    tableData[index].indexes = v.indexes;
-                                } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
-                                    tableData[index].dependencies = v;
-                                } else {                                            // Content
-                                    tableData[index].content = v;
-                                }
+                        .then(([columns, dependencies, content]) => {
+                            tableData[index].columns = columns.columns;
+                            tableData[index].indexes = columns.indexes;
+                            tableData[index].dependencies = dependencies;                            
+                            tableData[index].content = content;
 
-                                if (index === tables.length - 1) {
-                                    resolve(tableData);
-                                }
-                            });
+                            if (index === tables.length - 1) {
+                                resolve(tableData);
+                            }
                         });
                 });
             })
