@@ -15,7 +15,7 @@ const getDate = () => {
     return `${date.getFullYear()}${zeroFilledMonth}${date.getDate()}`;
 }
 
-const getSerial = (number, width = 9) => _.padStart(number, width, 0);
+const getSerial = (number, width = 6) => _.padStart(number, width, 0);
 
 const setKey = (object, key, value, mapFn, evaulateFn) => {
     if (evaulateFn !== undefined) {
