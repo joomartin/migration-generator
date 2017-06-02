@@ -438,4 +438,56 @@ describe('Query', () => {
                 });
         });
     });
+
+    describe('#getTableData', () => {
+        it('should call all function that produces table data', (done) => {
+            const tablesMock = [
+                { table: 'table1' }, { table: 'table2' }
+            ];
+            const config = {
+                database: 'database'
+            };
+            const connection = {
+            };
+            const queryMock = {
+                getTables() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve(tablesMock);
+                    });
+                },
+                getColumns() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve({
+                            columns: [
+                                { Field: 'column1' }, { Field: 'column2' }
+                            ],
+                            idnexes: [
+                                { Field: 'index1' }
+                            ],
+                        });
+                    });
+                },
+                getDependencies() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve([{ sourceTable: 'table1', sourceColumn: 'col1' }, { sourceTable: 'table1', sourceColumn: 'col2' }]);
+                    });
+                },
+                getContent() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
+                    });
+                }
+            };
+
+            query.getTableData(connection, queryMock, config, queryProcess, utils)
+                .then(() => {
+                    done()
+                })
+                .catch(console.log);
+        });
+    });
 });
