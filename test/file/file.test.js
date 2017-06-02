@@ -165,4 +165,78 @@ describe('File', () => {
                 .catch(err => console.log(err));
         });
     });
+
+    describe('#getProcedureTemplate()', () => {
+        it('should get template for procedures', (done) => {
+            const procedures = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-procedures.ejs');
+                    expect(options).to.include({ procedures });
+                    callback(null, 'html content');
+                }
+            };
+
+            file.getProcedureTemplate(procedures, config, ejs)
+                .then(html => {
+                    expect(html).to.be.equal('html content');
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
+
+    describe('#getTriggersTemplate()', () => {
+        it('should get template for triggers', (done) => {
+            const triggers = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-triggers.ejs');
+                    expect(options).to.include({ triggersByTables: triggers });
+                    callback(null, 'html content');
+                }
+            };
+
+            file.getTriggersTemplate(triggers, config, ejs)
+                .then(html => {
+                    expect(html).to.be.equal('html content');
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
+
+    describe('#getFileNames()', () => {
+        it('should get file names', () => {
+            const tables = [{table: 'table 1'}];
+            const padIndex = (index) => index;
+            const fileMock = {
+                getFileName() {
+                    expect(true).to.be.true;
+                }
+            };
+
+            file.getFileNames(null, tables, fileMock, padIndex);
+        });
+    });
+
+    describe('#getFileName()', () => {
+        it('should get file names', () => {
+            const table = 'table1';
+            const index = 1;
+
+            const fileName = file.getFileName(null, table, index);
+            expect(fileName).to.include('1_create_table1_table.php');
+        });
+    });
 });

@@ -1,149 +1,91 @@
 const _ = require('lodash');
 
 const TableContent = require('./stream/table-content');
+const queryProcessFactory = require('../business/query-process-factory');
+const utils = require('../utils/utils');
 
 /**
- * @param connection Object
- * @param config Object
- * @param filterCallback Function
- * @return Promise
+ * @param {Object} connection - Database connection
+ * @param {Object} config - App config
+ * @param {Function} filterFn - A callback that filters out excluded tables
+ * @return {Promise} - Contains array
  */
-const getTables = (connection, config, filterCallback) => {
+const getTables = (connection, config, filterFn) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
             if (err) return reject(err);
 
-            resolve(tablesRaw.filter(t => filterCallback(t, config)));
+            resolve(filterFn(tablesRaw, config));
         });
     });
 }
 
 /**
- * @param {Array} viewTables - Raw view tables queried from database
- * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
- * @param {Function} escapeQuotesFn - A callback that escape quotes
- * @param {Object} _ - lodash
- * @return {Array} - Sanitized view tables
- */
-const viewTableSanitize = (viewTables, replaceDatabaseNameFn, escapeQuotesFn, database, _) =>
-    viewTables.map(vt => {
-        let viewTable = _.clone(vt);
-        viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
-            database, escapeQuotesFn(vt.VIEW_DEFINITION));
-
-        return viewTable;
-    });
-
-/**
+ * 
  * @param {Object} connection - Database connection
- * @param {Function} sanitizeFn - A callback that sanitize the raw output from database
+ * @param {Function} replaceDatabaseNameFn - A calback that replaces source database name fom view definition
+ * @param {Function} escapeFn - A callback that escapes quotes
+ * @param {Function} sanitizeFn - A callback that sanitize raw output
+ * @param {Object} _ - lodash
+ * @return {Promise} - Contains array
  */
 const getViewTables = (connection, sanitizeFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
             if (err) return reject(err);
 
-            resolve(sanitizeFn(
-                viewTablesRaw, replaceInContent, escapeQuotes, connection.config.database, _));
+            resolve(sanitizeFn(viewTablesRaw));
         });
     });
 }
-
-/**
- * @param {string} value - Searched value in content to replace
- * @param {string} content - Content to search value in
- */
-const replaceInContent = (value, content) => {
-    let pattern = new RegExp('`' + value + '`.', 'g')
-    let tmp = content;
-
-    return tmp.replace(pattern, '');
-}
-
-/**
- * @param {Object} table
- * @param {Object} config
- * @return {Array}
- */
-const isTableIncluded = (table, config) => !config.excludedTables.includes(table[`Tables_in_${config.database}`]);
-
-/**
- * @param {Array} columns - Collection of table column objects
- * @param {Function} isIndexFn - A callback that filter out index column
- */
-const convertColumns = (columns, isIndexFn) => ({
-    indexes: columns.filter(c => isIndexFn(c)),
-    columns: columns
-})
 
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
- * @return {Promise}
+ * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, convertColumnsFn) => {
+const getColumns = (connection, table, seperateColumnsFn) => {
     return new Promise((resolve, reject) => {
         connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
             if (err) return reject(err);
 
-            resolve(convertColumnsFn(columnsRaw, isIndex));
+            resolve(seperateColumnsFn(columnsRaw));
         });
     });
 }
 
 /**
- * @param {Object} column - A table column
- * @returns {boolean}
+ * @param {TableContent} content$ - Readable stream that reads content of a tablo
+ * @param {Function} escapeFn - A callback that escaps quotes
+ * @param {Function} processFn - A callback that processes the raw output
+ * @return {Promise} - Contains array
  */
-const isIndex = column => column.Key === 'MUL' || column.Key === 'UNI';
-
-/**
- * @param connection Object
- * @param table String
- */
-let getContent = (connection, table, escapeCallback) => {
+const getContent = (content$, processFn) => {
     return new Promise((resolve, reject) => {
         let rows = [];
-        let content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-        content$.on('error', (err) => reject(err));
+        content$.on('error', err => reject(err));
 
-        content$.on('data', (chunk) => {
+        content$.on('data', chunk => {
             rows = rows.concat(chunk);
         });
 
         content$.on('end', () => {
-            let escapedRows = [];
-            rows.forEach(r => {
-                let escapedRow = [];
-                for (key in r) {
-                    escapedRow[key] = r[key];
-                    if (typeof r[key] === 'string') {
-                        escapedRow[key] = escapeCallback(r[key]);
-                    }
-                }
-
-                escapedRows.push(escapedRow);
-            });
-
-            resolve(escapedRows);
+            resolve(processFn(rows));
         });
     });
 }
 
 /**
- * @param {string} content - Any string
- * @return {string}
+ * @param {Object} connection - Database connection
+ * @param {string} table - Table name
+ * @param {Object} config - App config
+ * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
+ * @param {Object} _ - lodash
+ * @returns {Promise} - Contains array
  */
-const escapeQuotes = content => content.replace(/'/g, "\\'");
-
-/**
- * @param connection Object
- * @param table String
- * @param config Object
- */
-const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
+const getDependencies = (connection, table, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
         const dependenciesQuery = `
             SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
@@ -151,45 +93,30 @@ const getDependencies = (connection, table, config, mapDependenciesFn, _) => {
             ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
             
             WHERE
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${config.database}' AND
-                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${config.database}' AND
+                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
+                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
                 INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
         `;
 
         connection.query(dependenciesQuery, (err, results) => {
             if (err) return reject(err);
 
-            resolve(mapDependenciesFn(results, _));
+            resolve(mapDependenciesFn(results));
         });
     });
 }
 
 /**
- * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
- * @param {Object} _ - lodash
- * @return {Array}
+ * @param {Object} connection - Database connection
+ * @param {Function} mapDefinitionFn - A callback that maps definitions
+ * @param {Function} escapeFn - A callback that escapes quotes
+ * @return {Promise} - Contains array
  */
-const mapDependencies = (dependencies, _) =>
-    _.uniqBy(dependencies.map(r => {
-        return {
-            sourceTable: r['TABLE_NAME'],
-            sourceColumn: r['COLUMN_NAME'],
-            referencedTable: r['REFERENCED_TABLE_NAME'],
-            referencedColumn: r['REFERENCED_COLUMN_NAME'],
-            updateRule: r['UPDATE_RULE'],
-            deleteRule: r['DELETE_RULE']
-        };
-    }), 'sourceColumn');
-
-/**
- * @param {Object} connection 
- * @param {Function} mapDefinitionFn 
- */
-const getProcedures = (connection, mapDefinitionFn) => {
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
-        getProceduresMeta(connection)
+        getProceduresMetaFn(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], mapDefinitionFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
             )
             .then(promises => {
                 Promise.all(promises)
@@ -201,8 +128,8 @@ const getProcedures = (connection, mapDefinitionFn) => {
 }
 
 /**
- * @param {Object} connection
- * @returns {Promise} 
+ * @param {Object} connection - Database connection
+ * @return {Promise} - Contains array
  */
 const getProceduresMeta = (connection) => {
     return new Promise((resolve, reject) => {
@@ -215,98 +142,58 @@ const getProceduresMeta = (connection) => {
         connection.query(query, (err, proceduresRaw) => {
             if (err) return reject(err);
 
-            if (proceduresRaw.length === 0) {
-                resolve([]);
-            }
-
             resolve(proceduresRaw);
         });
     });
 }
 
 /**
- * @param {Object} connection 
- * @param {string} name 
- * @param {string} type 
- * @param {Function} mapDefinitionFn 
+ * @param {Object} connection - Database connection
+ * @param {string} name - Procedure name
+ * @param {string} type - Type (function or procedure)
+ * @param {Function} mapDefinitionFn - A callback that maps definition
+ * @param {Function} escapeFn - A callback that escapes quotes
+ * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, name, type, mapDefinitionFn) => {
+const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
         connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
             if (err) return reject(err);
 
-            resolve(mapDefinitionFn(type, result[0], escapeQuotes));
+            resolve(normalizeDefinitionFn(type, result[0]));
         });
     });
 }
 
 /**
- * @param {string} type 
- * @param {Object} definition 
- * @param {Function} escapeFn 
- */
-const mapProcedureDefinition = (type, definition, escapeFn) => {
-    const createColumn = type.toUpperCase() === 'FUNCTION' ? 'Create Function' : 'Create Procedure';
-    const typeColumn = type.toUpperCase() === 'FUNCTION' ? 'Function' : 'Procedure';
-
-    return {
-        type,
-        name: definition[typeColumn],
-        definition: escapeFn(definition[createColumn])
-    };
-}
-
-/**
- * @param {string} database - Name of database
- * @param {Array} triggers - List of triggers in raw format
- * @param {Function} escapeFn - Callback that escape quotes
+ * @param {Object} connection - Database connection
+ * @param {Function} mapFn - A callback that maps raw results
+ * @param {Function} escapeFn - A callback that escape quotes
  * @param {Object} _ - lodash
  */
-const mapTriggers = (database, triggers, escapeFn, _) => {
-    let mapped = {};
-    triggers.forEach(t => {
-        if (!_.has(mapped, t.Table)) {
-            _.set(mapped, t.Table, []);
-        }
-
-        mapped[t.Table].push({
-            name: t.Trigger,
-            event: t.Event,
-            timing: t.Timing,
-            statement: escapeFn(t.Statement),
-            definer: t.Definer,
-            table: t.Table,
-            database: database
-        });
-    });
-
-    return mapped;
-}
-
-const getTriggers = (connection, escapeFn, _) => {
+const getTriggers = (connection, mapFn) => {
     return new Promise((resolve, reject) => {
         const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
 
         connection.query(query, (err, triggers) => {
             if (err) return reject(err);
 
-            resolve(mapTriggers(connection.config.database, triggers, escapeFn, _));
+            resolve(mapFn(connection.config.database, triggers));
         });
     });
 }
 
 /**
- * @param connection Object
- * @param query Object
- * @param config Object
- * @return Promise
+ * @param {Object} connection 
+ * @param {Object} query 
+ * @param {Object} config 
  */
-let getTableData = (connection, query, config) => {
+const getTableData = (connection, query, config, queryProcess, utils) => {
     return new Promise((resolve, reject) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, query.isTableIncluded)
+        query.getTables(connection, config, queryProcess.filterExcluededTables)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -315,26 +202,26 @@ let getTableData = (connection, query, config) => {
                         dependencies: []
                     });
 
-                    let columnsPromise = query.getColumns(connection, table, query.convertColumns);
-                    let dependenciesPromise = query.getDependencies(connection, table, config, mapDependencies, _);
-                    let contentPromise = query.getContent(connection, table, query.escapeQuotes);
+                    const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
+
+                    const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
+                    const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
+                    const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+
+                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
+                    let dependenciesPromise = query.getDependencies(connection, table, mapDependenciesFn);
+                    let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
-                        .then(values => {
-                            values.forEach(v => {
-                                if (_.get(v, ['columns'], null)) {                  // Columns
-                                    tableData[index].columns = v.columns;
-                                    tableData[index].indexes = v.indexes;
-                                } else if (_.get(v, [0, 'sourceTable'], null)) {    // Dependencies
-                                    tableData[index].dependencies = v;
-                                } else {                                            // Content
-                                    tableData[index].content = v;
-                                }
+                        .then(([columns, dependencies, content]) => {
+                            tableData[index].columns = columns.columns;
+                            tableData[index].indexes = columns.indexes;
+                            tableData[index].dependencies = dependencies;
+                            tableData[index].content = content;
 
-                                if (index === tables.length - 1) {
-                                    resolve(tableData);
-                                }
-                            });
+                            if (index === tables.length - 1) {
+                                resolve(tableData);
+                            }
                         });
                 });
             })
@@ -353,12 +240,6 @@ module.exports = {
     getProcedures,
     getTriggers,
     getViewTables,
-    isIndex,
-    isTableIncluded,
-    escapeQuotes,
-    viewTableSanitize,
-    convertColumns,
-    mapDependencies,
-    mapProcedureDefinition,
-    replaceInContent
+    getProceduresMeta,
+    getProcedureDefinition
 }
