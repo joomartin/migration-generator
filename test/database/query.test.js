@@ -1,6 +1,11 @@
 const expect = require('chai').expect;
+const _ = require('lodash');
 
 const query = require('../../database/query');
+const queryProcess = require('../../business/query-process');
+const TableContent = require('../../database/stream/table-content');
+const utils = require('../../utils/utils');
+const queryProcessFactory = require('../../business/query-process-factory');
 
 describe('Query', () => {
     describe('#getTables()', () => {
@@ -22,7 +27,7 @@ describe('Query', () => {
                 }
             }
 
-            query.getTables(connection, config, query.isTableIncluded)
+            query.getTables(connection, config, queryProcess.filterExcluededTables)
                 .then(res => {
                     expect(res.length).to.be.equal(2)
                     done();
@@ -46,7 +51,8 @@ describe('Query', () => {
                 }
             }
 
-            query.getColumns(connection, table, query.filterIndexes)
+            const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
+            query.getColumns(connection, table, seperateColumnsFn)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);
@@ -58,11 +64,10 @@ describe('Query', () => {
 
     describe('#getDependencies()', () => {
         it('should return all dependencies for a table', (done) => {
-            let config = {
-                database: 'database'
-            };
-
-            let connection = {
+            const connection = {
+                config: {
+                    database: 'database'
+                },
                 query(queryString, callback) {
                     callback(undefined, [
                         {
@@ -77,7 +82,9 @@ describe('Query', () => {
                 }
             }
 
-            query.getDependencies(connection, 'table1', config)
+            const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+
+            query.getDependencies(connection, 'table1', mapDependenciesFn)
                 .then(dependencies => {
                     expect(dependencies.length).to.be.equal(1);
 
@@ -91,21 +98,6 @@ describe('Query', () => {
                     done();
                 })
                 .catch(err => (console.log(err)));
-        });
-    });
-
-    describe('#isTableIncluded', () => {
-        it('should return true if a table is not excluded by config', () => {
-            let config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
-
-            let filter = query.isTableIncluded({ Tables_in_test: 'migrations' }, config);
-            expect(filter).to.be.false;
-
-            filter = query.isTableIncluded({ Tables_in_test: 'test1' }, config);
-            expect(filter).to.be.true;
         });
     });
 
@@ -135,7 +127,9 @@ describe('Query', () => {
                 return content;
             }
 
-            query.getContent(connection, 'todos', escapeQuotes)
+            const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
+
+            query.getContent(content$, escapeQuotes, queryProcess.escapeRows)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
 
@@ -198,10 +192,12 @@ describe('Query', () => {
             }
 
             let escapeCallback = (s) => s;
+            const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
+                _, utils.escapeQuotes);
 
-            query.getProcedures(connection, query.convertProceduresToObjects, escapeCallback)
+            query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn)
                 .then(res => {
-                    expect(res.length).to.be.equal(2);    
+                    expect(res.length).to.be.equal(2);
 
                     expect(res[0].type).to.be.equal('PROCEDURE');
                     expect(res[0].definition).to.be.equal('SOME PROCEDURE');
@@ -217,144 +213,10 @@ describe('Query', () => {
         });
     });
 
-    describe('#getTableData()', () => {
-        it('it returns all table data', (done) => {
-            let connectionMock = {};
-            let config = {
-                database: 'test'
-            };
-            let queryDependency = {
-                tables: [
-                    {
-                        'Tables_in_test': 'todos'
-                    }, {
-                        'Tables_in_test': 'categories'
-                    }
-                ],
-                hasTable(table) {
-                    return this.tables
-                        .map(t => t['Tables_in_test'])
-                        .some(tn => tn === table);
-                },
-                getTables(connection, config, filterCallback) {
-                    expect(true).to.be.true;
-
-                    return new Promise((resolve, reject) => {
-                        resolve(this.tables);
-                    });
-                },
-                getColumns(connection, table, filterCallback) {
-                    expect(connection).to.be.equal(connectionMock);
-                    expect(this.hasTable(table)).to.be.true;
-
-                    return new Promise((resolve, reject) => {
-                        let data = {
-                            indexes: [
-                                {
-                                    'Field': 'category_id',
-                                    'Type': 'int(11) unsigned',
-                                    'Collation': null,
-                                    'Null': 'YES',
-                                    'Key': 'MUL',
-                                    'Default': null,
-                                    'Extra': '',
-                                    'Privileges': 'select,insert,update,references',
-                                    'Comment': ''
-                                }
-                            ],
-                            columns: [
-                                {
-                                    'Field': 'title',
-                                    'Type': 'varchar(255)',
-                                    'Collation': null,
-                                    'Null': 'YES',
-                                    'Key': 'NO',
-                                    'Default': null,
-                                    'Extra': '',
-                                    'Privileges': 'select,insert,update,references',
-                                    'Comment': ''
-                                },
-                                {
-                                    'Field': 'category_id',
-                                    'Type': 'int(11) unsigned',
-                                    'Collation': null,
-                                    'Null': 'YES',
-                                    'Key': 'MUL',
-                                    'Default': null,
-                                    'Extra': '',
-                                    'Privileges': 'select,insert,update,references',
-                                    'Comment': ''
-                                }
-                            ]
-                        };
-
-                        resolve(data);
-                    });
-                },
-                getDependencies(connection, table, config) {
-                    expect(connection).to.be.equal(connectionMock);
-                    expect(this.hasTable(table)).to.be.true;
-
-                    return new Promise((resolve, reject) => {
-                        let data = [{
-                            sourceTable: 'todos',
-                            sourceColumn: 'category_id',
-                            referencedTable: 'categories',
-                            referencedColumn: 'id',
-                            updateRule: 'NO ACTION',
-                            deleteRule: 'SET NULL'
-                        }];
-
-                        resolve(data);
-                    });
-                },
-                getContent(connection, table) {
-                    expect(connection).to.be.equal(connectionMock);
-                    expect(this.hasTable(table)).to.be.true;
-
-                    return new Promise((resolve, reject) => {
-                        let data = [
-                            {
-                                title: 'Todo #1',
-                                category_id: null
-                            }, {
-                                title: 'Todo #2',
-                                category_id: null
-                            }
-                        ];
-
-                        resolve(data);
-                    });
-                }
-            };
-
-            query.getTableData(connectionMock, queryDependency, config)
-                .then(res => {
-                    expect(res[0].table).to.be.equal('todos');
-                    expect(res[0].indexes.length).to.be.equal(1);
-                    expect(res[0].columns.length).to.be.equal(2);
-
-                    expect(res[0].indexes[0].Field).to.be.equal('category_id');
-                    expect(res[0].columns[0].Field).to.be.equal('title');
-
-                    expect(res[0].dependencies.length).to.be.equal(1);
-                    expect(res[0].dependencies[0].referencedTable).to.be.equal('categories');
-                    expect(res[0].dependencies[0].referencedColumn).to.be.equal('id');
-
-                    expect(res[0].content.length).to.be.equal(2);
-                    expect(res[0].content[0].title).to.be.equal('Todo #1');
-                    expect(res[0].content[1].title).to.be.equal('Todo #2');
-
-                    done();
-                })
-                .catch(err => console.log(err));
-        });
-    });
-
     describe('#escapeQuotes()', () => {
         it('should escape quotes', () => {
             let obj = { id: 1, name: "it has 'quotes'" };
-            let escaped = query.escapeQuotes(JSON.stringify(obj));
+            let escaped = utils.escapeQuotes(JSON.stringify(obj));
 
             let temp = "\\'quotes\\'";
             expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
@@ -363,7 +225,7 @@ describe('Query', () => {
 
     describe('#getViewTables()', () => {
         it('should query database for view tables', (done) => {
-            let connection = {
+            const connection = {
                 config: { database: 'test' },
                 query(queryString, callback) {
 
@@ -376,13 +238,122 @@ describe('Query', () => {
                 }
             }
 
-            query.getViewTables(connection, query.escapeQuotes)
+            const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
+                _, 'test', queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+
+            query.getViewTables(connection, sanitizeFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
                     done();
                 })
                 .catch(err => console.log(err));
+        });
+    });
+
+    describe('#getViewTables', () => {
+        it('should query view tables and call sanitize function', (done) => {
+            const views = [
+                { name: 'view1' }
+            ];
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'database'");
+                    callback(null, views);
+                }
+            };
+            const sanitizeFn = (viewsRaw) => {
+                expect(viewsRaw).to.be.equal(views);
+                return viewsRaw;
+            }
+
+            query.getViewTables(connection, sanitizeFn)
+                .then(viewTables => {
+                    expect(viewTables).to.be.equal(views)
+                    done();
+                });
+        });
+    });
+
+    describe('#getTriggers', () => {
+        it('should query view tables and call sanitize function', (done) => {
+            const triggersMock = [
+                { name: 'trigger1' }
+            ];
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW TRIGGERS FROM `database`");
+                    callback(null, triggersMock);
+                }
+            };
+            const mapFn = (database, triggersRaw) => {
+                expect(triggersRaw).to.be.equal(triggersMock);
+                return triggersRaw;
+            }
+
+            query.getTriggers(connection, mapFn)
+                .then(triggers => {
+                    expect(triggers).to.be.equal(triggersMock)
+                    done();
+                });
+        });
+    });
+
+    describe('#getTableData', () => {
+        it('should call all function that produces table data', (done) => {
+            const tablesMock = [
+                { table: 'table1' }, { table: 'table2' }
+            ];
+            const config = {
+                database: 'database'
+            };
+            const connection = {
+            };
+            const queryMock = {
+                getTables() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve(tablesMock);
+                    });
+                },
+                getColumns() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve({
+                            columns: [
+                                { Field: 'column1' }, { Field: 'column2' }
+                            ],
+                            idnexes: [
+                                { Field: 'index1' }
+                            ],
+                        });
+                    });
+                },
+                getDependencies() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve([{ sourceTable: 'table1', sourceColumn: 'col1' }, { sourceTable: 'table1', sourceColumn: 'col2' }]);
+                    });
+                },
+                getContent() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
+                    });
+                }
+            };
+
+            query.getTableData(connection, queryMock, config, queryProcess, utils)
+                .then(() => {
+                    done()
+                })
+                .catch(console.log);
         });
     });
 });

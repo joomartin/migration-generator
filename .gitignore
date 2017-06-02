@@ -3,3 +3,5 @@ node_modules
 coverage
 config.json
 playground.js
+tags
+*.swp

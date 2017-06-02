@@ -12,8 +12,8 @@ const file = require('./file/file');
 const createColumnInfo = require('./database/column-info/factory');
 const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
 const utils = require('./utils/utils');
-
-const typeMapper = createTypeMapper(config.migrationLib);
+const queryProcess = require('./business/query-process');
+const queryProcessFactory = require('./business/query-process-factory');
 
 const connection = mysql.createConnection({
     host: config.host || 'localhost',
@@ -23,15 +23,9 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
+const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(
+    queryProcess.filterIndexes);
 
-let ci = new ColumnInfoPhinx({ Type: 'INT (10) UNSIGNED'});
-console.log(ci.getType());
-
-ci = new ColumnInfoPhinx({ Type: 'LONGTEXT'});
-console.log(ci.getType());
-
-ci = new ColumnInfoPhinx({ Type: 'DECIMAL (10, 2) unsigned'});
-console.log(ci.getType());
-
-ci = new ColumnInfoPhinx({ Type: 'VARCHAR(100)'});
-console.log(ci.getType());
+// query.getColumns(connection, table, seperateColumnsFn)
+//     .then(console.log)
+//     .catch(console.log);
