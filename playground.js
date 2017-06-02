@@ -13,7 +13,7 @@ const createColumnInfo = require('./database/column-info/factory');
 const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
 const utils = require('./utils/utils');
 const queryProcess = require('./business/query-process');
-const queryProcessFactory = require('./business/factory/query-process');
+const queryProcessFactory = require('./business/query-process-factory');
 
 const connection = mysql.createConnection({
     host: config.host || 'localhost',

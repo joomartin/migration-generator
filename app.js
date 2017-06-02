@@ -12,7 +12,7 @@ const utils = require('./utils/utils');
 const queryProcess = require('./business/query-process');
 
 const config = require('./config.json');
-const queryProcessFactory = require('./business/factory/query-process');
+const queryProcessFactory = require('./business/query-process-factory');
  
 utils.logHeader(config);
 
