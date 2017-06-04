@@ -20,13 +20,22 @@ const responsibilities = [
 ];
 
 if (cluster.isMaster) {
+    let finishedProcessCount = 0;
     utils.logHeader(config);
+    
     for (let i = 0; i < responsibilities.length; i++) {
         const worker = cluster.fork({ responsibilities: responsibilities[i] });
         worker.on('message', data => {
             console.log('MASTER:', data);
         });
     }
+
+    cluster.on('exit', (worker, code, signal) => {
+        if (++finishedProcessCount == responsibilities.length) {
+            util.log(chalk.green(`All Done.`));
+            connection.end();
+        }
+    });
 } else {
     if (process.env.responsibilities === 'extra-migrations') {
         const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
@@ -56,8 +65,11 @@ if (cluster.isMaster) {
             .catch(err => console.log(chalk.bgRed(err)));
 
         Promise.all([viewTablesPromise, proceduresPromise, triggersPromise])
-            .then(() => process.send({ done: true, success: true }))
-            .catch(() => process.send({ done: true, success: false }));
+            .then(() => process.exit())
+            .catch((err) => {
+                console.log(chalk.bgRed(err));
+                process.exit();                
+            });
 
     } else {
         let fileNames = [];
@@ -81,7 +93,10 @@ if (cluster.isMaster) {
 
         
         Promise.all([tableDataPromise, foreignKeyTemplate])
-            .then(() => process.send({ done: true, success: true }))
-            .catch(() => process.send({ done: true, success: false }));
+            .then(() => process.exit())
+            .catch(() => {
+                console.log(chalk.bgRed(err));
+                process.exit();
+            });
     }
 }
