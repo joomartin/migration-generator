@@ -23,9 +23,47 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(
-    queryProcess.filterIndexes);
+connection.query('SHOW CREATE TABLE `erp_partner`', (err, result) => {
+    if (err) return console.log(err);
+    const createTable = result[0]['Create Table'];
 
-// query.getColumns(connection, table, seperateColumnsFn)
-//     .then(console.log)
-//     .catch(console.log);
+    const foreignKeys = substringFrom(createTable, 'CONSTRAINT');
+    const tmp = foreignKeys.split('CONSTRAINT');
+    const arr = tmp.filter(item => item.trim);
+
+    arr.forEach(line => {
+        const tmp = substringFrom(line, 'FOREIGN KEY');
+        const rest = _.trimEnd(tmp.slice(0, tmp.indexOf(') ENGINE')));
+        const regex = /`[a-z_]*`/g;
+
+        if (rest) {
+            console.log('--------');
+            console.log(rest);
+            let columns = regex.exec(rest);
+            let matches = [];
+
+            while (columns !== null) {
+                matches.push(columns[0]);
+                columns = regex.exec(rest);
+            }
+
+            const rules = substringFrom(rest, 'ON DELETE');
+            const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
+            const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
+
+            const obj = {
+                sourceColumn: _.trimEnd(_.trimStart(matches[0], '(`'), '`)'),
+                targetColumn: _.trimEnd(_.trimStart(matches[2], '(`'), '`)'),
+                targetTable: _.trimEnd(_.trimStart(matches[1], '`'), '`'),             
+                deleteRule: _.trimEnd(deleteRule.slice(9)),
+                updateRule: updateRule.slice(9),
+            };
+
+            console.log(obj);
+        }
+    });
+
+    connection.end();
+});
+
+const substringFrom = (src, str) => src.substring(src.indexOf(str));
