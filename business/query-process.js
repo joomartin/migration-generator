@@ -129,46 +129,44 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
-const getDependenciesFromCreateTable = (table, createTable) => {
-    const foreignKeys = substringFrom(createTable, 'CONSTRAINT');
-    const arr = foreignKeys.split('CONSTRAINT').filter(item => item.trim());
+const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
+    const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
+    const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());
+    let dependencies = [];
 
-    arr.forEach(line => {
-        const tmp = substringFrom(line, 'FOREIGN KEY');
-        const rest = _.trimEnd(tmp.slice(0, tmp.indexOf(') ENGINE')));
+    foreignKeys.forEach(line => {
+        const fromForeignKeyStatement = substringFromFn(line, 'FOREIGN KEY');
+        const foreignKey = _.trimEnd(fromForeignKeyStatement.slice(0, fromForeignKeyStatement.indexOf(') ENGINE')));
         const regex = /`[a-z_]*`/g;
 
-        if (rest) {
-            console.log('--------');
-            console.log(rest);
-            let columns = regex.exec(rest);
-            let matches = [];
+        if (foreignKey) {
+            let matches = regex.exec(foreignKey);
+            let data = [];
 
-            while (columns !== null) {
-                matches.push(columns[0]);
-                columns = regex.exec(rest);
+            while (matches !== null) {
+                data.push(matches[0]);
+                matches = regex.exec(foreignKey);
             }
 
-            const rules = substringFrom(rest, 'ON DELETE');
+            const rules = substringFromFn(foreignKey, 'ON DELETE');
             const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
             const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
 
-            console.log(_.trim(matches[0], '()`'));
-            const obj = {
+            dependencies.push({
                 sourceTable: table,
-                sourceColumn: _.trim(matches[0], '()`'),
-                referencedTable: _.trim(matches[1], '()`'),
-                referencedColumn: _.trim(matches[2], '()`'),
+                sourceColumn: _.trim(data[0], '()`'),
+                referencedTable: _.trim(data[1], '()`'),
+                referencedColumn: _.trim(data[2], '()`'),
                 updateRule: _.trim(updateRule.slice(9)),
                 deleteRule: _.trim(deleteRule.slice(9)) 
-            };
-
-            console.log(obj);
+            });
         }
     }); 
+
+    return dependencies;
 }
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable
 }
