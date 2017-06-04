@@ -136,6 +136,10 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
  * @param {string} createTable - CREATE TABLE query results
  */
 const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
+    if (!createTable.includes('CONSTRAINT')) {
+        return [];
+    }
+    
     const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
     const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());
     let dependencies = [];
