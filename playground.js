@@ -23,6 +23,10 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
+let str = '  asdf ';
+let trimmed = _(str).trim();
+console.log(trimmed);
+
 const table = 'erp_partner';
 connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
     if (err) return console.log(err);
