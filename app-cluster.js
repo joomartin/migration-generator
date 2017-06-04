@@ -22,12 +22,9 @@ const responsibilities = [
 if (cluster.isMaster) {
     let finishedProcessCount = 0;
     utils.logHeader(config);
-    
+
     for (let i = 0; i < responsibilities.length; i++) {
-        const worker = cluster.fork({ responsibilities: responsibilities[i] });
-        worker.on('message', data => {
-            console.log('MASTER:', data);
-        });
+        cluster.fork({ responsibilities: responsibilities[i] });
     }
 
     cluster.on('exit', (worker, code, signal) => {
