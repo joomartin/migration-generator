@@ -23,7 +23,8 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-connection.query('SHOW CREATE TABLE `erp_partner`', (err, result) => {
+const table = 'erp_partner';
+connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
     if (err) return console.log(err);
     const createTable = result[0]['Create Table'];
 
@@ -51,12 +52,14 @@ connection.query('SHOW CREATE TABLE `erp_partner`', (err, result) => {
             const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
             const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
 
+            console.log(_.trim(matches[0], '()`'));
             const obj = {
-                sourceColumn: _.trimEnd(_.trimStart(matches[0], '(`'), '`)'),
-                targetColumn: _.trimEnd(_.trimStart(matches[2], '(`'), '`)'),
-                targetTable: _.trimEnd(_.trimStart(matches[1], '`'), '`'),             
-                deleteRule: _.trimEnd(deleteRule.slice(9)),
-                updateRule: updateRule.slice(9),
+                sourceTable: table,
+                sourceColumn: _.trim(matches[0], '()`'),
+                referencedTable: _.trim(matches[1], '()`'),
+                referencedColumn: _.trim(matches[2], '()`'),
+                updateRule: _.trim(updateRule.slice(9)),
+                deleteRule: _.trim(deleteRule.slice(9)) 
             };
 
             console.log(obj);
