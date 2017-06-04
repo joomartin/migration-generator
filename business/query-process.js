@@ -129,7 +129,54 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
+/**
+ * @param {Object} _ - lodash
+ * @param {Function} substringFromFn - A callback that returns substring from a string, given a search string
+ * @param {string} table - Table name
+ * @param {string} createTable - CREATE TABLE query results
+ */
+const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
+    if (!createTable.includes('CONSTRAINT')) {
+        return [];
+    }
+    
+    const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
+    const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());
+    let dependencies = [];
+
+    foreignKeys.forEach(line => {
+        const fromForeignKeyStatement = substringFromFn(line, 'FOREIGN KEY');
+        const foreignKey = _.trimEnd(fromForeignKeyStatement.slice(0, fromForeignKeyStatement.indexOf(') ENGINE')));
+        const regex = /`[a-z_]*`/g;
+
+        if (foreignKey) {
+            let matches = regex.exec(foreignKey);
+            let data = [];
+
+            while (matches !== null) {
+                data.push(matches[0]);
+                matches = regex.exec(foreignKey);
+            }
+
+            const rules = substringFromFn(foreignKey, 'ON DELETE');
+            const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
+            const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
+
+            dependencies.push({
+                sourceTable: table,
+                sourceColumn: _.trim(data[0], '()`'),
+                referencedTable: _.trim(data[1], '()`'),
+                referencedColumn: _.trim(data[2], '()`'),
+                updateRule: _.trim(updateRule.slice(9)),
+                deleteRule: _.trim(deleteRule.slice(9)) 
+            });
+        }
+    }); 
+
+    return dependencies;
+}
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable
 }

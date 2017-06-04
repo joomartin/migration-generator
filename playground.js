@@ -14,6 +14,7 @@ const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
 const utils = require('./utils/utils');
 const queryProcess = require('./business/query-process');
 const queryProcessFactory = require('./business/query-process-factory');
+const strUtils = require('./utils/str');
 
 const connection = mysql.createConnection({
     host: config.host || 'localhost',
@@ -23,9 +24,13 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(
-    queryProcess.filterIndexes);
+const table = 'erp_partner';
+connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
+    if (err) return console.log(err);
+    const createTable = result[0]['Create Table'];
 
-// query.getColumns(connection, table, seperateColumnsFn)
-//     .then(console.log)
-//     .catch(console.log);
+    const dependencies = queryProcess.getDependenciesFromCreateTable(_, strUtils.substringFrom, table, createTable); 
+    console.log(dependencies);
+
+    connection.end();
+});
