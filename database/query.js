@@ -81,16 +81,7 @@ const getContent = (content$, processFn) => {
  */
 const getDependencies = (connection, table, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
-        // const dependenciesQuery = `
-        //     SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
-        //     LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-        //     ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
-            
-        //     WHERE
-        //         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
-        //         INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
-        //         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
-        // `;
+        // SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE runs for 30ms. It runs for 0,5 .. 1ms
         const dependenciesQuery = 'SHOW CREATE TABLE `' + table + '`';
 
         connection.query(dependenciesQuery, (err, result) => {
