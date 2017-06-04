@@ -6,10 +6,11 @@
 const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
 
 /**
- * @param {Array} viewTables - Raw view tables queried from database
+ * @param {Object} _ - lodash
+ * @param {string} database - Database name
  * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
  * @param {Function} escapeQuotesFn - A callback that escape quotes
- * @param {Object} _ - lodash
+ * @param {Array} viewTables - Raw view tables queried from database
  * @return {Array} - Sanitized view tables
  */
 const sanitizeViewTables = (_, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
@@ -22,15 +23,15 @@ const sanitizeViewTables = (_, database, replaceDatabaseNameFn, escapeQuotesFn, 
     });
 
 /**
- * @param {string} value - Searched value in content to replace
+ * @param {string} database - Database name. Searched value in content to replace
  * @param {string} content - Content to search value in
  * @return {string}
  */
 const replaceDatabaseInContent = (database, content) => content.replace(new RegExp('`' + database + '`.', 'g'), '');
 
 /**
- * @param {Array} columns - Collection of table column objects
  * @param {Function} filterIndexesFn - A callback that filter out index columns
+ * @param {Array} columns - Collection of table column objects
  * @return {Object}
  */
 const seperateColumns = (filterIndexesFn, columns) => ({
@@ -45,8 +46,8 @@ const seperateColumns = (filterIndexesFn, columns) => ({
 const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
 
 /**
- * @param {Array} rows - raw mysql content
  * @param {Function} escapeFn - A callback that escapes quotes
+ * @param {Array} rows - raw mysql content
  * @return {Array}
  */
 const escapeRows = (escapeFn, rows) => {
@@ -67,8 +68,8 @@ const escapeRows = (escapeFn, rows) => {
 }
 
 /**
- * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
  * @param {Object} _ - lodash
+ * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
  * @return {Array}
  */
 const mapDependencies = (_, dependencies) =>
@@ -84,9 +85,10 @@ const mapDependencies = (_, dependencies) =>
     }), 'sourceColumn');
 
 /**
+ * @param {Object} _ - lodash
+ * @param {Function} escapeFn - A callback that escapes quotes
  * @param {string} type - Procedure or function
  * @param {Object} definition - Definition
- * @param {Function} escapeFn - A callback that escapes quotes
  * @return {Object}
  */
 const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
@@ -100,10 +102,10 @@ const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
 }
 
 /**
+ * @param {Object} _ - lodash
+ * @param {Function} escapeFn - Callback that escape quotes
  * @param {string} database - Name of database
  * @param {Array} triggers - List of triggers in raw format
- * @param {Function} escapeFn - Callback that escape quotes
- * @param {Object} _ - lodash
  * @return {Object}
  */
 const mapTriggers = (_, escapeFn, database, triggers) => {
@@ -127,7 +129,54 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
+/**
+ * @param {Object} _ - lodash
+ * @param {Function} substringFromFn - A callback that returns substring from a string, given a search string
+ * @param {string} table - Table name
+ * @param {string} createTable - CREATE TABLE query results
+ */
+const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
+    if (!createTable.includes('CONSTRAINT')) {
+        return [];
+    }
+    
+    const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
+    const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());
+    let dependencies = [];
+
+    foreignKeys.forEach(line => {
+        const fromForeignKeyStatement = substringFromFn(line, 'FOREIGN KEY');
+        const foreignKey = _.trimEnd(fromForeignKeyStatement.slice(0, fromForeignKeyStatement.indexOf(') ENGINE')));
+        const regex = /`[a-z_]*`/g;
+
+        if (foreignKey) {
+            let matches = regex.exec(foreignKey);
+            let data = [];
+
+            while (matches !== null) {
+                data.push(matches[0]);
+                matches = regex.exec(foreignKey);
+            }
+
+            const rules = substringFromFn(foreignKey, 'ON DELETE');
+            const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
+            const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
+
+            dependencies.push({
+                sourceTable: table,
+                sourceColumn: _.trim(data[0], '()`'),
+                referencedTable: _.trim(data[1], '()`'),
+                referencedColumn: _.trim(data[2], '()`'),
+                updateRule: _.trim(updateRule.slice(9)),
+                deleteRule: _.trim(deleteRule.slice(9)) 
+            });
+        }
+    }); 
+
+    return dependencies;
+}
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable
 }

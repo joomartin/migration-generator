@@ -6,6 +6,7 @@ const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
 const utils = require('../../utils/utils');
 const queryProcessFactory = require('../../business/query-process-factory');
+const strUtils = require('../../utils/str');
 
 describe('Query', () => {
     describe('#getTables()', () => {
@@ -64,37 +65,30 @@ describe('Query', () => {
 
     describe('#getDependencies()', () => {
         it('should return all dependencies for a table', (done) => {
+            const table = 'table1';
             const connection = {
                 config: {
                     database: 'database'
                 },
                 query(queryString, callback) {
+                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`'); 
                     callback(undefined, [
                         {
-                            TABLE_NAME: 'table1',
-                            COLUMN_NAME: 'column1',
-                            REFERENCED_TABLE_NAME: 'table2',
-                            REFERENCED_COLUMN_NAME: 'column2',
-                            UPDATE_RULE: 'CASCADE',
-                            DELETE_RULE: 'SET NULL'
-                        },
+                            'Create Table': 'CREATE TABLE todos' 
+                        }
                     ]);
                 }
             }
 
-            const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+            const mapDependenciesFn = (table, createTable) => {
+                expect(table).to.be.equal('table1');
+                expect(createTable).to.be.equal('CREATE TABLE todos');
+
+                return createTable;
+            }
 
             query.getDependencies(connection, 'table1', mapDependenciesFn)
                 .then(dependencies => {
-                    expect(dependencies.length).to.be.equal(1);
-
-                    expect(dependencies[0].sourceTable).to.be.equal('table1');
-                    expect(dependencies[0].sourceColumn).to.be.equal('column1');
-                    expect(dependencies[0].referencedTable).to.be.equal('table2');
-                    expect(dependencies[0].referencedColumn).to.be.equal('column2');
-                    expect(dependencies[0].updateRule).to.be.equal('CASCADE');
-                    expect(dependencies[0].deleteRule).to.be.equal('SET NULL');
-
                     done();
                 })
                 .catch(err => (console.log(err)));

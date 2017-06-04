@@ -18,7 +18,11 @@ const normalizeProcedureDefinitionFactory = (_, escapeFn) =>
 const mapTriggersFactory = (_, escapeFn) => 
     queryProcess.mapTriggers.bind(null, _, escapeFn);
 
+const getDependenciesFromCreateTableFactory = (_, substringFromFn) => 
+    queryProcess.getDependenciesFromCreateTable.bind(null, _, substringFromFn);
+
 module.exports = {
     sanitizeViewTablesFactory, seperateColumnsFactory, escapeRowsFactory,
-    mapDependenciesFactory, normalizeProcedureDefinitionFactory, mapTriggersFactory
+    mapDependenciesFactory, normalizeProcedureDefinitionFactory, mapTriggersFactory,
+    getDependenciesFromCreateTableFactory
 }

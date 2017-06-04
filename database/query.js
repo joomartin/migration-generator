@@ -3,6 +3,7 @@ const _ = require('lodash');
 const TableContent = require('./stream/table-content');
 const queryProcessFactory = require('../business/query-process-factory');
 const utils = require('../utils/utils');
+const strUtils = require('../utils/str');
 
 /**
  * @param {Object} connection - Database connection
@@ -21,12 +22,8 @@ const getTables = (connection, config, filterFn) => {
 }
 
 /**
- * 
  * @param {Object} connection - Database connection
- * @param {Function} replaceDatabaseNameFn - A calback that replaces source database name fom view definition
- * @param {Function} escapeFn - A callback that escapes quotes
  * @param {Function} sanitizeFn - A callback that sanitize raw output
- * @param {Object} _ - lodash
  * @return {Promise} - Contains array
  */
 const getViewTables = (connection, sanitizeFn) => {
@@ -42,7 +39,7 @@ const getViewTables = (connection, sanitizeFn) => {
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Function} convertColumnsFn - A callback thath converts columns from raw format
+ * @param {Function} seperateColumnsFn - A callback thath converts columns from raw format
  * @return {Promise} - Contains array
  */
 const getColumns = (connection, table, seperateColumnsFn) => {
@@ -57,7 +54,6 @@ const getColumns = (connection, table, seperateColumnsFn) => {
 
 /**
  * @param {TableContent} content$ - Readable stream that reads content of a tablo
- * @param {Function} escapeFn - A callback that escaps quotes
  * @param {Function} processFn - A callback that processes the raw output
  * @return {Promise} - Contains array
  */
@@ -80,37 +76,27 @@ const getContent = (content$, processFn) => {
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Object} config - App config
  * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
- * @param {Object} _ - lodash
  * @returns {Promise} - Contains array
  */
 const getDependencies = (connection, table, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
-        const dependenciesQuery = `
-            SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
-            LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-            ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
-            
-            WHERE
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
-                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
-        `;
+        // SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE runs for 30ms. It runs for 0,5 .. 1ms
+        const dependenciesQuery = 'SHOW CREATE TABLE `' + table + '`';
 
-        connection.query(dependenciesQuery, (err, results) => {
+        connection.query(dependenciesQuery, (err, result) => {
             if (err) return reject(err);
 
-            resolve(mapDependenciesFn(results));
+            resolve(mapDependenciesFn(table, result[0]['Create Table']));
         });
     });
 }
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} mapDefinitionFn - A callback that maps definitions
- * @param {Function} escapeFn - A callback that escapes quotes
- * @return {Promise} - Contains array
+ * @param {Function} getProceduresMetaFn - A function that queries procedures meta data
+ * @param {Function} getProcedureDefinitionFn - A function that queries a procedure definition
+ * @param {Function} normalizeDefinitionFn - A function that normalizes raw output
  */
 const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn) => {
     return new Promise((resolve, reject) => {
@@ -151,8 +137,7 @@ const getProceduresMeta = (connection) => {
  * @param {Object} connection - Database connection
  * @param {string} name - Procedure name
  * @param {string} type - Type (function or procedure)
- * @param {Function} mapDefinitionFn - A callback that maps definition
- * @param {Function} escapeFn - A callback that escapes quotes
+ * @param {Function} normalizeDefinitionFn - A callback that normalizes definition
  * @return {Promise} - Contains an object
  */
 const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) => {
@@ -168,8 +153,7 @@ const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) =
 /**
  * @param {Object} connection - Database connection
  * @param {Function} mapFn - A callback that maps raw results
- * @param {Function} escapeFn - A callback that escape quotes
- * @param {Object} _ - lodash
+ * @return {Promise} - Contains array
  */
 const getTriggers = (connection, mapFn) => {
     return new Promise((resolve, reject) => {
@@ -187,6 +171,8 @@ const getTriggers = (connection, mapFn) => {
  * @param {Object} connection 
  * @param {Object} query 
  * @param {Object} config 
+ * @param {Object} queryProcess 
+ * @param {Object} utils 
  */
 const getTableData = (connection, query, config, queryProcess, utils) => {
     return new Promise((resolve, reject) => {
@@ -206,10 +192,11 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
-                    const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+                    // const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+                    const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
-                    let dependenciesPromise = query.getDependencies(connection, table, mapDependenciesFn);
+                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
@@ -222,6 +209,9 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                             if (index === tables.length - 1) {
                                 resolve(tableData);
                             }
+                        })
+                        .catch(err => {
+                            reject(err);
                         });
                 });
             })
