@@ -176,7 +176,10 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
     return dependencies;
 }
 
+const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable,
+    mapTables
 }
