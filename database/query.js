@@ -21,7 +21,6 @@ const getTables = (connection, config, filterFn) => {
 }
 
 /**
- * 
  * @param {Object} connection - Database connection
  * @param {Function} sanitizeFn - A callback that sanitize raw output
  * @return {Promise} - Contains array
@@ -216,6 +215,9 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                             if (index === tables.length - 1) {
                                 resolve(tableData);
                             }
+                        })
+                        .catch(err => {
+                            reject(err);
                         });
                 });
             })
