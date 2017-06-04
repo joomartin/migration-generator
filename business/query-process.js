@@ -129,6 +129,12 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
+/**
+ * @param {Object} _ - lodash
+ * @param {Function} substringFromFn - A callback that returns substring from a string, given a search string
+ * @param {string} table - Table name
+ * @param {string} createTable - CREATE TABLE query results
+ */
 const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
     const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
     const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());

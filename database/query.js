@@ -3,6 +3,7 @@ const _ = require('lodash');
 const TableContent = require('./stream/table-content');
 const queryProcessFactory = require('../business/query-process-factory');
 const utils = require('../utils/utils');
+const strUtils = require('../utils/str');
 
 /**
  * @param {Object} connection - Database connection
@@ -80,21 +81,22 @@ const getContent = (content$, processFn) => {
  */
 const getDependencies = (connection, table, mapDependenciesFn) => {
     return new Promise((resolve, reject) => {
-        const dependenciesQuery = `
-            SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
-            LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-            ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
+        // const dependenciesQuery = `
+        //     SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE        
+        //     LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+        //     ON INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
             
-            WHERE
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
-                INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
-        `;
+        //     WHERE
+        //         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_SCHEMA = '${connection.config.database}' AND
+        //         INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_SCHEMA = '${connection.config.database}' AND
+        //         INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME = '${table}';
+        // `;
+        const dependenciesQuery = 'SHOW CREATE TABLE `' + table + '`';
 
-        connection.query(dependenciesQuery, (err, results) => {
+        connection.query(dependenciesQuery, (err, result) => {
             if (err) return reject(err);
 
-            resolve(mapDependenciesFn(results));
+            resolve(mapDependenciesFn(table, result[0]['Create Table']));
         });
     });
 }
@@ -199,10 +201,11 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
-                    const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+                    // const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
+                    const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
-                    let dependenciesPromise = query.getDependencies(connection, table, mapDependenciesFn);
+                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
