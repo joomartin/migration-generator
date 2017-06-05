@@ -72,16 +72,11 @@ const getContent = (content$, processFn) => {
  * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
  * @returns {Promise} - Contains array
  */
-const getDependencies = (connection, table, mapDependenciesFn) => {
+const getDependencies = (connection, table, mapDependenciesFn, concatFn) => {
     return new Promise((resolve, reject) => {
         // SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE runs for 30ms. It runs for 0,5 .. 1ms
-        const dependenciesQuery = 'SHOW CREATE TABLE `' + table + '`';
-
-        connection.query(dependenciesQuery, (err, result) => {
-            if (err) return reject(err);
-
-            resolve(mapDependenciesFn(table, result[0]['Create Table']));
-        });
+        connection.query(concatFn('SHOW CREATE TABLE `', table, '`'), (err, result) => 
+            (err) ? reject(err) : resolve(mapDependenciesFn(table, result[0]['Create Table'])));
     });
 }
 
@@ -185,11 +180,10 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
-                    // const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
                     const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
                     let columnsPromise = query.getColumns(connection, table, seperateColumnsFn, strUtils.concat);
-                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn);
+                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn, strUtils.concat);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])

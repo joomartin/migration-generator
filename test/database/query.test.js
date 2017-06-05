@@ -138,29 +138,33 @@ describe('Query', () => {
 
     describe('#getDependencies()', () => {
         it('should return all dependencies for a table', (done) => {
-            const table = 'table1';
             const connection = {
                 config: {
                     database: 'database'
                 },
                 query(queryString, callback) {
                     expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`');
+
                     callback(undefined, [
                         {
-                            'Create Table': 'CREATE TABLE todos'
+                            'Create Table': 'CREATE TABLE table1'
                         }
                     ]);
                 }
-            }
-
+            };
             const mapDependenciesFn = (table, createTable) => {
                 expect(table).to.be.equal('table1');
-                expect(createTable).to.be.equal('CREATE TABLE todos');
+                expect(createTable).to.be.equal('CREATE TABLE table1');
 
                 return createTable;
-            }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-            query.getDependencies(connection, 'table1', mapDependenciesFn)
+                return 'SHOW CREATE TABLE `table1`';
+            };
+
+            query.getDependencies(connection, 'table1', mapDependenciesFn, concatFn)
                 .then(dependencies => {
                     done();
                 })
