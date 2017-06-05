@@ -9,24 +9,26 @@ const strUtils = require('../utils/str');
  * @param {Object} connection - Database connection
  * @param {Object} config - App config
  * @param {Function} filterFn - A callback that filters out excluded tables
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
 const getTables = (connection, config, filterFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW FULL TABLES IN `', config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tablesRaw) => 
-            err ? reject(err) : resolve(filterFn(tablesRaw, config)));
+        connection.query(concatFn('SHOW FULL TABLES IN `', config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tables) => 
+            err ? reject(err) : resolve(filterFn(tables, config)));
     });
 }
 
 /**
  * @param {Object} connection - Database connection
  * @param {Function} sanitizeFn - A callback that sanitize raw output
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
 const getViewTables = (connection, sanitizeFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTablesRaw) => 
-            err ? reject(err) : resolve(sanitizeFn(viewTablesRaw)));
+        connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTables) => 
+            err ? reject(err) : resolve(sanitizeFn(viewTables)));
     });
 }
 
@@ -36,13 +38,10 @@ const getViewTables = (connection, sanitizeFn, concatFn) => {
  * @param {Function} seperateColumnsFn - A callback thath converts columns from raw format
  * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, seperateColumnsFn) => {
+const getColumns = (connection, table, seperateColumnsFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
-            if (err) return reject(err);
-
-            resolve(seperateColumnsFn(columnsRaw));
-        });
+        connection.query(concatFn('SHOW FULL COLUMNS FROM `', table, '`'), (err, columns) => 
+            (err) ? reject(err) : resolve(seperateColumnsFn(columns)));
     });
 }
 
@@ -189,7 +188,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                     // const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
                     const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
-                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
+                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn, strUtils.concat);
                     let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 

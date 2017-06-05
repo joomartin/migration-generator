@@ -54,24 +54,40 @@ describe('Query', () => {
 
     describe('#getColumns()', () => {
         it('should return all columns from a table', (done) => {
-            let table = 'table';
-            let connection = {
+            const columnsMock = {
+                columns: [
+                    { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
+                    { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
+                ],
+                indexes: [
+                    { Field: 'name' }, { Field: 'id' }
+                ]
+            };
+            const connection = {
                 query(queryString, callback) {
 
-                    expect(queryString).to.be.equal(`SHOW FULL COLUMNS FROM ${table}`);
+                    expect(queryString).to.be.equal('SHOW FULL COLUMNS FROM `table`');
 
-                    callback(undefined, [
-                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
-                        { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
-                    ]);
+                    callback(undefined, columnsMock.columns);
                 }
-            }
+            };
+            const seperateColumnsFn = (columns) => {
+                expect(columns).to.be.deep.equal(columnsMock.columns);
 
-            const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
-            query.getColumns(connection, table, seperateColumnsFn)
+                return columnsMock;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW FULL COLUMNS FROM `table`';
+            };
+
+            query.getColumns(connection, 'table', seperateColumnsFn, concatFn)
                 .then(columns => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);
+                    expect(columns).to.be.deep.equal(columnsMock);
+                    
                     done();
                 })
                 .catch(err => (console.log(err)));
@@ -267,7 +283,7 @@ describe('Query', () => {
                         { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
                         { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
                     ]);
-                    
+
                     done();
                 })
                 .catch(err => console.log(err));
