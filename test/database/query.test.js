@@ -264,7 +264,7 @@ describe('Query', () => {
                     expect(procedures).to.deep.equal([
                         'SET @bar = 1', 'SET @foo = 1'
                     ]);
-                    
+
                     done();
                 })
                 .catch(console.log);
@@ -351,12 +351,19 @@ describe('Query', () => {
                 expect(triggersRaw).to.be.equal(triggersMock);
                 return triggersRaw;
             }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-            query.getTriggers(connection, mapFn)
+                return "SHOW TRIGGERS FROM `database`";
+            }
+
+            query.getTriggers(connection, mapFn, concatFn)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
+                    
                     done();
-                });
+                })
+                .catch(console.log);
         });
     });
 
