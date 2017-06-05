@@ -26,9 +26,21 @@ describe('Query', () => {
                     ]);
                 }
             }
-            const filterFn = (tables) => tables;
+            const filterFn = (tables) => {
+                expect(tables).to.be.deep.equal([
+                    { 'Tables_in_database': 'table1' },
+                    { 'Tables_in_database': 'table2' },
+                ]);
 
-            query.getTables(connection, config, filterFn)
+                return tables;
+            }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
+            }
+
+            query.getTables(connection, config, filterFn, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['Tables_in_database']).to.be.equal('table1');
@@ -74,10 +86,10 @@ describe('Query', () => {
                     database: 'database'
                 },
                 query(queryString, callback) {
-                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`'); 
+                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`');
                     callback(undefined, [
                         {
-                            'Create Table': 'CREATE TABLE todos' 
+                            'Create Table': 'CREATE TABLE todos'
                         }
                     ]);
                 }

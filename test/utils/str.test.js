@@ -10,4 +10,14 @@ describe('Str', () => {
             expect(fromTest).to.be.equal('test string');
         });
     });
+
+    describe('#concat()', () => {
+        it('should concat any number of strings', () => {
+            const hello = 'Hello';
+            const world = ' world.';
+            const functional = ' Functional programming is great!'; 
+
+            expect(strUtils.concat(hello, world, functional)).to.be.equal('Hello world. Functional programming is great!');
+        });
+    });
 });
