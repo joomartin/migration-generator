@@ -185,9 +185,16 @@ const getDependenciesFromCreateTableFunctional = (_, substringFromFn, table, cre
         .filter(createTable => createTable.includes('CONSTRAINT'))      // csak azok, ahol van foreign key
         .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))     // minden idegen kulcsnak egy uj elem
         .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
-        .flatMap().value();
+        .flatMap()
+        .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
+        .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
+        .value();
 
     let dependencies = [];
+
+    foreignKeys.map(fk => {
+
+    });
 
     foreignKeys.forEach(fk => {
         // string FOREIGN KEY -től kezdődő rész
