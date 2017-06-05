@@ -3,16 +3,16 @@ const ejs = require('ejs');
 
 const utils = require('../utils/utils');
 
-let getFileNames = (date, tables, file, padIndex) => 
+const getFileNames = (date, tables, file, padIndex) => 
     tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
 
-let getFileName = (date, table, index) => 
+const getFileName = (date, table, index) => 
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
-let getTemplates = (tables, config, columnInfoFactory, ejs, file) =>  
+const getTemplates = (tables, config, columnInfoFactory, ejs, file) =>  
     Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs)));
 
-let generateFiles = (contents, fileNames, config, fs, file) => 
+const generateFiles = (contents, fileNames, config, fs, file) => 
     Promise.all(contents.map((content, index) => 
         file.generateFile(content.html, fileNames[index], config, fs)
             .then(file => console.log(`${fileNames[index]} was generated successfully`))
@@ -24,7 +24,7 @@ let generateFiles = (contents, fileNames, config, fs, file) =>
  * @param columnInfoFactory Function
  * @param ejs Object
  */
-let getTemplate = (table, config, columnInfoFactory, ejs) => {
+const getTemplate = (table, config, columnInfoFactory, ejs) => {
     return new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
@@ -65,7 +65,7 @@ let getTemplate = (table, config, columnInfoFactory, ejs) => {
     });
 }
 
-let getForeignKeyTemplate = (tables, config, ejs) => {
+const getForeignKeyTemplate = (tables, config, ejs) => {
     return new Promise((resolve, reject) => {
         let variableNames = {};
         tables.forEach(table => {
@@ -83,7 +83,7 @@ let getForeignKeyTemplate = (tables, config, ejs) => {
     });
 }
 
-let getViewTablesTemplate = (viewTables, config, ejs) => {
+const getViewTablesTemplate = (viewTables, config, ejs) => {
     return new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, {
             viewTables,
@@ -96,7 +96,7 @@ let getViewTablesTemplate = (viewTables, config, ejs) => {
     });
 }
 
-let getProcedureTemplate = (procedures, config, ejs) => {
+const getProcedureTemplate = (procedures, config, ejs) => {
     return new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
             migrationClass: 'CreateProcedures',
@@ -109,7 +109,7 @@ let getProcedureTemplate = (procedures, config, ejs) => {
     });
 }
 
-let getTriggersTemplate = (triggersByTables, config, ejs) => {
+const getTriggersTemplate = (triggersByTables, config, ejs) => {
     return new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, {            
             migrationClass: 'CreateTriggers',
@@ -130,12 +130,12 @@ let getTriggersTemplate = (triggersByTables, config, ejs) => {
  * @param timestamp int
  * @return String
  */
-let generateFile = (content, fileName, config, fs) => {
+const generateFile = (content, fileName, config, fs) => {
     return new Promise((resolve, reject) => {
-        let path = `${config.output}/${fileName}`;
+        const path = `${config.output}/${fileName}`;
+        const options = { highWaterMark: Math.pow(2, 16) };
+        const ws = fs.createWriteStream(path, options);
 
-        let options = { highWaterMark: Math.pow(2, 16) };
-        let ws = fs.createWriteStream(path, options);
         ws.write(content);
         ws.end();
         resolve(fileName);
@@ -146,20 +146,20 @@ let generateFile = (content, fileName, config, fs) => {
  * @param tableName String
  * @return String
  */
-let getClassName = (tableName) => {
-    const tablePartsUpper = tableName.split('_')
-        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
+const getClassName = (tableName) => {
+    const tableNameCamel = tableName
+        .split('_')
+        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1))
+        .reduce((carry, current) => carry + current);
 
-    return `Create${tablePartsUpper.join('')}Table`;
+    return `Create${tableNameCamel}Table`;
 }
 
 /**
  * @param tableName String
  * @return String
  */
-let getVariableName = (tableName) => {
-    return _.camelCase(tableName);
-}
+const getVariableName = (tableName) => _.camelCase(tableName);
 
 module.exports = {
     getTemplate,

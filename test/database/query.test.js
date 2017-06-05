@@ -11,12 +11,11 @@ const strUtils = require('../../utils/str');
 describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
-            let config = {
+            const config = {
                 excludedTables: ['migrations'],
                 database: 'test'
             };
-
-            let connection = {
+            const connection = {
                 query(queryString, callback) {
 
                     expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
@@ -27,193 +26,29 @@ describe('Query', () => {
                     ]);
                 }
             }
+            const filterFn = (tables) => {
+                expect(tables).to.be.deep.equal([
+                    { 'Tables_in_database': 'table1' },
+                    { 'Tables_in_database': 'table2' },
+                ]);
 
-            query.getTables(connection, config, queryProcess.filterExcluededTables)
-                .then(res => {
-                    expect(res.length).to.be.equal(2)
-                    done();
-                })
-                .catch(err => console.log(err));
-        });
-    });
+                return tables;
+            }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-    describe('#getColumns()', () => {
-        it('should return all columns from a table', (done) => {
-            let table = 'table';
-            let connection = {
-                query(queryString, callback) {
-
-                    expect(queryString).to.be.equal(`SHOW FULL COLUMNS FROM ${table}`);
-
-                    callback(undefined, [
-                        { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
-                        { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
-                    ]);
-                }
+                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
             }
 
-            const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
-            query.getColumns(connection, table, seperateColumnsFn)
-                .then(columns => {
-                    expect(columns.columns.length).to.be.equal(5);
-                    expect(columns.indexes.length).to.be.equal(2);
-                    done();
-                })
-                .catch(err => (console.log(err)));
-        });
-    });
-
-    describe('#getDependencies()', () => {
-        it('should return all dependencies for a table', (done) => {
-            const table = 'table1';
-            const connection = {
-                config: {
-                    database: 'database'
-                },
-                query(queryString, callback) {
-                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`'); 
-                    callback(undefined, [
-                        {
-                            'Create Table': 'CREATE TABLE todos' 
-                        }
-                    ]);
-                }
-            }
-
-            const mapDependenciesFn = (table, createTable) => {
-                expect(table).to.be.equal('table1');
-                expect(createTable).to.be.equal('CREATE TABLE todos');
-
-                return createTable;
-            }
-
-            query.getDependencies(connection, 'table1', mapDependenciesFn)
-                .then(dependencies => {
-                    done();
-                })
-                .catch(err => (console.log(err)));
-        });
-    });
-
-    describe('#getContent()', () => {
-        it('should execute SELECT * query for a table', (done) => {
-            let connection = {
-                query(queryString, callback) {
-                    expect(queryString).to.be.equal('SELECT * FROM `todos`')
-
-                    callback(undefined, [
-                        {
-                            id: 1,
-                            title: 'Todo #1',
-                            description: 'Important'
-                        }, {
-                            id: 2,
-                            title: 'Todo #2',
-                            description: 'Not tmportant'
-                        },
-                    ]);
-                }
-            }
-
-            let escapeQuotes = (content) => {
-                expect(content).to.be.string;
-
-                return content;
-            }
-
-            const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
-
-            query.getContent(content$, escapeQuotes, queryProcess.escapeRows)
+            query.getTables(connection, config, filterFn, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
-
-                    expect(res[0].id).to.be.equal(1);
-                    expect(res[0].title).to.be.equal('Todo #1');
-
-                    expect(res[1].id).to.be.equal(2);
-                    expect(res[1].title).to.be.equal('Todo #2');
+                    expect(res[0]['Tables_in_database']).to.be.equal('table1');
+                    expect(res[1]['Tables_in_database']).to.be.equal('table2');
 
                     done();
                 })
                 .catch(err => console.log(err));
-        });
-    });
-
-    describe('#getProcedures()', () => {
-        it('should get all procedures and functions for a database', (done) => {
-            let connection = {
-                count: 0,
-                config: { database: 'database' },
-                query(queryString, callback) {
-                    this.count++;
-                    if (this.count === 1) {
-                        expect(queryString.includes("FROM INFORMATION_SCHEMA.ROUTINES")).to.be.true;
-                        expect(queryString.includes("WHERE ROUTINE_SCHEMA = 'database'")).to.be.true;
-
-                        callback(undefined, [
-                            {
-                                SPECIFIC_NAME: 'proc1',
-                                ROUTINE_TYPE: 'PROCEDURE',
-                                ROUTINE_DEFINITION: 'SOME PROCEDURE',
-                                DEFINER: 'root@localhost'
-                            }, {
-                                SPECIFIC_NAME: 'func1',
-                                ROUTINE_TYPE: 'FUNCTION',
-                                ROUTINE_DEFINITION: 'SOME FUNCTION',
-                                DEFINER: 'root@localhost'
-                            },
-                        ]);
-                    } else {
-                        expect(queryString.includes("SHOW CREATE")).to.be.true;
-
-                        if (queryString.includes('FUNCTION')) {
-                            callback(undefined, [
-                                {
-                                    'Function': 'func1',
-                                    'Create Function': 'SOME FUNCTION'
-                                }
-                            ]);
-                        } else {
-                            callback(undefined, [
-                                {
-                                    'Procedure': 'proc1',
-                                    'Create Procedure': 'SOME PROCEDURE'
-                                }
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            let escapeCallback = (s) => s;
-            const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
-                _, utils.escapeQuotes);
-
-            query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn)
-                .then(res => {
-                    expect(res.length).to.be.equal(2);
-
-                    expect(res[0].type).to.be.equal('PROCEDURE');
-                    expect(res[0].definition).to.be.equal('SOME PROCEDURE');
-                    expect(res[0].name).to.be.equal('proc1');
-
-                    expect(res[1].type).to.be.equal('FUNCTION');
-                    expect(res[1].definition).to.be.equal('SOME FUNCTION');
-                    expect(res[1].name).to.be.equal('func1');
-
-                    done();
-                })
-                .catch(err => console.log(err));
-        });
-    });
-
-    describe('#escapeQuotes()', () => {
-        it('should escape quotes', () => {
-            let obj = { id: 1, name: "it has 'quotes'" };
-            let escaped = utils.escapeQuotes(JSON.stringify(obj));
-
-            let temp = "\\'quotes\\'";
-            expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
         });
     });
 
@@ -230,45 +65,271 @@ describe('Query', () => {
                         { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
                     ]);
                 }
-            }
+            };
+            const sanitizeFn = (viewTables) => {
+                expect(viewTables).to.be.deep.equal([
+                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                ]);
 
-            const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
-                _, 'test', queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+                return viewTables;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-            query.getViewTables(connection, sanitizeFn)
+                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
+            };
+
+            query.getViewTables(connection, sanitizeFn, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
-                    expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
+                    expect(res).to.be.deep.equal([
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+
                     done();
                 })
                 .catch(err => console.log(err));
         });
     });
 
-    describe('#getViewTables', () => {
-        it('should query view tables and call sanitize function', (done) => {
-            const views = [
-                { name: 'view1' }
-            ];
+    describe('#getColumns()', () => {
+        it('should return all columns from a table', (done) => {
+            const columnsMock = {
+                columns: [
+                    { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
+                    { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
+                ],
+                indexes: [
+                    { Field: 'name' }, { Field: 'id' }
+                ]
+            };
+            const connection = {
+                query(queryString, callback) {
+
+                    expect(queryString).to.be.equal('SHOW FULL COLUMNS FROM `table`');
+
+                    callback(undefined, columnsMock.columns);
+                }
+            };
+            const seperateColumnsFn = (columns) => {
+                expect(columns).to.be.deep.equal(columnsMock.columns);
+
+                return columnsMock;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW FULL COLUMNS FROM `table`';
+            };
+
+            query.getColumns(connection, 'table', seperateColumnsFn, concatFn)
+                .then(columns => {
+                    expect(columns.columns.length).to.be.equal(5);
+                    expect(columns.indexes.length).to.be.equal(2);
+                    expect(columns).to.be.deep.equal(columnsMock);
+
+                    done();
+                })
+                .catch(err => (console.log(err)));
+        });
+    });
+
+    describe('#getDependencies()', () => {
+        it('should return all dependencies for a table', (done) => {
             const connection = {
                 config: {
                     database: 'database'
                 },
                 query(queryString, callback) {
-                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'database'");
-                    callback(null, views);
+                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`');
+
+                    callback(undefined, [
+                        {
+                            'Create Table': 'CREATE TABLE table1'
+                        }
+                    ]);
                 }
             };
-            const sanitizeFn = (viewsRaw) => {
-                expect(viewsRaw).to.be.equal(views);
-                return viewsRaw;
+            const mapDependenciesFn = (table, createTable) => {
+                expect(table).to.be.equal('table1');
+                expect(createTable).to.be.equal('CREATE TABLE table1');
+
+                return createTable;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW CREATE TABLE `table1`';
+            };
+
+            query.getDependencies(connection, 'table1', mapDependenciesFn, concatFn)
+                .then(dependencies => {
+                    done();
+                })
+                .catch(err => (console.log(err)));
+        });
+    });
+
+    describe('#getContent()', () => {
+        it('should execute SELECT * query for a table', (done) => {
+            const connection = {
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SELECT * FROM `todos`')
+
+                    callback(undefined, [
+                        {
+                            id: 1,
+                            title: 'Todo #1',
+                            description: 'Important'
+                        }, {
+                            id: 2,
+                            title: 'Todo #2',
+                            description: 'Not tmportant'
+                        },
+                    ]);
+                }
+            };
+            const data = [
+                {
+                    id: 1,
+                    title: 'Todo #1',
+                    description: 'Important'
+                }, {
+                    id: 2,
+                    title: 'Todo #2',
+                    description: 'Not tmportant'
+                }];
+            const content$ = {
+                on(event, fn) {
+                    if (event !== 'error') {
+                        expect(['data', 'end'].includes(event));
+                        fn(data);
+                    }
+                }
+            };
+            const processFn = (content) => {
+                expect(content).to.be.deep.equal(data);
+
+                return content;
+            };
+
+            query.getContent(content$, processFn)
+                .then(res => {
+                    expect(res.length).to.be.equal(2);
+                    expect(res).to.be.deep.equal(data);
+
+                    done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
+
+    describe('#getProcedures()', () => {
+        it('should get all procedures and functions for a database', (done) => {
+            const getProceduresMetaFn = (connection, concatFn) => {
+                expect(true).to.be.true;
+
+                return Promise.resolve([
+                    {
+                        SPECIFIC_NAME: 'proc1',
+                        ROUTINE_TYPE: 'PROCEDURE'
+                    },
+                    {
+                        SPECIFIC_NAME: 'func1',
+                        ROUTINE_TYPE: 'FUNCTION'
+                    },
+                ]);
+            }
+            const getProcedureDefinitionFn = (connection, name, type, normalizeProcedureDefinitionFn, concatFn) => {
+                expect(['proc1', 'func1']).to.include(name);
+                expect(['PROCEDURE', 'FUNCTION']).to.include(type);
+
+                return Promise.resolve(
+                    type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
+                );
+            }
+            const normalizeProcedureDefinitionFn = (str) => {
+                expect(true).to.be.true;
+                return str;
+            }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+                return 'some string';
             }
 
-            query.getViewTables(connection, sanitizeFn)
-                .then(viewTables => {
-                    expect(viewTables).to.be.equal(views)
+            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, normalizeProcedureDefinitionFn, concatFn)
+                .then(procedures => {
+                    expect(procedures).to.deep.equal([
+                        'SET @bar = 1', 'SET @foo = 1'
+                    ]);
+
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
+
+    describe('#getProceduresMeta()', () => {
+        it('should return all procedures meta data', (done) => {
+            const proceduresMock = [
+                {
+                    SPECIFIC_NAME: 'proc1',
+                    ROUTINE_TYPE: 'PROCEDURE'
+                }, {
+                    SPECIFIC_NAME: 'func1',
+                    ROUTINE_TYPE: 'FUNCTION'
+                },
+            ];
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'");
+
+                    callback(null, proceduresMock);
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
+            }
+            query.getProceduresMeta(connection, concatFn)
+                .then(procedures => {
+                    expect(procedures).to.be.deep.equal(proceduresMock);
                     done();
                 });
+        });
+    });
+
+    describe('#getProcedureDefinition()', () => {
+        it('should return definition for a given procedure', (done) => {
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW CREATE PROCEDURE `proc1`");
+
+                    callback(null, ['SET @foo = 1']);
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SHOW CREATE PROCEDURE `proc1`";
+            }
+            const normalizeProcedureDefinitionFn = (type, definition) => {
+                expect(type).to.be.equal('procedure');
+                expect(definition).to.be.equal('SET @foo = 1');
+
+                return 'SET @foo = 1';
+            }
+            query.getProcedureDefinition(connection, 'proc1', 'procedure', normalizeProcedureDefinitionFn, concatFn)
+                .then(definition => {
+                    expect(definition).to.be.equal('SET @foo = 1');
+                    done();
+                })
+                .catch(console.log);
         });
     });
 
@@ -290,12 +351,19 @@ describe('Query', () => {
                 expect(triggersRaw).to.be.equal(triggersMock);
                 return triggersRaw;
             }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-            query.getTriggers(connection, mapFn)
+                return "SHOW TRIGGERS FROM `database`";
+            }
+
+            query.getTriggers(connection, mapFn, concatFn)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
+                    
                     done();
-                });
+                })
+                .catch(console.log);
         });
     });
 
