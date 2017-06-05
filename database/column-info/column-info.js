@@ -36,9 +36,9 @@ ColumnInfo.prototype.isPrimaryKey = function () {
 }
 
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
-    let parts = this.field['Type'].split('(');
+    const parts = this.field['Type'].split('(');
     let options = {};
-    
+
     if (length && !isNaN(length)) {
         options.length = parseInt(length);
     } else if (length) {
