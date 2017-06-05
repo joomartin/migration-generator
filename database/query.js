@@ -88,9 +88,9 @@ const getDependencies = (connection, table, mapDependenciesFn, concatFn) => {
  * @param {Function} getProcedureDefinitionFn - A function that queries a procedure definition
  * @param {Function} normalizeDefinitionFn - A function that normalizes raw output
  */
-const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn) => {
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        getProceduresMetaFn(connection)
+        getProceduresMetaFn(connection, concatFn)
             .then(metas =>
                 metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
             )
@@ -102,21 +102,13 @@ const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn
 
 /**
  * @param {Object} connection - Database connection
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getProceduresMeta = (connection) => {
+const getProceduresMeta = (connection, concatFn) => {
     return new Promise((resolve, reject) => {
-        const query = `
-            SELECT *
-            FROM INFORMATION_SCHEMA.ROUTINES
-            WHERE ROUTINE_SCHEMA = '${connection.config.database}';
-        `;
-
-        connection.query(query, (err, proceduresRaw) => {
-            if (err) return reject(err);
-
-            resolve(proceduresRaw);
-        });
+        connection.query(concatFn("SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '", connection.config.database, "'"), (err, procedures) => 
+            (err) ? reject(err) : resolve(procedures));
     });
 }
 
