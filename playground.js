@@ -24,13 +24,21 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-const table = 'erp_partner';
-connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
-    if (err) return console.log(err);
-    const createTable = result[0]['Create Table'];
+const connectionObj = {
+    config: { database: 'test' },
+    query(queryString, callback) {
 
-    const dependencies = queryProcess.getDependenciesFromCreateTable(_, strUtils.substringFrom, table, createTable); 
-    console.log(dependencies);
+        callback(undefined, [
+            { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+            { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+        ]);
+    }
+};
+const sanitizeFn = (viewTables) => {
+    return viewTables;
+};
+const concatFn = (str) => {
+    return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
+};
 
-    connection.end();
-});
+query.getViewTables(connectionObj, sanitizeFn, concatFn);

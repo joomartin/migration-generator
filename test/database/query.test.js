@@ -245,45 +245,32 @@ describe('Query', () => {
                         { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
                     ]);
                 }
-            }
+            };
+            const sanitizeFn = (viewTables) => {
+                expect(viewTables).to.be.deep.equal([
+                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                ]);
 
-            const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
-                _, 'test', queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+                return viewTables;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
 
-            query.getViewTables(connection, sanitizeFn)
+                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
+            };
+
+            query.getViewTables(connection, sanitizeFn, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
-                    expect(res[0]['VIEW_DEFINITION']).includes("\\'static\\'");
+                    expect(res).to.be.deep.equal([
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+                    
                     done();
                 })
                 .catch(err => console.log(err));
-        });
-    });
-
-    describe('#getViewTables', () => {
-        it('should query view tables and call sanitize function', (done) => {
-            const views = [
-                { name: 'view1' }
-            ];
-            const connection = {
-                config: {
-                    database: 'database'
-                },
-                query(queryString, callback) {
-                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'database'");
-                    callback(null, views);
-                }
-            };
-            const sanitizeFn = (viewsRaw) => {
-                expect(viewsRaw).to.be.equal(views);
-                return viewsRaw;
-            }
-
-            query.getViewTables(connection, sanitizeFn)
-                .then(viewTables => {
-                    expect(viewTables).to.be.equal(views)
-                    done();
-                });
         });
     });
 

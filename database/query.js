@@ -23,13 +23,10 @@ const getTables = (connection, config, filterFn, concatFn) => {
  * @param {Function} sanitizeFn - A callback that sanitize raw output
  * @return {Promise} - Contains array
  */
-const getViewTables = (connection, sanitizeFn) => {
+const getViewTables = (connection, sanitizeFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
-            if (err) return reject(err);
-
-            resolve(sanitizeFn(viewTablesRaw));
-        });
+        connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTablesRaw) => 
+            err ? reject(err) : resolve(sanitizeFn(viewTablesRaw)));
     });
 }
 
