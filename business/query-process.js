@@ -139,7 +139,7 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
     if (!createTable.includes('CONSTRAINT')) {
         return [];
     }
-    
+
     // string create table string a CONSTRAINT résztől
     const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
     // array minden CONSTRAINT -vel kezdődő sornak egy elem
@@ -172,62 +172,46 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
                 referencedTable: _.trim(data[1], '()`'),
                 referencedColumn: _.trim(data[2], '()`'),
                 updateRule: _.trim(updateRule.slice(9)),
-                deleteRule: _.trim(deleteRule.slice(9)) 
+                deleteRule: _.trim(deleteRule.slice(9))
             });
         }
-    }); 
+    });
 
     return dependencies;
 }
 
 const getDependenciesFromCreateTableFunctional = (_, substringFromFn, table, createTable) => {
     const foreignKeys = _([createTable]
-        .filter(createTable => createTable.includes('CONSTRAINT'))      // csak azok, ahol van foreign key
-        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))     // minden idegen kulcsnak egy uj elem
+        .filter(createTable => createTable.includes('CONSTRAINT')) 
+        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
         .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
         .flatMap()
         .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
         .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
         .value();
 
-    let dependencies = [];
-
-    foreignKeys.map(fk => {
-
-    });
-
-    foreignKeys.forEach(fk => {
-        // string FOREIGN KEY -től kezdődő rész
-        const fromForeignKeyStatement = substringFromFn(fk, 'FOREIGN KEY');
-        // string ugyanaz, mint a from, csak le van vágva a végéről az ENGING kifejezés, ha ez az utolsó sor
-        const foreignKey = _.trimEnd(fromForeignKeyStatement.slice(0, fromForeignKeyStatement.indexOf(') ENGINE')));
+    return foreignKeys.map(fk => {
         const regex = /`[a-z_]*`/g;
+        let matches = regex.exec(fk);
+        let data = [];
 
-        if (foreignKey) {
-            let matches = regex.exec(foreignKey);
-            let data = [];
-
-            while (matches !== null) {
-                data.push(matches[0]);
-                matches = regex.exec(foreignKey);
-            }
-
-            const rules = substringFromFn(foreignKey, 'ON DELETE');
-            const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
-            const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
-
-            dependencies.push({
-                sourceTable: table,
-                sourceColumn: _.trim(data[0], '()`'),
-                referencedTable: _.trim(data[1], '()`'),
-                referencedColumn: _.trim(data[2], '()`'),
-                updateRule: _.trim(updateRule.slice(9)),
-                deleteRule: _.trim(deleteRule.slice(9)) 
-            });
+        while (matches !== null) {
+            data.push(matches[0]);
+            matches = regex.exec(fk);
         }
-    }); 
 
-    return dependencies;
+        const deleteRule = fk.slice(fk.indexOf('ON DELETE'), fk.indexOf('ON UPDATE')).slice(9);
+        const updateRule = fk.slice(fk.indexOf('ON UPDATE')).slice(9);
+
+        return {
+            sourceTable: table,
+            sourceColumn: _.trim(data[0], '()`'),
+            referencedTable: _.trim(data[1], '()`'),
+            referencedColumn: _.trim(data[2], '()`'),
+            updateRule: _.trim(updateRule, ' ,'),
+            deleteRule: _.trim(deleteRule, ' ,')
+        };
+    });
 }
 
 const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
