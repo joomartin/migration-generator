@@ -20,10 +20,10 @@ const run = () => {
             query.getTables(connection, config, queryProcess.mapTables)
                 .then(utils.sideEffect(tables => allTables = tables))
                 .then(tables => getCachedTables(db, config))
-                .then(cachedTables => {
-                    return cachedTables.length === 0
-                        ? allTables : _.difference(allTables, cachedTables.map(t => t.name));
-                })
+                .then(cachedTables => 
+                    cachedTables.length === 0
+                        ? allTables : _.difference(allTables, cachedTables.map(t => t.name))
+                )
                 .then(tablesToInsert => insertTables(db, config, tablesToInsert))
                 .then(res => resolve(res))
                 .catch(err => reject(err));
@@ -37,11 +37,8 @@ const run = () => {
  */
 const getCachedTables = (db, config) => {
     return new Promise((resolve, reject) => {
-        db.collection('tables').find({ database: config.database }).toArray((err, docs) => {
-            if (err) return reject(err);
-
-            resolve(docs);
-        });
+        db.collection('tables').find({ database: config.database }).toArray((err, docs) => 
+            err ? reject(err) : resolve(docs));
     });
 }
 
@@ -55,11 +52,8 @@ const insertTables = (db, config, tables) => {
         if (tables.length === 0) return resolve({ result: { ok: 1, n: 0 }});
         const mappedTables = tables.map(t => ({ name: t, database: config.database }));
 
-        db.collection('tables').insertMany(mappedTables, (err, result) => {
-            if (err) return reject(err);
-
-            resolve(result);
-        });
+        db.collection('tables').insertMany(mappedTables, (err, result) => 
+            err ? reject(err) : resolve(result));
     });
 }
 
