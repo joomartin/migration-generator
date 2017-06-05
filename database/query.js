@@ -13,7 +13,7 @@ const strUtils = require('../utils/str');
  */
 const getTables = (connection, config, filterFn) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
+        connection.query('SHOW FULL TABLES IN `'.concat(config.database).concat('` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tablesRaw) => {
             if (err) return reject(err);
 
             resolve(filterFn(tablesRaw, config));

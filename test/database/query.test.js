@@ -11,12 +11,11 @@ const strUtils = require('../../utils/str');
 describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
-            let config = {
+            const config = {
                 excludedTables: ['migrations'],
                 database: 'test'
             };
-
-            let connection = {
+            const connection = {
                 query(queryString, callback) {
 
                     expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
@@ -27,10 +26,14 @@ describe('Query', () => {
                     ]);
                 }
             }
+            const filterFn = (tables) => tables;
 
-            query.getTables(connection, config, queryProcess.filterExcluededTables)
+            query.getTables(connection, config, filterFn)
                 .then(res => {
-                    expect(res.length).to.be.equal(2)
+                    expect(res.length).to.be.equal(2);
+                    expect(res[0]['Tables_in_database']).to.be.equal('table1');
+                    expect(res[1]['Tables_in_database']).to.be.equal('table2');
+
                     done();
                 })
                 .catch(err => console.log(err));
