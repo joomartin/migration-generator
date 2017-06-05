@@ -47,7 +47,7 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
 
     utils.setKey(options, 'precision', precision, parseInt);
     utils.setKey(options, 'scale', scale, parseInt);
-    utils.setKey(options, 'unsigned', unsigned);
+    utils.setKey(options, 'unsigned', unsigned, undefined, () => this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int'));
 
     return options;
 }
@@ -56,23 +56,31 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
  * @return Object
  */
 ColumnInfo.prototype.getType = function () {
-    let type = this.field['Type'];
+    const type = this.field['Type'];
+    const parts = type.split('(');  
 
-    let parts = type.split('(');          
     let length = null;
     let scale = null;
     let precision = null;
-    let unsigned = null;
 
-    if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
-        unsigned = this.isUnsigned(type);
-    }
+    const unsigned = [type]
+        .filter(t => this.isUnsigned(t))
+        .length !== 0;
 
     if (this.isTypeOf(type, 'decimal')) {
-        precision = parseInt(parts[1].split(',')[0]);
-        scale = parseInt(parts[1].split(',')[1]);
+        const splitted = parts[1].split(',');
+        precision = [splitted[0]]
+            .map(s => parseInt(s))
+            .shift();
+
+        scale = [splitted[1]]
+            .map(s => parseInt(s))
+            .shift();
+
     } else if (parts[1]) { 
-        length = parseInt(parts[1]);
+        length = [parts[1]]
+            .map(s => parseInt(s))
+            .shift();
     } 
 
     return {
@@ -94,7 +102,8 @@ ColumnInfo.prototype.getOptions = function () {
     utils.setKey(options, 'default', this.field['Default']);
     utils.setKey(options, 'auto_increment', true, undefined, () => this.field['Extra'] === 'auto_increment');
 
-    return (_.isEmpty(options)) ? null : this.mapOptions(options);
+    return (_.isEmpty(options)) 
+        ? null : this.mapOptions(options);
 }
 
 module.exports = ColumnInfo;

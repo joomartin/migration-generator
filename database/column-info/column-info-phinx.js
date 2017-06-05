@@ -12,7 +12,7 @@ ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
     let original = _.clone(typeOptions);
     let mapped = _.clone(typeOptions);
 
-    if (original.unsigned !== undefined) {
+    if (this.isTypeOf(type, 'int') || this.isTypeOf(type, 'decimal')) {
         mapped.signed = !original.unsigned;
         delete mapped.unsigned;
     }
