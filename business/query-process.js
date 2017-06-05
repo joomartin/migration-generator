@@ -51,20 +51,15 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @return {Array}
  */
 const escapeRows = (escapeFn, rows) => {
-    let escapedRows = [];
-    rows.forEach(r => {
+    return rows.map(r => {
         let escapedRow = [];
         for (key in r) {
-            escapedRow[key] = r[key];
-            if (typeof r[key] === 'string') {
-                escapedRow[key] = escapeFn(r[key]);
-            }
+            escapedRow[key] = (typeof r[key] === 'string')
+                ? escapeFn(r[key]) : r[key];
         }
 
-        escapedRows.push(escapedRow);
+        return escapedRow;
     });
-
-    return escapedRows;
 }
 
 /**
@@ -91,15 +86,11 @@ const mapDependencies = (_, dependencies) =>
  * @param {Object} definition - Definition
  * @return {Object}
  */
-const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
-    const typeUpperFirst = _.upperFirst(type.toLowerCase());
-
-    return {
-        type,
-        name: definition[typeUpperFirst],
-        definition: escapeFn(definition[`Create ${typeUpperFirst}`])
-    };
-}
+const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
+    type,
+    name: definition[_.upperFirst(type.toLowerCase())],
+    definition: escapeFn(definition[`Create ${_.upperFirst(type.toLowerCase())}`])
+})
 
 /**
  * @param {Object} _ - lodash
@@ -131,7 +122,7 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
 
 const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
     const foreignKeys = _([createTable]
-        .filter(createTable => createTable.includes('CONSTRAINT')) 
+        .filter(createTable => createTable.includes('CONSTRAINT'))
         .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
         .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
         .flatMap()
