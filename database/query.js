@@ -36,6 +36,7 @@ const getViewTables = (connection, sanitizeFn, concatFn) => {
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} seperateColumnsFn - A callback thath converts columns from raw format
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
 const getColumns = (connection, table, seperateColumnsFn, concatFn) => {
@@ -70,6 +71,7 @@ const getContent = (content$, processFn) => {
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
+ * @param {Function} concatFn - A callack that concats string
  * @returns {Promise} - Contains array
  */
 const getDependencies = (connection, table, mapDependenciesFn, concatFn) => {
@@ -92,11 +94,8 @@ const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn
             .then(metas =>
                 metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
             )
-            .then(promises => {
-                Promise.all(promises)
-                    .then(resolve)
-                    .catch(reject);
-            })
+            .then(promises => Promise.all(promises))
+            .then(resolve)
             .catch(reject);
     });
 }
