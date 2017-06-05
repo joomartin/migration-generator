@@ -242,6 +242,20 @@ describe('QueryProcess', () => {
             expect(dependencies).to.be.lengthOf(0);
         });
     });
+
+    describe('#mapTables', () => {
+        it('should map an array containing mysql results to an array contains table names', () => {
+            const config = { database: 'database' };
+            const tables = [
+                { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
+            ];
+
+            const tableNames = queryProcess.mapTables(tables, config);
+            expect(tableNames).to.deep.equal([
+                'table1', 'table2', 'table3',
+            ]);
+        });
+    });
 });
 
 const createTable = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";

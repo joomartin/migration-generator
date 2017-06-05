@@ -154,6 +154,10 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
     });
 }
 
+/**
+ * @param {Array} tables 
+ * @param {Object} config 
+ */
 const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
 
 module.exports = {
