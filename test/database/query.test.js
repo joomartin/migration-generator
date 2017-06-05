@@ -226,77 +226,48 @@ describe('Query', () => {
         });
     });
 
-    xdescribe('#getProcedures()', () => {
+    describe('#getProcedures()', () => {
         it('should get all procedures and functions for a database', (done) => {
-            let connection = {
-                count: 0,
-                config: { database: 'database' },
-                query(queryString, callback) {
-                    this.count++;
-                    if (this.count === 1) {
-                        expect(queryString.includes("FROM INFORMATION_SCHEMA.ROUTINES")).to.be.true;
-                        expect(queryString.includes("WHERE ROUTINE_SCHEMA = 'database'")).to.be.true;
-
-                        callback(undefined, [
-                            {
-                                SPECIFIC_NAME: 'proc1',
-                                ROUTINE_TYPE: 'PROCEDURE',
-                                ROUTINE_DEFINITION: 'SOME PROCEDURE',
-                                DEFINER: 'root@localhost'
-                            }, {
-                                SPECIFIC_NAME: 'func1',
-                                ROUTINE_TYPE: 'FUNCTION',
-                                ROUTINE_DEFINITION: 'SOME FUNCTION',
-                                DEFINER: 'root@localhost'
-                            },
-                        ]);
-                    } else {
-                        expect(queryString.includes("SHOW CREATE")).to.be.true;
-
-                        if (queryString.includes('FUNCTION')) {
-                            callback(undefined, [
-                                {
-                                    'Function': 'func1',
-                                    'Create Function': 'SOME FUNCTION'
-                                }
-                            ]);
-                        } else {
-                            callback(undefined, [
-                                {
-                                    'Procedure': 'proc1',
-                                    'Create Procedure': 'SOME PROCEDURE'
-                                }
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            let escapeCallback = (s) => s;
-            const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
-                _, utils.escapeQuotes);
-
-            const concatFn = (str) => {
+            const getProceduresMetaFn = (connection, concatFn) => {
                 expect(true).to.be.true;
 
-                return 'SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = "database"';
+                return Promise.resolve([
+                    {
+                        SPECIFIC_NAME: 'proc1',
+                        ROUTINE_TYPE: 'PROCEDURE'
+                    },
+                    {
+                        SPECIFIC_NAME: 'func1',
+                        ROUTINE_TYPE: 'FUNCTION'
+                    },
+                ]);
+            }
+            const getProcedureDefinitionFn = (connection, name, type, normalizeProcedureDefinitionFn, concatFn) => {
+                expect(['proc1', 'func1']).to.include(name);
+                expect(['PROCEDURE', 'FUNCTION']).to.include(type);
+
+                return Promise.resolve(
+                    type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
+                );
+            }
+            const normalizeProcedureDefinitionFn = (str) => {
+                expect(true).to.be.true;
+                return str;
+            }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+                return 'some string';
             }
 
-            query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn, concatFn)
-                .then(res => {
-                    expect(res.length).to.be.equal(2);
-
-                    expect(res[0].type).to.be.equal('PROCEDURE');
-                    expect(res[0].definition).to.be.equal('SOME PROCEDURE');
-                    expect(res[0].name).to.be.equal('proc1');
-
-                    expect(res[1].type).to.be.equal('FUNCTION');
-                    expect(res[1].definition).to.be.equal('SOME FUNCTION');
-                    expect(res[1].name).to.be.equal('func1');
-
+            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, normalizeProcedureDefinitionFn, concatFn)
+                .then(procedures => {
+                    expect(procedures).to.deep.equal([
+                        'SET @bar = 1', 'SET @foo = 1'
+                    ]);
+                    
                     done();
                 })
-                .catch(err => console.log(err));
+                .catch(console.log);
         });
     });
 
@@ -329,6 +300,36 @@ describe('Query', () => {
                     expect(procedures).to.be.deep.equal(proceduresMock);
                     done();
                 });
+        });
+    });
+
+    describe('#getProcedureDefinition()', () => {
+        it('should return definition for a given procedure', (done) => {
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW CREATE PROCEDURE `proc1`");
+
+                    callback(null, ['SET @foo = 1']);
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SHOW CREATE PROCEDURE `proc1`";
+            }
+            const normalizeProcedureDefinitionFn = (type, definition) => {
+                expect(type).to.be.equal('procedure');
+                expect(definition).to.be.equal('SET @foo = 1');
+
+                return 'SET @foo = 1';
+            }
+            query.getProcedureDefinition(connection, 'proc1', 'procedure', normalizeProcedureDefinitionFn, concatFn)
+                .then(definition => {
+                    expect(definition).to.be.equal('SET @foo = 1');
+                    done();
+                })
+                .catch(console.log);
         });
     });
 

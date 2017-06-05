@@ -92,7 +92,7 @@ const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn
     return new Promise((resolve, reject) => {
         getProceduresMetaFn(connection, concatFn)
             .then(metas =>
-                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn, concatFn))
             )
             .then(promises => Promise.all(promises))
             .then(resolve)
@@ -117,15 +117,13 @@ const getProceduresMeta = (connection, concatFn) => {
  * @param {string} name - Procedure name
  * @param {string} type - Type (function or procedure)
  * @param {Function} normalizeDefinitionFn - A callback that normalizes definition
+ * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) => {
+const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
-            if (err) return reject(err);
-
-            resolve(normalizeDefinitionFn(type, result[0]));
-        });
+        connection.query(concatFn('SHOW CREATE ', type.toUpperCase(), '`', name, '`'), (err, definition) => 
+            (err) ? reject(err) : resolve(normalizeDefinitionFn(type, definition[0])));
     });
 }
 
