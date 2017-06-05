@@ -24,12 +24,12 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-const table = 'erp_partner';
+const table = 'todos';
 connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
     if (err) return console.log(err);
     const createTable = result[0]['Create Table'];
 
-    const dependencies = queryProcess.getDependenciesFromCreateTable(_, strUtils.substringFrom, table, createTable); 
+    const dependencies = queryProcess.getDependenciesFromCreateTableFunctional(_, strUtils.substringFrom, table, createTable); 
     console.log(dependencies);
 
     connection.end();
