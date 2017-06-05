@@ -51,20 +51,15 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @return {Array}
  */
 const escapeRows = (escapeFn, rows) => {
-    let escapedRows = [];
-    rows.forEach(r => {
+    return rows.map(r => {
         let escapedRow = [];
         for (key in r) {
-            escapedRow[key] = r[key];
-            if (typeof r[key] === 'string') {
-                escapedRow[key] = escapeFn(r[key]);
-            }
+            escapedRow[key] = (typeof r[key] === 'string')
+                ? escapeFn(r[key]) : r[key];
         }
 
-        escapedRows.push(escapedRow);
+        return escapedRow;
     });
-
-    return escapedRows;
 }
 
 /**
@@ -91,15 +86,11 @@ const mapDependencies = (_, dependencies) =>
  * @param {Object} definition - Definition
  * @return {Object}
  */
-const normalizeProcedureDefinition = (_, escapeFn, type, definition) => {
-    const typeUpperFirst = _.upperFirst(type.toLowerCase());
-
-    return {
-        type,
-        name: definition[typeUpperFirst],
-        definition: escapeFn(definition[`Create ${typeUpperFirst}`])
-    };
-}
+const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
+    type,
+    name: definition[_.upperFirst(type.toLowerCase())],
+    definition: escapeFn(definition[`Create ${_.upperFirst(type.toLowerCase())}`])
+})
 
 /**
  * @param {Object} _ - lodash
@@ -129,54 +120,44 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
-/**
- * @param {Object} _ - lodash
- * @param {Function} substringFromFn - A callback that returns substring from a string, given a search string
- * @param {string} table - Table name
- * @param {string} createTable - CREATE TABLE query results
- */
 const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
-    if (!createTable.includes('CONSTRAINT')) {
-        return [];
-    }
-    
-    const foreignKeyLines = substringFromFn(createTable, 'CONSTRAINT');
-    const foreignKeys = foreignKeyLines.split('CONSTRAINT').filter(item => item.trim());
-    let dependencies = [];
+    const foreignKeys = _([createTable]
+        .filter(createTable => createTable.includes('CONSTRAINT'))
+        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
+        .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
+        .flatMap()
+        .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
+        .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
+        .value();
 
-    foreignKeys.forEach(line => {
-        const fromForeignKeyStatement = substringFromFn(line, 'FOREIGN KEY');
-        const foreignKey = _.trimEnd(fromForeignKeyStatement.slice(0, fromForeignKeyStatement.indexOf(') ENGINE')));
+    return foreignKeys.map(fk => {
         const regex = /`[a-z_]*`/g;
+        let matches = regex.exec(fk);
+        let data = [];
 
-        if (foreignKey) {
-            let matches = regex.exec(foreignKey);
-            let data = [];
-
-            while (matches !== null) {
-                data.push(matches[0]);
-                matches = regex.exec(foreignKey);
-            }
-
-            const rules = substringFromFn(foreignKey, 'ON DELETE');
-            const deleteRule = rules.slice(0, rules.indexOf('ON UPDATE'));
-            const updateRule = _.trimEnd(rules.slice(rules.indexOf('ON UPDATE')), ',');
-
-            dependencies.push({
-                sourceTable: table,
-                sourceColumn: _.trim(data[0], '()`'),
-                referencedTable: _.trim(data[1], '()`'),
-                referencedColumn: _.trim(data[2], '()`'),
-                updateRule: _.trim(updateRule.slice(9)),
-                deleteRule: _.trim(deleteRule.slice(9)) 
-            });
+        while (matches !== null) {
+            data.push(matches[0]);
+            matches = regex.exec(fk);
         }
-    }); 
 
-    return dependencies;
+        const deleteRule = fk.slice(fk.indexOf('ON DELETE'), fk.indexOf('ON UPDATE')).slice(9);
+        const updateRule = fk.slice(fk.indexOf('ON UPDATE')).slice(9);
+
+        return {
+            sourceTable: table,
+            sourceColumn: _.trim(data[0], '()`'),
+            referencedTable: _.trim(data[1], '()`'),
+            referencedColumn: _.trim(data[2], '()`'),
+            updateRule: _.trim(updateRule, ' ,'),
+            deleteRule: _.trim(deleteRule, ' ,')
+        };
+    });
 }
+
+const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable,
+    mapTables
 }
