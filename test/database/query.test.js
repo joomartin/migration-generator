@@ -52,6 +52,48 @@ describe('Query', () => {
         });
     });
 
+    describe('#getViewTables()', () => {
+        it('should query database for view tables', (done) => {
+            const connection = {
+                config: { database: 'test' },
+                query(queryString, callback) {
+
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'");
+
+                    callback(undefined, [
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+                }
+            };
+            const sanitizeFn = (viewTables) => {
+                expect(viewTables).to.be.deep.equal([
+                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                ]);
+
+                return viewTables;
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
+            };
+
+            query.getViewTables(connection, sanitizeFn, concatFn)
+                .then(res => {
+                    expect(res.length).to.be.equal(2);
+                    expect(res).to.be.deep.equal([
+                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
+                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
+                    ]);
+
+                    done();
+                })
+                .catch(err => console.log(err));
+        });
+    });
+
     describe('#getColumns()', () => {
         it('should return all columns from a table', (done) => {
             const columnsMock = {
@@ -87,7 +129,7 @@ describe('Query', () => {
                     expect(columns.columns.length).to.be.equal(5);
                     expect(columns.indexes.length).to.be.equal(2);
                     expect(columns).to.be.deep.equal(columnsMock);
-                    
+
                     done();
                 })
                 .catch(err => (console.log(err)));
@@ -128,7 +170,7 @@ describe('Query', () => {
 
     describe('#getContent()', () => {
         it('should execute SELECT * query for a table', (done) => {
-            let connection = {
+            const connection = {
                 query(queryString, callback) {
                     expect(queryString).to.be.equal('SELECT * FROM `todos`')
 
@@ -144,25 +186,35 @@ describe('Query', () => {
                         },
                     ]);
                 }
-            }
+            };
+            const data = [
+                {
+                    id: 1,
+                    title: 'Todo #1',
+                    description: 'Important'
+                }, {
+                    id: 2,
+                    title: 'Todo #2',
+                    description: 'Not tmportant'
+                }];
+            const content$ = {
+                on(event, fn) {
+                    if (event !== 'error') {
+                        expect(['data', 'end'].includes(event));
+                        fn(data);
+                    }
+                }
+            };
+            const processFn = (content) => {
+                expect(content).to.be.deep.equal(data);
 
-            let escapeQuotes = (content) => {
-                expect(content).to.be.string;
+                return content; 
+            };
 
-                return content;
-            }
-
-            const content$ = new TableContent(connection, 'todos', { max: 1, highWaterMark: Math.pow(2, 16) });
-
-            query.getContent(content$, escapeQuotes, queryProcess.escapeRows)
+            query.getContent(content$, processFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
-
-                    expect(res[0].id).to.be.equal(1);
-                    expect(res[0].title).to.be.equal('Todo #1');
-
-                    expect(res[1].id).to.be.equal(2);
-                    expect(res[1].title).to.be.equal('Todo #2');
+                    expect(res).to.be.deep.equal(data); 
 
                     done();
                 })
@@ -238,57 +290,7 @@ describe('Query', () => {
         });
     });
 
-    describe('#escapeQuotes()', () => {
-        it('should escape quotes', () => {
-            let obj = { id: 1, name: "it has 'quotes'" };
-            let escaped = utils.escapeQuotes(JSON.stringify(obj));
 
-            let temp = "\\'quotes\\'";
-            expect(escaped).to.be.equal(`{"id":1,"name":"it has ${temp}"}`);
-        });
-    });
-
-    describe('#getViewTables()', () => {
-        it('should query database for view tables', (done) => {
-            const connection = {
-                config: { database: 'test' },
-                query(queryString, callback) {
-
-                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'");
-
-                    callback(undefined, [
-                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
-                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
-                    ]);
-                }
-            };
-            const sanitizeFn = (viewTables) => {
-                expect(viewTables).to.be.deep.equal([
-                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
-                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
-                ]);
-
-                return viewTables;
-            };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
-            };
-
-            query.getViewTables(connection, sanitizeFn, concatFn)
-                .then(res => {
-                    expect(res.length).to.be.equal(2);
-                    expect(res).to.be.deep.equal([
-                        { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
-                        { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
-                    ]);
-
-                    done();
-                })
-                .catch(err => console.log(err));
-        });
-    });
 
     describe('#getTriggers', () => {
         it('should query view tables and call sanitize function', (done) => {
