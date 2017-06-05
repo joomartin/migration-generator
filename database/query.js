@@ -9,30 +9,26 @@ const strUtils = require('../utils/str');
  * @param {Object} connection - Database connection
  * @param {Object} config - App config
  * @param {Function} filterFn - A callback that filters out excluded tables
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getTables = (connection, config, filterFn) => {
+const getTables = (connection, config, filterFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW FULL TABLES IN `' + config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tablesRaw) => {
-            if (err) return reject(err);
-
-            resolve(filterFn(tablesRaw, config));
-        });
+        connection.query(concatFn('SHOW FULL TABLES IN `', config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tables) => 
+            err ? reject(err) : resolve(filterFn(tables, config)));
     });
 }
 
 /**
  * @param {Object} connection - Database connection
  * @param {Function} sanitizeFn - A callback that sanitize raw output
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getViewTables = (connection, sanitizeFn) => {
+const getViewTables = (connection, sanitizeFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTablesRaw) => {
-            if (err) return reject(err);
-
-            resolve(sanitizeFn(viewTablesRaw));
-        });
+        connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTables) => 
+            err ? reject(err) : resolve(sanitizeFn(viewTables)));
     });
 }
 
@@ -40,15 +36,13 @@ const getViewTables = (connection, sanitizeFn) => {
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} seperateColumnsFn - A callback thath converts columns from raw format
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, seperateColumnsFn) => {
+const getColumns = (connection, table, seperateColumnsFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(`SHOW FULL COLUMNS FROM ${table}`, (err, columnsRaw) => {
-            if (err) return reject(err);
-
-            resolve(seperateColumnsFn(columnsRaw));
-        });
+        connection.query(concatFn('SHOW FULL COLUMNS FROM `', table, '`'), (err, columns) => 
+            (err) ? reject(err) : resolve(seperateColumnsFn(columns)));
     });
 }
 
@@ -77,18 +71,14 @@ const getContent = (content$, processFn) => {
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
  * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
+ * @param {Function} concatFn - A callack that concats string
  * @returns {Promise} - Contains array
  */
-const getDependencies = (connection, table, mapDependenciesFn) => {
+const getDependencies = (connection, table, mapDependenciesFn, concatFn) => {
     return new Promise((resolve, reject) => {
         // SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE runs for 30ms. It runs for 0,5 .. 1ms
-        const dependenciesQuery = 'SHOW CREATE TABLE `' + table + '`';
-
-        connection.query(dependenciesQuery, (err, result) => {
-            if (err) return reject(err);
-
-            resolve(mapDependenciesFn(table, result[0]['Create Table']));
-        });
+        connection.query(concatFn('SHOW CREATE TABLE `', table, '`'), (err, result) => 
+            (err) ? reject(err) : resolve(mapDependenciesFn(table, result[0]['Create Table'])));
     });
 }
 
@@ -98,38 +88,27 @@ const getDependencies = (connection, table, mapDependenciesFn) => {
  * @param {Function} getProcedureDefinitionFn - A function that queries a procedure definition
  * @param {Function} normalizeDefinitionFn - A function that normalizes raw output
  */
-const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn) => {
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        getProceduresMetaFn(connection)
+        getProceduresMetaFn(connection, concatFn)
             .then(metas =>
-                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, meta['SPECIFIC_NAME'], meta['ROUTINE_TYPE'], normalizeDefinitionFn, concatFn))
             )
-            .then(promises => {
-                Promise.all(promises)
-                    .then(resolve)
-                    .catch(reject);
-            })
+            .then(promises => Promise.all(promises))
+            .then(resolve)
             .catch(reject);
     });
 }
 
 /**
  * @param {Object} connection - Database connection
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getProceduresMeta = (connection) => {
+const getProceduresMeta = (connection, concatFn) => {
     return new Promise((resolve, reject) => {
-        const query = `
-            SELECT *
-            FROM INFORMATION_SCHEMA.ROUTINES
-            WHERE ROUTINE_SCHEMA = '${connection.config.database}';
-        `;
-
-        connection.query(query, (err, proceduresRaw) => {
-            if (err) return reject(err);
-
-            resolve(proceduresRaw);
-        });
+        connection.query(concatFn("SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '", connection.config.database, "'"), (err, procedures) => 
+            (err) ? reject(err) : resolve(procedures));
     });
 }
 
@@ -138,32 +117,26 @@ const getProceduresMeta = (connection) => {
  * @param {string} name - Procedure name
  * @param {string} type - Type (function or procedure)
  * @param {Function} normalizeDefinitionFn - A callback that normalizes definition
+ * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn) => {
+const getProcedureDefinition = (connection, name, type, normalizeDefinitionFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query('SHOW CREATE ' + type.toUpperCase() + ' `' + name + '`', (err, result) => {
-            if (err) return reject(err);
-
-            resolve(normalizeDefinitionFn(type, result[0]));
-        });
+        connection.query(concatFn('SHOW CREATE ', type.toUpperCase(), '`', name, '`'), (err, definition) => 
+            (err) ? reject(err) : resolve(normalizeDefinitionFn(type, definition[0])));
     });
 }
 
 /**
  * @param {Object} connection - Database connection
  * @param {Function} mapFn - A callback that maps raw results
+ * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains array
  */
-const getTriggers = (connection, mapFn) => {
+const getTriggers = (connection, mapFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        const query = 'SHOW TRIGGERS FROM `' + connection.config.database + '`';
-
-        connection.query(query, (err, triggers) => {
-            if (err) return reject(err);
-
-            resolve(mapFn(connection.config.database, triggers));
-        });
+        connection.query(concatFn('SHOW TRIGGERS FROM `', connection.config.database, '`'), (err, triggers) => 
+            (err) ? reject(err) : resolve(mapFn(connection.config.database, triggers)));
     });
 }
 
@@ -179,7 +152,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, config, queryProcess.filterExcluededTables)
+        query.getTables(connection, config, queryProcess.filterExcluededTables, strUtils.concat)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
@@ -192,11 +165,10 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
-                    // const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
                     const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
-                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn);
-                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn);
+                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn, strUtils.concat);
+                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn, strUtils.concat);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])

@@ -11,6 +11,7 @@ const file = require('./file/file');
 
 const createColumnInfo = require('./database/column-info/factory');
 const ColumnInfoPhinx = require('./database/column-info/column-info-phinx');
+const ColumnInfo = require('./database/column-info/column-info');
 const utils = require('./utils/utils');
 const queryProcess = require('./business/query-process');
 const queryProcessFactory = require('./business/query-process-factory');
@@ -24,13 +25,6 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-const table = 'erp_partner';
-connection.query('SHOW CREATE TABLE `' + table + '`', (err, result) => {
-    if (err) return console.log(err);
-    const createTable = result[0]['Create Table'];
-
-    const dependencies = queryProcess.getDependenciesFromCreateTable(_, strUtils.substringFrom, table, createTable); 
-    console.log(dependencies);
-
-    connection.end();
-});
+let type = (new ColumnInfo({
+    Type: 'DECIMAL (10, 2)'
+})).getType();

@@ -9,11 +9,10 @@ function ColumnInfoPhinx(field) {
 ColumnInfoPhinx.prototype = Object.create(ColumnInfo.prototype);
 
 ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
-    let original = _.clone(typeOptions);
     let mapped = _.clone(typeOptions);
 
-    if (original.unsigned !== undefined) {
-        mapped.signed = !original.unsigned;
+    if (this.isTypeOf(type, 'int') || this.isTypeOf(type, 'decimal')) {
+        mapped.signed = !typeOptions.unsigned;
         delete mapped.unsigned;
     }
 
@@ -25,11 +24,10 @@ ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
 }
 
 ColumnInfoPhinx.prototype.mapOptions = function (options) {
-    let original = _.clone(options);
     let mapped = _.clone(options);
 
-    if (original.auto_increment) {
-        mapped.identity = original.auto_increment;
+    if (options.auto_increment) {
+        mapped.identity = options.auto_increment;
         delete mapped.auto_increment;
     }
 
