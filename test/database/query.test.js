@@ -297,17 +297,13 @@ describe('Query', () => {
                     callback(null, triggersMock);
                 }
             };
-            const mapFn = (database, triggersRaw) => {
-                expect(triggersRaw).to.be.equal(triggersMock);
-                return triggersRaw;
-            }
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return "SHOW TRIGGERS FROM `database`";
             }
 
-            query.getTriggers(connection, mapFn, concatFn)
+            query.getTriggers(connection, concatFn)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
 

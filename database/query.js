@@ -122,14 +122,13 @@ const getProcedureDefinition = (connection, meta, concatFn) => {
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} mapFn - A callback that maps raw results
  * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains array
  */
-const getTriggers = (connection, mapFn, concatFn) => {
+const getTriggers = (connection, concatFn) => {
     return new Promise((resolve, reject) => {
         connection.query(concatFn('SHOW TRIGGERS FROM `', connection.config.database, '`'), (err, triggers) => 
-            (err) ? reject(err) : resolve(mapFn(connection.config.database, triggers)));
+            (err) ? reject(err) : resolve(triggers));
     });
 }
 
