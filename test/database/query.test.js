@@ -38,6 +38,31 @@ describe('Query', () => {
                 })
                 .catch(err => console.log(err));
         });
+
+        it('should reject if error in query', (done) => {
+            const connection = {
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
+
+                    callback('ERROR');
+                },
+                config: { database: 'test' }
+            }
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
+            }
+
+            query.getTables(connection, concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getViewTables()', () => {
@@ -72,6 +97,31 @@ describe('Query', () => {
                 })
                 .catch(err => console.log(err));
         });
+
+        it('should reject if error in query', (done) => {
+            const connection = {
+                config: { database: 'test' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'");
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
+            };
+
+            query.getViewTables(connection, concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getColumns()', () => {
@@ -103,6 +153,34 @@ describe('Query', () => {
                 })
                 .catch(err => (console.log(err)));
         });
+
+        it('should reject if error in query', (done) => {
+            const columnsMock = [
+                { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
+                { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
+            ];
+            const connection = {
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SHOW FULL COLUMNS FROM `table`');
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW FULL COLUMNS FROM `table`';
+            };
+
+            query.getColumns(connection, 'table', concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getCreateTable()', () => {
@@ -133,6 +211,33 @@ describe('Query', () => {
                     done();
                 })
                 .catch(err => (console.log(err)));
+        });
+
+        it('should reject if error in query', (done) => {
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SHOW CREATE TABLE `table1`');
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return 'SHOW CREATE TABLE `table1`';
+            };
+
+            query.getCreateTable(connection, 'table1', concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
@@ -255,6 +360,30 @@ describe('Query', () => {
                     done();
                 });
         });
+
+        it('should reject if error in query', (done) => {
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'");
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
+            }
+            query.getProceduresMeta(connection, concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getProcedureDefinition()', () => {
@@ -280,6 +409,31 @@ describe('Query', () => {
                     done();
                 })
                 .catch(console.log);
+        });
+
+        it('should reject if error in query', (done) => {
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW CREATE PROCEDURE `proc1`");
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SHOW CREATE PROCEDURE `proc1`";
+            }
+            const meta = { type: 'procedure', name: 'proc1' };
+            query.getProcedureDefinition(connection, meta, concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
@@ -310,6 +464,36 @@ describe('Query', () => {
                     done();
                 })
                 .catch(console.log);
+        });
+
+        it('should reject if error in query', (done) => {
+            const triggersMock = [
+                { name: 'trigger1' }
+            ];
+            const connection = {
+                config: {
+                    database: 'database'
+                },
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal("SHOW TRIGGERS FROM `database`");
+
+                    callback('ERROR');
+                }
+            };
+            const concatFn = (str) => {
+                expect(true).to.be.true;
+
+                return "SHOW TRIGGERS FROM `database`";
+            }
+
+            query.getTriggers(connection, concatFn)
+                .then(res => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
@@ -358,6 +542,82 @@ describe('Query', () => {
                     done()
                 })
                 .catch(console.log);
+        });
+
+        it('should reject if error in getTables query', (done) => {
+            const tablesMock = [
+                { table: 'table1' }, { table: 'table2' }
+            ];
+            const config = {
+                database: 'database',
+                excludedTables: ['migrations']
+            };
+            const connection = {
+            };
+            const queryMock = {
+                getTables() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        reject('ERROR');
+                    });
+                }
+            };
+
+            query.getTableData(connection, queryMock, config, queryProcess, utils)
+                .then(() => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
+
+        it('should reject if any inner query', (done) => {
+            const tablesMock = [
+                { table: 'table1' }, { table: 'table2' }
+            ];
+            const config = {
+                database: 'database',
+                excludedTables: ['migrations']
+            };
+            const connection = {
+            };
+            const queryMock = {
+                getTables() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve(tablesMock);
+                    });
+                },
+                getColumns() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        reject('ERROR');
+                    });
+                },
+                getCreateTable() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve('CREATE TABLE table1');
+                    });
+                },
+                getContent() {
+                    return new Promise((resolve, reject) => {
+                        expect(true).to.be.true;
+                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
+                    });
+                }
+            };
+
+            query.getTableData(connection, queryMock, config, queryProcess, utils)
+                .then(() => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 });
