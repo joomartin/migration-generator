@@ -32,14 +32,13 @@ const getViewTables = (connection, concatFn) => {
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Function} seperateColumnsFn - A callback thath converts columns from raw format
  * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, seperateColumnsFn, concatFn) => {
+const getColumns = (connection, table, concatFn) => {
     return new Promise((resolve, reject) => {
         connection.query(concatFn('SHOW FULL COLUMNS FROM `', table, '`'), (err, columns) => 
-            (err) ? reject(err) : resolve(seperateColumnsFn(columns)));
+            (err) ? reject(err) : resolve(columns));
     });
 }
 
@@ -165,14 +164,14 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
                     const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
 
-                    let columnsPromise = query.getColumns(connection, table, seperateColumnsFn, strUtils.concat);
+                    let columnsPromise = query.getColumns(connection, table, strUtils.concat);
                     let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn, strUtils.concat);
                     let contentPromise = query.getContent(content$, escapeRowsFn);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(([columns, dependencies, content]) => {
-                            tableData[index].columns = columns.columns;
-                            tableData[index].indexes = columns.indexes;
+                            tableData[index].columns = columns;
+                            tableData[index].indexes = queryProcess.filterIndexes(columns);
                             tableData[index].dependencies = dependencies;
                             tableData[index].content = content;
 

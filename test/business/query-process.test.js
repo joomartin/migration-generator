@@ -69,16 +69,16 @@ describe('QueryProcess', () => {
             ];
             const indexFilterFn = (columnsToBeFiltered) => {
                 expect(columnsToBeFiltered).to.be.deep.equal(columns);
-                return columnsToBeFiltered;
+                return [columnsToBeFiltered[0]];
             };
 
             const seperated = queryProcess.seperateColumns(indexFilterFn, columns);
 
             expect(seperated.columns.length).to.be.equal(2);
-            expect(seperated.indexes.length).to.be.equal(2);
+            expect(seperated.indexes.length).to.be.equal(1);
 
             expect(seperated.columns).to.be.deep.equal(columns);
-            expect(seperated.indexes).to.be.deep.equal(columns);
+            expect(seperated.indexes[0]).to.be.deep.equal(columns[0]);
 
         });
     });

@@ -20,7 +20,7 @@ describe('Query', () => {
                         { 'Tables_in_database': 'table2' },
                     ]);
                 },
-                config: { database: 'test' }            
+                config: { database: 'test' }
             }
             const concatFn = (str) => {
                 expect(true).to.be.true;
@@ -76,27 +76,17 @@ describe('Query', () => {
 
     describe('#getColumns()', () => {
         it('should return all columns from a table', (done) => {
-            const columnsMock = {
-                columns: [
-                    { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
-                    { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
-                ],
-                indexes: [
-                    { Field: 'name' }, { Field: 'id' }
-                ]
-            };
+            const columnsMock = [
+                { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
+                { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
+            ];
             const connection = {
                 query(queryString, callback) {
 
                     expect(queryString).to.be.equal('SHOW FULL COLUMNS FROM `table`');
 
-                    callback(undefined, columnsMock.columns);
+                    callback(undefined, columnsMock);
                 }
-            };
-            const seperateColumnsFn = (columns) => {
-                expect(columns).to.be.deep.equal(columnsMock.columns);
-
-                return columnsMock;
             };
             const concatFn = (str) => {
                 expect(true).to.be.true;
@@ -104,10 +94,9 @@ describe('Query', () => {
                 return 'SHOW FULL COLUMNS FROM `table`';
             };
 
-            query.getColumns(connection, 'table', seperateColumnsFn, concatFn)
+            query.getColumns(connection, 'table', concatFn)
                 .then(columns => {
-                    expect(columns.columns.length).to.be.equal(5);
-                    expect(columns.indexes.length).to.be.equal(2);
+                    expect(columns.length).to.be.equal(5);
                     expect(columns).to.be.deep.equal(columnsMock);
 
                     done();
@@ -340,7 +329,7 @@ describe('Query', () => {
             query.getTriggers(connection, mapFn, concatFn)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
-                    
+
                     done();
                 })
                 .catch(console.log);
@@ -368,14 +357,9 @@ describe('Query', () => {
                 getColumns() {
                     return new Promise((resolve, reject) => {
                         expect(true).to.be.true;
-                        resolve({
-                            columns: [
-                                { Field: 'column1' }, { Field: 'column2' }
-                            ],
-                            idnexes: [
-                                { Field: 'index1' }
-                            ],
-                        });
+                        resolve([
+                            { Field: 'column1' }, { Field: 'column2' }
+                        ]);
                     });
                 },
                 getDependencies() {
