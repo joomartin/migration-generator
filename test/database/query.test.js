@@ -105,8 +105,8 @@ describe('Query', () => {
         });
     });
 
-    describe('#getDependencies()', () => {
-        it('should return all dependencies for a table', (done) => {
+    describe('#getCreateTable()', () => {
+        it('should return create table script for a table', (done) => {
             const connection = {
                 config: {
                     database: 'database'
@@ -121,20 +121,15 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const mapDependenciesFn = (table, createTable) => {
-                expect(table).to.be.equal('table1');
-                expect(createTable).to.be.equal('CREATE TABLE table1');
-
-                return createTable;
-            };
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return 'SHOW CREATE TABLE `table1`';
             };
 
-            query.getDependencies(connection, 'table1', mapDependenciesFn, concatFn)
-                .then(dependencies => {
+            query.getCreateTable(connection, 'table1', concatFn)
+                .then(createTable => {
+                    expect(createTable).to.be.equal('CREATE TABLE table1');
                     done();
                 })
                 .catch(err => (console.log(err)));
@@ -357,10 +352,10 @@ describe('Query', () => {
                         ]);
                     });
                 },
-                getDependencies() {
+                getCreateTable() {
                     return new Promise((resolve, reject) => {
                         expect(true).to.be.true;
-                        resolve([{ sourceTable: 'table1', sourceColumn: 'col1' }, { sourceTable: 'table1', sourceColumn: 'col2' }]);
+                        resolve('CREATE TABLE table1');
                     });
                 },
                 getContent() {

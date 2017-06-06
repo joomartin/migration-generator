@@ -65,15 +65,14 @@ const getContent = (content$) => {
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Function} mapDependenciesFn - A callback that maps raw dependencies 
  * @param {Function} concatFn - A callack that concats string
  * @returns {Promise} - Contains array
  */
-const getDependencies = (connection, table, mapDependenciesFn, concatFn) => {
+const getCreateTable = (connection, table, concatFn) => {
     return new Promise((resolve, reject) => {
         // SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE runs for 30ms. It runs for 0,5 .. 1ms
         connection.query(concatFn('SHOW CREATE TABLE `', table, '`'), (err, result) => 
-            (err) ? reject(err) : resolve(mapDependenciesFn(table, result[0]['Create Table'])));
+            (err) ? reject(err) : resolve(result[0]['Create Table']));
     });
 }
 
@@ -161,17 +160,17 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
-                    const getDependenciesFromCreateTableFn = queryProcessFactory.getDependenciesFromCreateTableFactory(_, strUtils.substringFrom);
+                    const parseDependenciesFn = queryProcessFactory.parseDependenciesFactory(_, strUtils.substringFrom);
 
                     let columnsPromise = query.getColumns(connection, table, strUtils.concat);
-                    let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn, strUtils.concat);
+                    let createTablePromise = query.getCreateTable(connection, table, strUtils.concat);
                     let contentPromise = query.getContent(content$);
 
-                    Promise.all([columnsPromise, dependenciesPromise, contentPromise])
-                        .then(([columns, dependencies, content]) => {
+                    Promise.all([columnsPromise, createTablePromise, contentPromise])
+                        .then(([columns, createTable, content]) => {
                             tableData[index].columns = columns;
                             tableData[index].indexes = queryProcess.filterIndexes(columns);
-                            tableData[index].dependencies = dependencies;
+                            tableData[index].dependencies = parseDependenciesFn(table, createTable);
                             tableData[index].content = escapeRowsFn(content);
 
                             if (index === tables.length - 1) {
@@ -192,7 +191,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 module.exports = {
     getTables,
     getColumns,
-    getDependencies,
+    getCreateTable,
     getTableData,
     getContent,
     getProcedures,
