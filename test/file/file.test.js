@@ -105,6 +105,52 @@ describe('File', () => {
                     done();
                 })
         });
+
+        it('should reject if error in renderFile', (done) => {
+            let config = {
+                migrationLib: 'phinx'
+            }
+
+            let columnInfoFactory = field => ({
+                isPrimaryKey() {
+                    return true;
+                },
+                getType() {
+                    return {name: 'INT'};
+                },
+                getOptions() {
+                    return {unsigned: true};
+                },
+                mapType(nativeType) {
+                    return 'integer';
+                }
+            });
+
+            let table = {
+                table: 'todos',
+                columns: [
+                    {Field: 'id'}
+                ]
+            }
+
+            let ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(path).to.be.equal(`./templates/phinx.ejs`);
+                    expect(data.table).to.be.equal('todos');
+
+                    callback('ERROR');
+                }
+            }
+
+            file.getTemplate(table, config, columnInfoFactory, ejs)
+                .then(data => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getForeignKeyTemplate()', () => {
@@ -133,7 +179,35 @@ describe('File', () => {
                     done();
                 })
                 .catch(err => console.log(err));
-                
+        });
+
+        it('should reject if error in renderFile', (done) => {
+            let config = {
+                migrationLib: 'phinx'
+            };
+
+            let tables = [
+                {table: 'todos'},
+                {table: 'categories'}
+            ];
+
+            let ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(path).to.be.equal(`./templates/phinx-dependencies.ejs`);
+                    expect(data.tables).to.be.equal(tables);
+
+                    callback('ERROR');
+                }
+            }
+
+            file.getForeignKeyTemplate(tables, config, ejs)
+                .then(data => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
@@ -164,6 +238,35 @@ describe('File', () => {
                 })
                 .catch(err => console.log(err));
         });
+
+        it('should reject if error in renderFile', (done) => {
+            let config = {
+                migrationLib: 'phinx'
+            }
+
+            let tables = {
+                'todos': {},
+                'categories': {}
+            }
+
+            let ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(path).to.be.equal(`./templates/phinx-view-tables.ejs`);
+                    expect(data.viewTables).to.be.equal(tables);
+
+                    callback('ERROR');
+                }
+            }
+
+            file.getViewTablesTemplate(tables, config, ejs)
+                .then(data => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getProcedureTemplate()', () => {
@@ -188,6 +291,32 @@ describe('File', () => {
                     done();
                 })
                 .catch(console.log);
+        });
+
+        it('should reject if error in renderFile', (done) => {
+            const procedures = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-procedures.ejs');
+                    expect(options).to.include({ procedures });
+
+                    callback('ERROR');
+                }
+            };
+
+            file.getProcedureTemplate(procedures, config, ejs)
+                .then(data => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
@@ -214,6 +343,32 @@ describe('File', () => {
                 })
                 .catch(console.log);
         });
+
+        it('should reject if error in renderFile', (done) => {
+            const triggers = [
+                { name: 'proc1' }
+            ];
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, options, obj, callback) {
+                    expect(path).to.be.equal('./templates/phinx-triggers.ejs');
+                    expect(options).to.include({ triggersByTables: triggers });
+
+                    callback('ERROR');
+                }
+            };
+
+            file.getTriggersTemplate(triggers, config, ejs)
+                .then(data => {
+                    expect(false).to.be.true;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
+        });
     });
 
     describe('#getFileNames()', () => {
@@ -237,6 +392,46 @@ describe('File', () => {
 
             const fileName = file.getFileName(null, table, index);
             expect(fileName).to.include('1_create_table1_table.php');
+        });
+    });
+
+    describe('#getTemplates()', () => {
+        it('should call getTemplate', (done) => {
+            const tables = ['table1', 'table2'];
+            const fileMock = {
+                getTemplate(table) {
+                    expect(tables).include(table);
+                }
+            }
+
+            file.getTemplates(tables, null, null, null, fileMock)
+                .then(res => {
+                    expect(true).to.be.true;
+                    done();
+                })
+                .catch(console.log);
+        });
+    });
+
+    describe('#generateFiles()', () => {
+        it('should call generateFile', (done) => {
+            const contents = [{ html: 'html content1' }];
+            const fileNames = ['filename1'];
+            const fileMock = {
+                generateFile(html) {
+                    return new Promise((resolve, reject) => {
+                        expect(html).to.be.equal('html content1');
+                        resolve(html);
+                    })
+                }
+            }
+
+            file.generateFiles(contents, fileNames, null, null, fileMock)
+                .then(res => {
+                    expect(true).to.be.true;
+                    done();
+                })
+                .catch(console.log);
         });
     });
 });
