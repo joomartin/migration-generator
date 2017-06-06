@@ -49,7 +49,9 @@ const getCachedTables = (db, config) => {
  */
 const insertTables = (db, config, tables) => {
     return new Promise((resolve, reject) => {
-        if (tables.length === 0) return resolve({ result: { ok: 1, n: 0 }});
+        if (tables.length === 0) 
+            return resolve({ result: { ok: 1, n: 0 }});
+            
         const mappedTables = tables.map(t => ({ name: t, database: config.database }));
 
         db.collection('tables').insertMany(mappedTables, (err, result) => 
