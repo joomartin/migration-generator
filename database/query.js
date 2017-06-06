@@ -44,10 +44,9 @@ const getColumns = (connection, table, concatFn) => {
 
 /**
  * @param {TableContent} content$ - Readable stream that reads content of a tablo
- * @param {Function} processFn - A callback that processes the raw output
  * @return {Promise} - Contains array
  */
-const getContent = (content$, processFn) => {
+const getContent = (content$) => {
     return new Promise((resolve, reject) => {
         let rows = [];
 
@@ -58,7 +57,7 @@ const getContent = (content$, processFn) => {
         });
 
         content$.on('end', () => {
-            resolve(processFn(rows));
+            resolve(rows);
         });
     });
 }
@@ -166,14 +165,14 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
 
                     let columnsPromise = query.getColumns(connection, table, strUtils.concat);
                     let dependenciesPromise = query.getDependencies(connection, table, getDependenciesFromCreateTableFn, strUtils.concat);
-                    let contentPromise = query.getContent(content$, escapeRowsFn);
+                    let contentPromise = query.getContent(content$);
 
                     Promise.all([columnsPromise, dependenciesPromise, contentPromise])
                         .then(([columns, dependencies, content]) => {
                             tableData[index].columns = columns;
                             tableData[index].indexes = queryProcess.filterIndexes(columns);
                             tableData[index].dependencies = dependencies;
-                            tableData[index].content = content;
+                            tableData[index].content = escapeRowsFn(content);
 
                             if (index === tables.length - 1) {
                                 resolve(tableData);

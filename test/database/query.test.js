@@ -178,13 +178,8 @@ describe('Query', () => {
                     }
                 }
             };
-            const processFn = (content) => {
-                expect(content).to.be.deep.equal(data);
 
-                return content;
-            };
-
-            query.getContent(content$, processFn)
+            query.getContent(content$)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal(data);
