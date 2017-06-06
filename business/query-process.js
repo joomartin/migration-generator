@@ -122,6 +122,9 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
 }
 
 const parseDependencies = (_, substringFromFn, table, createTable) => {
+    /**
+     * @todo split, és trimEnd kerüljön külön map -be
+     */
     const foreignKeys = _([createTable]
         .filter(createTable => createTable.includes('CONSTRAINT'))
         .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
