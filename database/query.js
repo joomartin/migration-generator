@@ -19,14 +19,13 @@ const getTables = (connection, concatFn) => {
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} sanitizeFn - A callback that sanitize raw output
  * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getViewTables = (connection, sanitizeFn, concatFn) => {
+const getViewTables = (connection, concatFn) => {
     return new Promise((resolve, reject) => {
         connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTables) => 
-            err ? reject(err) : resolve(sanitizeFn(viewTables)));
+            err ? reject(err) : resolve(viewTables));
     });
 }
 

@@ -54,21 +54,13 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const sanitizeFn = (viewTables) => {
-                expect(viewTables).to.be.deep.equal([
-                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
-                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
-                ]);
-
-                return viewTables;
-            };
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
             };
 
-            query.getViewTables(connection, sanitizeFn, concatFn)
+            query.getViewTables(connection, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal([

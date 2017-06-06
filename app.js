@@ -28,7 +28,8 @@ const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDef
 
 const mapTriggersFn = queryProcessFactory.mapTriggersFactory(_, utils.escapeQuotes);
 
-let viewTablesPromise = query.getViewTables(connection, sanitizeFn, strUtils.concat)
+let viewTablesPromise = query.getViewTables(connection, strUtils.concat)
+    .then(viewTables => sanitizeFn(viewTables))
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
