@@ -53,10 +53,11 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
 const escapeRows = (escapeFn, rows) => {
     return rows.map(r => {
         let escapedRow = [];
-        for (key in r) {
-            escapedRow[key] = (typeof r[key] === 'string')
-                ? escapeFn(r[key]) : r[key];
-        }
+        
+        Object.keys(r).forEach(k => {
+            escapedRow[k] = (typeof r[k] === 'string')
+                ? escapeFn(r[k]) : r[k];
+        });
 
         return escapedRow;
     });
