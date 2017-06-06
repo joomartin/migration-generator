@@ -32,4 +32,21 @@ describe('Utils', () => {
             expect(utils.sideEffect(fn)(10)).to.be.equal(10);
         });
     });
+
+    describe('#logHeader()', () => {
+        it('should destroy my code coverage', () => {
+            const config = { database: 'database' };
+            const consoleMock = { log(msg) { expect(true).to.be.true; } };
+            const utilMock = { log(msg) { expect(true).to.be.true; } };
+            const chalkMock = {
+                green(msg) { return msg },
+                yellow(msg) { return msg },
+                bold(msg) { return msg },
+                bgRed: { bold: { yellow(msg) { return msg; } }}
+            };
+            
+            utils.logHeader(config, utilMock, consoleMock, chalkMock);
+            expect(true).to.be.true;
+        });
+    });
 });

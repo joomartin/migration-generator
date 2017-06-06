@@ -15,7 +15,7 @@ const queryProcess = require('./business/query-process');
 const config = require('./config.json');
 const queryProcessFactory = require('./business/query-process-factory');
  
-utils.logHeader(config);
+utils.logHeader(config, util, console, chalk);
 
 let fileNames = [];
 let allTables = [];

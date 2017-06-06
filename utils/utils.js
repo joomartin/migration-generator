@@ -34,7 +34,7 @@ const setKey = (object, key, value, mapFn, evaulateFn) => {
  */
 const escapeQuotes = content => content.replace(/'/g, "\\'");
 
-const logHeader = (config) => {
+const logHeader = (config, util, console, chalk) => {
     console.log(chalk.green('********************************************************'));
     console.log(chalk.green('*                                                      *'));
     console.log(chalk.green('*                 Migration Generator                  *'));
