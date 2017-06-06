@@ -243,23 +243,6 @@ describe('Query', () => {
 
     describe('#getContent()', () => {
         it('should execute SELECT * query for a table', (done) => {
-            const connection = {
-                query(queryString, callback) {
-                    expect(queryString).to.be.equal('SELECT * FROM `todos`')
-
-                    callback(undefined, [
-                        {
-                            id: 1,
-                            title: 'Todo #1',
-                            description: 'Important'
-                        }, {
-                            id: 2,
-                            title: 'Todo #2',
-                            description: 'Not tmportant'
-                        },
-                    ]);
-                }
-            };
             const data = [
                 {
                     id: 1,
@@ -287,6 +270,25 @@ describe('Query', () => {
                     done();
                 })
                 .catch(err => console.log(err));
+        });
+
+        it('should reject if error in stream', (done) => {
+            const content$ = {
+                on(event, fn) {
+                    if (event === 'error') {
+                        fn('ERROR');
+                    }
+                }
+            };
+
+            query.getContent(content$)
+                .then(res => {
+                    expect(true).to.be.false;
+                })
+                .catch(err => {
+                    expect(err).to.be.equal('ERROR');
+                    done();
+                });
         });
     });
 
