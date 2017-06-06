@@ -69,16 +69,16 @@ describe('QueryProcess', () => {
             ];
             const indexFilterFn = (columnsToBeFiltered) => {
                 expect(columnsToBeFiltered).to.be.deep.equal(columns);
-                return columnsToBeFiltered;
+                return [columnsToBeFiltered[0]];
             };
 
             const seperated = queryProcess.seperateColumns(indexFilterFn, columns);
 
             expect(seperated.columns.length).to.be.equal(2);
-            expect(seperated.indexes.length).to.be.equal(2);
+            expect(seperated.indexes.length).to.be.equal(1);
 
             expect(seperated.columns).to.be.deep.equal(columns);
-            expect(seperated.indexes).to.be.deep.equal(columns);
+            expect(seperated.indexes[0]).to.be.deep.equal(columns[0]);
 
         });
     });
@@ -210,9 +210,9 @@ describe('QueryProcess', () => {
         });
     });
 
-    describe('#getDependenciesFromCreateTable()', () => {
+    describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
-            const dependencies = queryProcess.getDependenciesFromCreateTable(
+            const dependencies = queryProcess.parseDependencies(
                 _, strUtils.substringFrom, 'todos', createTable); 
 
             expect(dependencies).to.be.lengthOf(2);
@@ -236,7 +236,7 @@ describe('QueryProcess', () => {
         });
 
         it('should return return an empty array if no foreign key in table', () => {
-            const dependencies = queryProcess.getDependenciesFromCreateTable(
+            const dependencies = queryProcess.parseDependencies(
                 _, strUtils.substringFrom, 'todos', createTableNoForeignKeys); 
 
             expect(dependencies).to.be.lengthOf(0);

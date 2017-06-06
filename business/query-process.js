@@ -120,7 +120,7 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
-const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
+const parseDependencies = (_, substringFromFn, table, createTable) => {
     const foreignKeys = _([createTable]
         .filter(createTable => createTable.includes('CONSTRAINT'))
         .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
@@ -162,6 +162,6 @@ const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.data
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable,
+    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, parseDependencies,
     mapTables
 }

@@ -28,22 +28,19 @@ const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDef
 
 const mapTriggersFn = queryProcessFactory.mapTriggersFactory(_, utils.escapeQuotes);
 
-let viewTablesPromise = query.getViewTables(connection, strUtils.concat)
-    .then(viewTables => sanitizeFn(viewTables))
+let viewTablesPromise = query.getViewTables(connection, sanitizeFn, strUtils.concat)
     .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, strUtils.concat)
-    .then(procedures => procedures.map(p => normalizeProcedureDefinitionFn(p.type, p.definition)))
+let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn, strUtils.concat)
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, strUtils.concat)
-    .then(triggers => mapTriggersFn(config.database, triggers))
+let triggersPromise = query.getTriggers(connection, mapTriggersFn, strUtils.concat)
     .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))

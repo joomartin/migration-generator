@@ -11,28 +11,16 @@ const strUtils = require('../../utils/str');
 describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
-            const config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
             const connection = {
                 query(queryString, callback) {
-
                     expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
 
                     callback(undefined, [
                         { 'Tables_in_database': 'table1' },
                         { 'Tables_in_database': 'table2' },
                     ]);
-                }
-            }
-            const filterFn = (tables) => {
-                expect(tables).to.be.deep.equal([
-                    { 'Tables_in_database': 'table1' },
-                    { 'Tables_in_database': 'table2' },
-                ]);
-
-                return tables;
+                },
+                config: { database: 'test' }
             }
             const concatFn = (str) => {
                 expect(true).to.be.true;
@@ -40,7 +28,7 @@ describe('Query', () => {
                 return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
             }
 
-            query.getTables(connection, config, filterFn, concatFn)
+            query.getTables(connection, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['Tables_in_database']).to.be.equal('table1');
@@ -66,21 +54,13 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const sanitizeFn = (viewTables) => {
-                expect(viewTables).to.be.deep.equal([
-                    { 'VIEW_DEFINITION': "SELECT *, 'static' AS static_field FROM table1", 'DEFINER': 'root@localhost' },
-                    { 'VIEW_DEFINITION': 'SELECT * FROM table2', 'DEFINER': 'root@localhost' },
-                ]);
-
-                return viewTables;
-            };
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
             };
 
-            query.getViewTables(connection, sanitizeFn, concatFn)
+            query.getViewTables(connection, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal([
@@ -96,27 +76,17 @@ describe('Query', () => {
 
     describe('#getColumns()', () => {
         it('should return all columns from a table', (done) => {
-            const columnsMock = {
-                columns: [
-                    { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
-                    { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
-                ],
-                indexes: [
-                    { Field: 'name' }, { Field: 'id' }
-                ]
-            };
+            const columnsMock = [
+                { Field: 'id', Key: 'PRI' }, { Field: 'name' }, { Field: 'id' },
+                { Field: 'is_done', Key: 'MUL' }, { Field: 'unique_field', Key: 'UNI' },
+            ];
             const connection = {
                 query(queryString, callback) {
 
                     expect(queryString).to.be.equal('SHOW FULL COLUMNS FROM `table`');
 
-                    callback(undefined, columnsMock.columns);
+                    callback(undefined, columnsMock);
                 }
-            };
-            const seperateColumnsFn = (columns) => {
-                expect(columns).to.be.deep.equal(columnsMock.columns);
-
-                return columnsMock;
             };
             const concatFn = (str) => {
                 expect(true).to.be.true;
@@ -124,10 +94,9 @@ describe('Query', () => {
                 return 'SHOW FULL COLUMNS FROM `table`';
             };
 
-            query.getColumns(connection, 'table', seperateColumnsFn, concatFn)
+            query.getColumns(connection, 'table', concatFn)
                 .then(columns => {
-                    expect(columns.columns.length).to.be.equal(5);
-                    expect(columns.indexes.length).to.be.equal(2);
+                    expect(columns.length).to.be.equal(5);
                     expect(columns).to.be.deep.equal(columnsMock);
 
                     done();
@@ -136,8 +105,8 @@ describe('Query', () => {
         });
     });
 
-    describe('#getDependencies()', () => {
-        it('should return all dependencies for a table', (done) => {
+    describe('#getCreateTable()', () => {
+        it('should return create table script for a table', (done) => {
             const connection = {
                 config: {
                     database: 'database'
@@ -152,20 +121,15 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const mapDependenciesFn = (table, createTable) => {
-                expect(table).to.be.equal('table1');
-                expect(createTable).to.be.equal('CREATE TABLE table1');
-
-                return createTable;
-            };
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return 'SHOW CREATE TABLE `table1`';
             };
 
-            query.getDependencies(connection, 'table1', mapDependenciesFn, concatFn)
-                .then(dependencies => {
+            query.getCreateTable(connection, 'table1', concatFn)
+                .then(createTable => {
+                    expect(createTable).to.be.equal('CREATE TABLE table1');
                     done();
                 })
                 .catch(err => (console.log(err)));
@@ -209,13 +173,8 @@ describe('Query', () => {
                     }
                 }
             };
-            const processFn = (content) => {
-                expect(content).to.be.deep.equal(data);
 
-                return content;
-            };
-
-            query.getContent(content$, processFn)
+            query.getContent(content$)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal(data);
@@ -242,24 +201,19 @@ describe('Query', () => {
                     },
                 ]);
             }
-            const getProcedureDefinitionFn = (connection, name, type, normalizeProcedureDefinitionFn, concatFn) => {
-                expect(['proc1', 'func1']).to.include(name);
-                expect(['PROCEDURE', 'FUNCTION']).to.include(type);
+            const getProcedureDefinitionFn = (connection, meta, normalizeProcedureDefinitionFn, concatFn) => {
+                expect(['proc1', 'func1']).to.include(meta.name);
+                expect(['PROCEDURE', 'FUNCTION']).to.include(meta.type);
 
                 return Promise.resolve(
-                    type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
+                    meta.type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
                 );
-            }
-            const normalizeProcedureDefinitionFn = (str) => {
-                expect(true).to.be.true;
-                return str;
             }
             const concatFn = (str) => {
                 expect(true).to.be.true;
-                return 'some string';
             }
 
-            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, normalizeProcedureDefinitionFn, concatFn)
+            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, concatFn)
                 .then(procedures => {
                     expect(procedures).to.deep.equal([
                         'SET @bar = 1', 'SET @foo = 1'
@@ -318,15 +272,11 @@ describe('Query', () => {
 
                 return "SHOW CREATE PROCEDURE `proc1`";
             }
-            const normalizeProcedureDefinitionFn = (type, definition) => {
-                expect(type).to.be.equal('procedure');
-                expect(definition).to.be.equal('SET @foo = 1');
-
-                return 'SET @foo = 1';
-            }
-            query.getProcedureDefinition(connection, 'proc1', 'procedure', normalizeProcedureDefinitionFn, concatFn)
-                .then(definition => {
-                    expect(definition).to.be.equal('SET @foo = 1');
+            const meta = { type: 'procedure', name: 'proc1' };
+            query.getProcedureDefinition(connection, meta, concatFn)
+                .then(p => {
+                    expect(p.definition).to.be.equal('SET @foo = 1');
+                    expect(p.type).to.be.equal('procedure');
                     done();
                 })
                 .catch(console.log);
@@ -347,20 +297,16 @@ describe('Query', () => {
                     callback(null, triggersMock);
                 }
             };
-            const mapFn = (database, triggersRaw) => {
-                expect(triggersRaw).to.be.equal(triggersMock);
-                return triggersRaw;
-            }
             const concatFn = (str) => {
                 expect(true).to.be.true;
 
                 return "SHOW TRIGGERS FROM `database`";
             }
 
-            query.getTriggers(connection, mapFn, concatFn)
+            query.getTriggers(connection, concatFn)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
-                    
+
                     done();
                 })
                 .catch(console.log);
@@ -373,7 +319,8 @@ describe('Query', () => {
                 { table: 'table1' }, { table: 'table2' }
             ];
             const config = {
-                database: 'database'
+                database: 'database',
+                excludedTables: ['migrations']
             };
             const connection = {
             };
@@ -387,20 +334,15 @@ describe('Query', () => {
                 getColumns() {
                     return new Promise((resolve, reject) => {
                         expect(true).to.be.true;
-                        resolve({
-                            columns: [
-                                { Field: 'column1' }, { Field: 'column2' }
-                            ],
-                            idnexes: [
-                                { Field: 'index1' }
-                            ],
-                        });
+                        resolve([
+                            { Field: 'column1' }, { Field: 'column2' }
+                        ]);
                     });
                 },
-                getDependencies() {
+                getCreateTable() {
                     return new Promise((resolve, reject) => {
                         expect(true).to.be.true;
-                        resolve([{ sourceTable: 'table1', sourceColumn: 'col1' }, { sourceTable: 'table1', sourceColumn: 'col2' }]);
+                        resolve('CREATE TABLE table1');
                     });
                 },
                 getContent() {
