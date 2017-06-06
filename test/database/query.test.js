@@ -11,28 +11,16 @@ const strUtils = require('../../utils/str');
 describe('Query', () => {
     describe('#getTables()', () => {
         it('should query database for tables', (done) => {
-            const config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
             const connection = {
                 query(queryString, callback) {
-
                     expect(queryString).to.be.equal('SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"');
 
                     callback(undefined, [
                         { 'Tables_in_database': 'table1' },
                         { 'Tables_in_database': 'table2' },
                     ]);
-                }
-            }
-            const filterFn = (tables) => {
-                expect(tables).to.be.deep.equal([
-                    { 'Tables_in_database': 'table1' },
-                    { 'Tables_in_database': 'table2' },
-                ]);
-
-                return tables;
+                },
+                config: { database: 'test' }            
             }
             const concatFn = (str) => {
                 expect(true).to.be.true;
@@ -40,7 +28,7 @@ describe('Query', () => {
                 return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
             }
 
-            query.getTables(connection, config, filterFn, concatFn)
+            query.getTables(connection, concatFn)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['Tables_in_database']).to.be.equal('table1');
@@ -373,7 +361,8 @@ describe('Query', () => {
                 { table: 'table1' }, { table: 'table2' }
             ];
             const config = {
-                database: 'database'
+                database: 'database',
+                excludedTables: ['migrations']
             };
             const connection = {
             };

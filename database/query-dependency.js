@@ -8,12 +8,14 @@ const strUtils = require('../utils/str');
 /**
  * @param {Object} connection - Database connection
  * @param {Object} config - App config
+ * @param {Function} filterFn - A callback that filters out excluded tables
+ * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getTables = (connection, concatFn) => {
+const getTables = (connection, config, filterFn, concatFn) => {
     return new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW FULL TABLES IN `', connection.config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tables) => 
-            err ? reject(err) : resolve(tables));
+        connection.query(concatFn('SHOW FULL TABLES IN `', config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tables) => 
+            err ? reject(err) : resolve(filterFn(tables, config)));
     });
 }
 
@@ -150,8 +152,7 @@ const getTableData = (connection, query, config, queryProcess, utils) => {
         let tableData = [];
         const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, strUtils.concat)
-            .then(tables => queryProcess.filterExcluededTables(tables, config))
+        query.getTables(connection, config, queryProcess.filterExcluededTables, strUtils.concat)
             .then(tables => {
                 tables.forEach((tableRaw, index) => {
                     const table = tableRaw[tableKey];
