@@ -209,16 +209,11 @@ describe('Query', () => {
                     meta.type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
                 );
             }
-            const normalizeProcedureDefinitionFn = (str) => {
-                expect(true).to.be.true;
-                return str;
-            }
             const concatFn = (str) => {
                 expect(true).to.be.true;
-                return 'some string';
             }
 
-            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, normalizeProcedureDefinitionFn, concatFn)
+            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, concatFn)
                 .then(procedures => {
                     expect(procedures).to.deep.equal([
                         'SET @bar = 1', 'SET @foo = 1'
@@ -277,16 +272,11 @@ describe('Query', () => {
 
                 return "SHOW CREATE PROCEDURE `proc1`";
             }
-            const normalizeProcedureDefinitionFn = (type, definition) => {
-                expect(type).to.be.equal('procedure');
-                expect(definition).to.be.equal('SET @foo = 1');
-
-                return 'SET @foo = 1';
-            }
             const meta = { type: 'procedure', name: 'proc1' };
-            query.getProcedureDefinition(connection, meta, normalizeProcedureDefinitionFn, concatFn)
-                .then(definition => {
-                    expect(definition).to.be.equal('SET @foo = 1');
+            query.getProcedureDefinition(connection, meta, concatFn)
+                .then(p => {
+                    expect(p.definition).to.be.equal('SET @foo = 1');
+                    expect(p.type).to.be.equal('procedure');
                     done();
                 })
                 .catch(console.log);

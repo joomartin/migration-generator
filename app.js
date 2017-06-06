@@ -35,7 +35,8 @@ let viewTablesPromise = query.getViewTables(connection, strUtils.concat)
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn, strUtils.concat)
+let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, strUtils.concat)
+    .then(procedures => procedures.map(p => normalizeProcedureDefinitionFn(p.type, p.definition)))
     .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))

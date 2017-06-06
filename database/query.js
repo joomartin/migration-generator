@@ -80,13 +80,14 @@ const getCreateTable = (connection, table, concatFn) => {
  * @param {Object} connection - Database connection
  * @param {Function} getProceduresMetaFn - A function that queries procedures meta data
  * @param {Function} getProcedureDefinitionFn - A function that queries a procedure definition
- * @param {Function} normalizeDefinitionFn - A function that normalizes raw output
+ * @param {Function} concatFn - A function that concats strings
+ * @return {Promise} - Contains array
  */
-const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, normalizeDefinitionFn, concatFn) => {
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, concatFn) => {
     return new Promise((resolve, reject) => {
         getProceduresMetaFn(connection, concatFn)
             .then(metas =>
-                metas.map(meta => getProcedureDefinitionFn(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}, normalizeDefinitionFn, concatFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}, concatFn))
             )
             .then(promises => Promise.all(promises))
             .then(resolve)
@@ -109,14 +110,13 @@ const getProceduresMeta = (connection, concatFn) => {
 /**
  * @param {Object} connection - Database connection
  * @param {Object} meta - Contains meta data about procedure like name, type
- * @param {Function} normalizeDefinitionFn - A callback that normalizes definition
  * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, meta, normalizeDefinitionFn, concatFn) => {
+const getProcedureDefinition = (connection, meta, concatFn) => {
     return new Promise((resolve, reject) => {
         connection.query(concatFn('SHOW CREATE ', meta.type.toUpperCase(), '`', meta.name, '`'), (err, definition) => 
-            (err) ? reject(err) : resolve(normalizeDefinitionFn(meta.type, definition[0])));
+            (err) ? reject(err) : resolve({ type: meta.type, definition: definition[0] }));
     });
 }
 
