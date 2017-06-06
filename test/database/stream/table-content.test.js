@@ -33,5 +33,33 @@ describe('TableContent', () => {
                 done();
             });
         });
+
+        it('should emit error event if error in query', done => {
+            const dataMock = [
+                { id: 1, name: 'first' }, { id: 2, name: 'second' },
+            ];
+            const connection = {
+                query(queryString, callback) {
+                    expect(queryString).to.be.equal('SELECT * FROM `table`');
+
+                    callback('ERROR');
+                }
+            };
+
+            const content$ = new TableContent(connection, 'table', { max: 1, highWaterMark: Math.pow(2, 16) });
+
+            content$.on('error', (err) => {
+                expect(err).to.be.equal('ERROR');
+                done();
+            });
+
+            content$.on('data', (chunk) => {
+                expect(false).to.be.true;
+            });
+
+            content$.on('end', () => {
+                expect(false).to.be.true;
+            });
+        });
     });
 });
