@@ -50,8 +50,8 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
-const escapeRows = (escapeFn, rows) => {
-    return rows.map(r => {
+const escapeRows = (escapeFn, rows) => 
+    rows.map(r => {
         let escapedRow = [];
         
         Object.keys(r).forEach(k => {
@@ -61,7 +61,6 @@ const escapeRows = (escapeFn, rows) => {
 
         return escapedRow;
     });
-}
 
 /**
  * @param {Object} _ - lodash
@@ -69,16 +68,15 @@ const escapeRows = (escapeFn, rows) => {
  * @return {Array}
  */
 const mapDependencies = (_, dependencies) =>
-    _.uniqBy(dependencies.map(r => {
-        return {
+    _.uniqBy(dependencies.map(r => (
+        {
             sourceTable: r['TABLE_NAME'],
             sourceColumn: r['COLUMN_NAME'],
             referencedTable: r['REFERENCED_TABLE_NAME'],
             referencedColumn: r['REFERENCED_COLUMN_NAME'],
             updateRule: r['UPDATE_RULE'],
             deleteRule: r['DELETE_RULE']
-        };
-    }), 'sourceColumn');
+        })), 'sourceColumn');
 
 /**
  * @param {Object} _ - lodash
