@@ -1,9 +1,18 @@
+const R = require('ramda');
+const { Either, Maybe } = require('ramda-fantasy');
+const { Left, Right } = Either;
+const strUtils = require('../utils/str');
 /**
  * @param {Array} tables - List of tables. Raw mysql results
  * @param {Object} config - App config
  * @return {Array} - Filtered tables
  */
 const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
+
+/**
+ * Első paraméter táblák, második config
+ * Úgy kell meghívnom a filtert, hogy abban legyen egy ilyen predicate: t => config.excludedTables.includes(t)
+ */
 
 /**
  * @param {Object} _ - lodash
@@ -50,10 +59,10 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
-const escapeRows = (escapeFn, rows) => 
+const escapeRows = (escapeFn, rows) =>
     rows.map(r => {
         let escapedRow = [];
-        
+
         Object.keys(r).forEach(k => {
             escapedRow[k] = (typeof r[k] === 'string')
                 ? escapeFn(r[k]) : r[k];
@@ -119,17 +128,23 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
+
+const getForeignKeys =
+    R.ifElse(
+        R.contains('CONSTRAINT'),
+        R.compose(
+            R.map(R.trim),
+            R.map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),   // @todo point-free
+            R.map(strUtils.substringFromCurry('FOREIGN KEY')),
+            R.filter(line => line.trim().length !== 0),     // @todo point-free
+            R.split('CONSTRAINT'),
+            strUtils.substringFromCurry('CONSTRAINT'),
+        ),
+        R.always([])
+    );
+
 const parseDependencies = (_, substringFromFn, table, createTable) => {
-    const foreignKeys = _([createTable]
-        .filter(createTable => createTable.includes('CONSTRAINT'))
-        .map(createTable => substringFromFn(createTable, 'CONSTRAINT'))
-        .map(contraintLine => contraintLine.split('CONSTRAINT'))
-        .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
-        .flatMap()
-        .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
-        .map(fk => fk.slice(0, fk.indexOf(') ENGINE')))
-        .map(sliced => _.trimEnd(sliced))
-        .value();
+    const foreignKeys = getForeignKeys(createTable);
 
     return foreignKeys.map(fk => {
         const regex = /`[a-z_]*`/g;
@@ -164,5 +179,5 @@ const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.data
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
     escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables
+    mapTables, getForeignKeys
 }
