@@ -120,16 +120,15 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
 }
 
 const parseDependencies = (_, substringFromFn, table, createTable) => {
-    /**
-     * @todo split, és trimEnd kerüljön külön map -be
-     */
     const foreignKeys = _([createTable]
         .filter(createTable => createTable.includes('CONSTRAINT'))
-        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
+        .map(createTable => substringFromFn(createTable, 'CONSTRAINT'))
+        .map(contraintLine => contraintLine.split('CONSTRAINT'))
         .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
         .flatMap()
         .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
-        .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
+        .map(fk => fk.slice(0, fk.indexOf(') ENGINE')))
+        .map(sliced => _.trimEnd(sliced))
         .value();
 
     return foreignKeys.map(fk => {
