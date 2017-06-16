@@ -50,8 +50,8 @@ const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key 
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
-const escapeRows = (escapeFn, rows) => {
-    return rows.map(r => {
+const escapeRows = (escapeFn, rows) => 
+    rows.map(r => {
         let escapedRow = [];
         
         Object.keys(r).forEach(k => {
@@ -61,7 +61,6 @@ const escapeRows = (escapeFn, rows) => {
 
         return escapedRow;
     });
-}
 
 /**
  * @param {Object} _ - lodash
@@ -69,16 +68,15 @@ const escapeRows = (escapeFn, rows) => {
  * @return {Array}
  */
 const mapDependencies = (_, dependencies) =>
-    _.uniqBy(dependencies.map(r => {
-        return {
+    _.uniqBy(dependencies.map(r => (
+        {
             sourceTable: r['TABLE_NAME'],
             sourceColumn: r['COLUMN_NAME'],
             referencedTable: r['REFERENCED_TABLE_NAME'],
             referencedColumn: r['REFERENCED_COLUMN_NAME'],
             updateRule: r['UPDATE_RULE'],
             deleteRule: r['DELETE_RULE']
-        };
-    }), 'sourceColumn');
+        })), 'sourceColumn');
 
 /**
  * @param {Object} _ - lodash
@@ -124,11 +122,13 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
 const parseDependencies = (_, substringFromFn, table, createTable) => {
     const foreignKeys = _([createTable]
         .filter(createTable => createTable.includes('CONSTRAINT'))
-        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
+        .map(createTable => substringFromFn(createTable, 'CONSTRAINT'))
+        .map(contraintLine => contraintLine.split('CONSTRAINT'))
         .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
         .flatMap()
         .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
-        .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
+        .map(fk => fk.slice(0, fk.indexOf(') ENGINE')))
+        .map(sliced => _.trimEnd(sliced))
         .value();
 
     return foreignKeys.map(fk => {
