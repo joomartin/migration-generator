@@ -128,7 +128,15 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     return mapped;
 }
 
+/**
+ * @return {boolean}
+ */
+const hasLength = 
+    R.compose(R.gt(R.__, 0), R.length, R.trim);
 
+/**
+ * @return {Array}
+ */
 const getForeignKeys =
     R.ifElse(
         R.contains('CONSTRAINT'),
@@ -136,7 +144,7 @@ const getForeignKeys =
             R.map(R.trim),
             R.map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),   // @todo point-free
             R.map(strUtils.substringFromCurry('FOREIGN KEY')),
-            R.filter(line => line.trim().length !== 0),     // @todo point-free
+            R.filter(hasLength),
             R.split('CONSTRAINT'),
             strUtils.substringFromCurry('CONSTRAINT'),
         ),
