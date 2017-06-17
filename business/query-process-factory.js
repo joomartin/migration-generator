@@ -15,8 +15,8 @@ const mapDependenciesFactory = (_) =>
 const normalizeProcedureDefinitionFactory = (_, escapeFn) =>
     queryProcess.normalizeProcedureDefinition.bind(null, _, escapeFn);
 
-const mapTriggersFactory = (_, escapeFn) => 
-    queryProcess.mapTriggers.bind(null, _, escapeFn);
+const mapTriggersFactory = (_, escapeFn, database) => 
+    queryProcess.mapTriggers.bind(null, _, escapeFn, database);
 
 const parseDependenciesFactory = (_, substringFromFn) => 
     queryProcess.parseDependencies.bind(null, _, substringFromFn);

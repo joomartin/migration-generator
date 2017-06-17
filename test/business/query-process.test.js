@@ -159,6 +159,10 @@ describe('QueryProcess', () => {
                 'Procedure': 'Procedure_Name',
                 'Create Procedure': 'Procedure body'
             };
+            const procedure = {
+                definition,
+                type: 'PROCEDURE'
+            };
             const escapeFn = (content) => {
                 expect(content).to.be.equal('Procedure body');
                 return content;
@@ -170,7 +174,7 @@ describe('QueryProcess', () => {
                 }
             };
 
-            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, 'PROCEDURE', definition);
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, procedure);
             expect(normalizedProcedureDefinition.type).eq('PROCEDURE');
             expect(normalizedProcedureDefinition.definition).eq('Procedure body');
             expect(normalizedProcedureDefinition.name).eq('Procedure_Name');

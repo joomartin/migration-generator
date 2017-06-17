@@ -89,10 +89,10 @@ const mapDependencies = (_, dependencies) =>
  * @param {Object} definition - Definition
  * @return {Object}
  */
-const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
-    type,
-    name: definition[R.compose(toUpperFirst, R.toLower)(type)],
-    definition: escapeFn(definition[`Create ${toUpperFirst(type.toLowerCase())}`])
+const normalizeProcedureDefinition = (_, escapeFn, procedure) => ({
+    type: procedure.type,
+    name: procedure.definition[R.compose(toUpperFirst, R.toLower)(R.prop('type', procedure))],
+    definition: escapeFn(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
 const toUpperFirst = R.compose(
