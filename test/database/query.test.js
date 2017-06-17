@@ -5,7 +5,6 @@ const query = require('../../database/query');
 const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
 const utils = require('../../utils/utils');
-const queryProcessFactory = require('../../business/query-process-factory');
 const strUtils = require('../../utils/str');
 
 describe('Query', () => {

@@ -2,7 +2,6 @@ const _ = require('lodash');
 
 const TableContent = require('./stream/table-content');
 const queryProcess = require('../business/query-process');
-const queryProcessFactory = require('../business/query-process-factory');
 const utils = require('../utils/utils');
 const strUtils = require('../utils/str');
 
