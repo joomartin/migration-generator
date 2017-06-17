@@ -60,8 +60,8 @@ const escapeRows = (escapeFn, rows) =>
         let escapedRow = [];
 
         Object.keys(r).forEach(k => {
-            escapedRow[k] = (typeof r[k] === 'string')
-                ? escapeFn(r[k]) : r[k];
+            escapedRow.push((typeof r[k] === 'string')
+                ? escapeFn(r[k]) : r[k]);
         });
 
         return escapedRow;
