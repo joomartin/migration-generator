@@ -82,11 +82,11 @@ const escapeRows = (escapeFn, rows) =>
  * @param {Object} definition - Definition
  * @return {Object}
  */
-const normalizeProcedureDefinition = (_, escapeFn, procedure) => ({
+const normalizeProcedureDefinition = R.curry((escapeFn, procedure) => ({
     type: procedure.type,
-    name: procedure.definition[R.compose(toUpperFirst, R.toLower)(R.prop('type', procedure))],
+    name: procedure.definition[R.compose(toUpperFirst, R.toLower)(procedure.type)],
     definition: escapeFn(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
-});
+}));
 
 const toUpperFirst = R.compose(
     R.join(''),
@@ -100,7 +100,7 @@ const toUpperFirst = R.compose(
  * @param {Array} triggers - List of triggers in raw format
  * @return {Object}
  */
-const mapTriggers = (_, escapeFn, database, triggers) => {
+const mapTriggers = R.curry((escapeFn, database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
         if (!R.has(t.Table, mapped)) {
@@ -119,7 +119,7 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
     });
 
     return mapped;
-}
+});
 
 /**
  * @return {boolean}

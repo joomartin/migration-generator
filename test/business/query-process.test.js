@@ -157,7 +157,7 @@ describe('QueryProcess', () => {
                 }
             };
 
-            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, procedure);
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(escapeFn, procedure);
             expect(normalizedProcedureDefinition.type).eq('PROCEDURE');
             expect(normalizedProcedureDefinition.definition).eq('Procedure body');
             expect(normalizedProcedureDefinition.name).eq('Procedure_Name');
@@ -176,16 +176,8 @@ describe('QueryProcess', () => {
                 expect(content).to.be.equal('SET @foo = 1');
                 return content;
             };
-            const _ = {
-                has() {
-                    return false;
-                },
-                set(arr, key, val) {
-                    arr[key] = val;
-                }
-            };
 
-            const mappedTriggers = queryProcess.mapTriggers(_, escapeFn, 'database', triggers);
+            const mappedTriggers = queryProcess.mapTriggers(escapeFn, 'database', triggers);
             expect(mappedTriggers.todos).to.be.deep.equal([
                 {
                     name: 'trigger1',
