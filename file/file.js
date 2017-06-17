@@ -96,18 +96,13 @@ const getViewTablesTemplate = R.curry((ejs, config, viewTables) =>
         );
     }));
 
-const getProcedureTemplate = (procedures, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
-            migrationClass: 'CreateProcedures',
-            procedures,
-        }, null, (err, html) => {
-            if (err) return reject(err);
+const getProcedureTemplate = R.curry((ejs, config, procedures) => 
+    new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, { procedures }, null, (err, html) => 
+            err ? reject(err) : resolve(html)
+        );
+    }));
 
-            resolve(html);
-        });
-    });
-}
 
 const getTriggersTemplate = (triggersByTables, config, ejs) => {
     return new Promise((resolve, reject) => {

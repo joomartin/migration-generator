@@ -285,7 +285,7 @@ describe('File', () => {
                 }
             };
 
-            file.getProcedureTemplate(procedures, config, ejs)
+            file.getProcedureTemplate(ejs, config, procedures)
                 .then(html => {
                     expect(html).to.be.equal('html content');
                     done();
@@ -309,7 +309,7 @@ describe('File', () => {
                 }
             };
 
-            file.getProcedureTemplate(procedures, config, ejs)
+            file.getProcedureTemplate(ejs, config, procedures)
                 .then(data => {
                     expect(false).to.be.true;
                 })
