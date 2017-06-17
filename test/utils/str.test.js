@@ -15,9 +15,19 @@ describe('Str', () => {
         it('should concat any number of strings', () => {
             const hello = 'Hello';
             const world = ' world.';
-            const functional = ' Functional programming is great!'; 
+            const functional = ' Functional programming is great!';
 
             expect(strUtils.concat(hello, world, functional)).to.be.equal('Hello world. Functional programming is great!');
+        });
+    });
+
+    describe('#escapeQuotes()', () => {
+        it('should return a string with escaped quotes', () => {
+            const quoted = "it has 'some' quotes";
+            const standard = 'Test standard string';
+
+            expect(strUtils.escapeQuotes(quoted)).to.be.equal("it has \\'some\\' quotes");
+            expect(strUtils.escapeQuotes(standard)).to.be.equal('Test standard string');
         });
     });
 });

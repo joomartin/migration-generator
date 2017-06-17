@@ -430,7 +430,7 @@ describe('Query', () => {
     });
 
     describe('#getTableData', () => {
-        it('should call all function that produces table data', (done) => {
+        it('should run all queries that produces table data', (done) => {
             const tablesMock = [
                 { table: 'table1' }, { table: 'table2' }
             ];

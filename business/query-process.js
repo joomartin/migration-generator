@@ -32,7 +32,7 @@ const sanitizeViewTables = R.curry((database, viewTables) =>
     viewTables.map(vt => {
         let viewTable = R.clone(vt);
         viewTable.VIEW_DEFINITION = replaceDatabaseInContent(
-            database, utils.escapeQuotes(vt.VIEW_DEFINITION));
+            database, strUtils.escapeQuotes(vt.VIEW_DEFINITION));
 
         return viewTable;
     }));
@@ -58,7 +58,7 @@ const escapeRows = (rows) =>
     R.map(r => {
         let escapedRow = {};
         R.forEach(k =>
-            escapedRow[k] = R.ifElse(R.is(String), utils.escapeQuotes, R.identity)(r[k])
+            escapedRow[k] = R.ifElse(R.is(String), strUtils.escapeQuotes, R.identity)(r[k])
         )(R.keys(r));
 
         return escapedRow;
@@ -74,7 +74,7 @@ const escapeRows = (rows) =>
 const normalizeProcedureDefinition = (procedure) => ({
     type: procedure.type,
     name: procedure.definition[R.compose(toUpperFirst, R.toLower)(procedure.type)],
-    definition: utils.escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
+    definition: strUtils.escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
 const toUpperFirst = R.compose(
@@ -99,7 +99,7 @@ const mapTriggers = R.curry((database, triggers) => {
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
-            statement: utils.escapeQuotes(t.Statement),
+            statement: strUtils.escapeQuotes(t.Statement),
             definer: t.Definer,
             table: t.Table,
             database: database
