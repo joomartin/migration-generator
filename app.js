@@ -21,35 +21,35 @@ utils.logHeader(config, util, console, chalk);
 let fileNames = [];
 let allTables = [];
 
-let viewTablesPromise = query.getViewTables(connection, strUtils.concat)
+const viewTablesPromise = query.getViewTables(connection, strUtils.concat)
     .then(queryProcess.sanitizeViewTables(config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes))
     .then(file.getViewTablesTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, strUtils.concat)
+const proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, strUtils.concat)
     .then(R.map(queryProcess.normalizeProcedureDefinition(utils.escapeQuotes)))
     .then(file.getProcedureTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let triggersPromise = query.getTriggers(connection, strUtils.concat)
+const triggersPromise = query.getTriggers(connection, strUtils.concat)
     .then(queryProcess.mapTriggers(utils.escapeQuotes, config.database))
     .then(file.getTriggersTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
+const tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
     .then(file.getTemplates(ejs, file, config, columnInfoFactory))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
     .catch(err => console.log(chalk.bgRed(err)));
 
-let foreignKeyTemplate = tableDataPromise
+const foreignKeyTemplate = tableDataPromise
     .then(res =>
         file.getForeignKeyTemplate(allTables, config, ejs)
             .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(993)}_add_foreign_keys.php`, config, fs))

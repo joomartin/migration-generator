@@ -66,23 +66,17 @@ const getTemplate = R.curry((ejs, config, columnInfoFactory, table) => {
     });
 });
 
-const getForeignKeyTemplate = (tables, config, ejs) => {
-    return new Promise((resolve, reject) => {
+const getForeignKeyTemplate = (tables, config, ejs) => 
+    new Promise((resolve, reject) => {
         let variableNames = {};
         tables.forEach(table => {
             variableNames[table.table] = _.camelCase(table.table);
         });
 
-        ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, {
-            tables, variableNames,
-            migrationClass: 'AddForeignKeys'
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
+        ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, { tables, variableNames }, null, (err, html) => 
+            err ? reject(err) : resolve(html)
+        );
     });
-}
 
 /**
  * @param {Object} ejs
