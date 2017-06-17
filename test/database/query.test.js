@@ -22,13 +22,8 @@ describe('Query', () => {
                 },
                 config: { database: 'test' }
             }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
-            }
-
-            query.getTables(connection, concatFn)
+            query.getTables(connection)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['Tables_in_database']).to.be.equal('table1');
@@ -48,13 +43,8 @@ describe('Query', () => {
                 },
                 config: { database: 'test' }
             }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
-            }
-
-            query.getTables(connection, concatFn)
+            query.getTables(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -79,13 +69,8 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
-            };
-
-            query.getViewTables(connection, concatFn)
+            query.getViewTables(connection)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal([
@@ -107,13 +92,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
-            };
-
-            query.getViewTables(connection, concatFn)
+            query.getViewTables(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -138,13 +118,8 @@ describe('Query', () => {
                     callback(undefined, columnsMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL COLUMNS FROM `table`';
-            };
-
-            query.getColumns(connection, 'table', concatFn)
+            query.getColumns(connection, 'table')
                 .then(columns => {
                     expect(columns.length).to.be.equal(5);
                     expect(columns).to.be.deep.equal(columnsMock);
@@ -166,13 +141,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL COLUMNS FROM `table`';
-            };
-
-            query.getColumns(connection, 'table', concatFn)
+            query.getColumns(connection, 'table')
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -199,13 +169,8 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW CREATE TABLE `table1`';
-            };
-
-            query.getCreateTable(connection, 'table1', concatFn)
+            query.getCreateTable(connection, 'table1')
                 .then(createTable => {
                     expect(createTable).to.be.equal('CREATE TABLE table1');
                     done();
@@ -224,13 +189,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW CREATE TABLE `table1`';
-            };
-
-            query.getCreateTable(connection, 'table1', concatFn)
+            query.getCreateTable(connection, 'table1')
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -316,11 +276,8 @@ describe('Query', () => {
                     meta.type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
                 );
             }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-            }
 
-            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, concatFn)
+            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn)
                 .then(procedures => {
                     expect(procedures).to.deep.equal([
                         'SET @bar = 1', 'SET @foo = 1'
@@ -351,12 +308,7 @@ describe('Query', () => {
                     callback(null, proceduresMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
-            }
-            query.getProceduresMeta(connection, concatFn)
+            query.getProceduresMeta(connection)
                 .then(procedures => {
                     expect(procedures).to.be.deep.equal(proceduresMock);
                     done();
@@ -372,12 +324,7 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
-            }
-            query.getProceduresMeta(connection, concatFn)
+            query.getProceduresMeta(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -398,13 +345,8 @@ describe('Query', () => {
                     callback(null, ['SET @foo = 1']);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SHOW CREATE PROCEDURE `proc1`";
-            }
             const meta = { type: 'procedure', name: 'proc1' };
-            query.getProcedureDefinition(connection, meta, concatFn)
+            query.getProcedureDefinition(connection, meta)
                 .then(p => {
                     expect(p.definition).to.be.equal('SET @foo = 1');
                     expect(p.type).to.be.equal('procedure');
@@ -422,13 +364,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SHOW CREATE PROCEDURE `proc1`";
-            }
             const meta = { type: 'procedure', name: 'proc1' };
-            query.getProcedureDefinition(connection, meta, concatFn)
+            query.getProcedureDefinition(connection, meta)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -453,13 +390,8 @@ describe('Query', () => {
                     callback(null, triggersMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SHOW TRIGGERS FROM `database`";
-            }
-
-            query.getTriggers(connection, concatFn)
+            query.getTriggers(connection)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
 
@@ -482,13 +414,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SHOW TRIGGERS FROM `database`";
-            }
-
-            query.getTriggers(connection, concatFn)
+            query.getTriggers(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })

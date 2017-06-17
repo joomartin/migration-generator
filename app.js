@@ -21,14 +21,14 @@ utils.logHeader(config, util, console, chalk);
 let fileNames = [];
 let allTables = [];
 
-const viewTablesPromise = query.getViewTables(connection, strUtils.concat)
+const viewTablesPromise = query.getViewTables(connection)
     .then(queryProcess.sanitizeViewTables(config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes))
     .then(file.getViewTablesTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-const proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, strUtils.concat)
+const proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition)
     .then(R.map(queryProcess.normalizeProcedureDefinition(utils.escapeQuotes)))
     .then(file.getProcedureTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))

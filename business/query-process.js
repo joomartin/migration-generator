@@ -169,9 +169,7 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
             deleteRule: _.trim(deleteRule, ' ,')
         };
     });
-}
-
-;
+};
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,

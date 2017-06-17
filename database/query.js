@@ -7,36 +7,33 @@ const strUtils = require('../utils/str');
 
 /**
  * @param {Object} connection - Database connection
- * @param {Object} config - App config
  * @return {Promise} - Contains array
  */
-const getTables = (connection, concatFn) => 
+const getTables = (connection) => 
     new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW FULL TABLES IN `', connection.config.database, '` WHERE TABLE_TYPE NOT LIKE "VIEW"'), (err, tables) => 
+        connection.query('SHOW FULL TABLES IN `' + connection.config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tables) => 
             err ? reject(err) : resolve(tables));
     });
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getViewTables = (connection, concatFn) => 
+const getViewTables = (connection) => 
     new Promise((resolve, reject) => {
-        connection.query(concatFn("SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '", connection.config.database, "'"), (err, viewTables) => 
+        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTables) => 
             err ? reject(err) : resolve(viewTables));
     });
 
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getColumns = (connection, table, concatFn) =>
+const getColumns = (connection, table) =>
     new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW FULL COLUMNS FROM `', table, '`'), (err, columns) => 
-            (err) ? reject(err) : resolve(columns));
+        connection.query('SHOW FULL COLUMNS FROM `' + table + '`', (err, columns) => 
+            err ? reject(err) : resolve(columns));
     });
 
 /**
@@ -61,13 +58,12 @@ const getContent = (content$) =>
 /**
  * @param {Object} connection - Database connection
  * @param {string} table - Table name
- * @param {Function} concatFn - A callack that concats string
  * @returns {Promise} - Contains array
  */
-const getCreateTable = (connection, table, concatFn) => 
+const getCreateTable = (connection, table) => 
     new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW CREATE TABLE `', table, '`'), (err, result) => 
-            (err) ? reject(err) : resolve(result[0]['Create Table']));
+        connection.query('SHOW CREATE TABLE `' +  table +  '`', (err, result) => 
+            err ? reject(err) : resolve(result[0]['Create Table']));
     });
 
 /**
@@ -77,11 +73,11 @@ const getCreateTable = (connection, table, concatFn) =>
  * @param {Function} concatFn - A function that concats strings
  * @return {Promise} - Contains array
  */
-const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn, concatFn) => 
+const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn) => 
     new Promise((resolve, reject) => {
-        getProceduresMetaFn(connection, concatFn)
+        getProceduresMetaFn(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinitionFn(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}, concatFn))
+                metas.map(meta => getProcedureDefinitionFn(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}))
             )
             .then(promises => Promise.all(promises))
             .then(resolve)
@@ -90,35 +86,32 @@ const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} concatFn - A callack that concats string
  * @return {Promise} - Contains array
  */
-const getProceduresMeta = (connection, concatFn) => 
+const getProceduresMeta = (connection) => 
     new Promise((resolve, reject) => {
-        connection.query(concatFn("SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '", connection.config.database, "'"), (err, procedures) => 
-            (err) ? reject(err) : resolve(procedures));
+        connection.query(`SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '${connection.config.database}'`, (err, procedures) => 
+            err ? reject(err) : resolve(procedures));
     });
 
 /**
  * @param {Object} connection - Database connection
  * @param {Object} meta - Contains meta data about procedure like name, type
- * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains an object
  */
-const getProcedureDefinition = (connection, meta, concatFn) =>
+const getProcedureDefinition = (connection, meta) =>
     new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW CREATE ', meta.type.toUpperCase(), '`', meta.name, '`'), (err, definition) => 
+        connection.query('SHOW CREATE ' + meta.type.toUpperCase() + ' `' + meta.name + '`', (err, definition) => 
             (err) ? reject(err) : resolve({ type: meta.type, definition: definition[0] }));
     });
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} concatFn - A callack that concats string 
  * @return {Promise} - Contains array
  */
-const getTriggers = (connection, concatFn) => 
+const getTriggers = (connection) => 
     new Promise((resolve, reject) => {
-        connection.query(concatFn('SHOW TRIGGERS FROM `', connection.config.database, '`'), (err, triggers) => 
+        connection.query('SHOW TRIGGERS FROM `' + connection.config.database + '`', (err, triggers) => 
             (err) ? reject(err) : resolve(triggers));
     });
 
@@ -150,8 +143,8 @@ const getTableData = (connection, query, config, queryProcess, utils) =>
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
                     const parseDependenciesFn = queryProcessFactory.parseDependenciesFactory(_, strUtils.substringFrom);
 
-                    let columnsPromise = query.getColumns(connection, table, strUtils.concat);
-                    let createTablePromise = query.getCreateTable(connection, table, strUtils.concat);
+                    let columnsPromise = query.getColumns(connection, table);
+                    let createTablePromise = query.getCreateTable(connection, table);
                     let contentPromise = query.getContent(content$);
 
                     Promise.all([columnsPromise, createTablePromise, contentPromise])
