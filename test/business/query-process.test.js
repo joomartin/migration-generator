@@ -136,40 +136,6 @@ describe('QueryProcess', () => {
         });
     });
 
-    describe('#mapDependencies()', () => {
-        it('should return a unique mapped array', () => {
-            const dependencies = [
-                {
-                    TABLE_NAME: 'todos',
-                    COLUMN_NAME: 'user_id',
-                    REFERENCED_TABLE_NAME: 'users',
-                    REFERENCED_COLUMN_NAME: 'id',
-                    UPDATE_RULE: 'CASCADE',
-                    DELETE_RULE: 'SET NULL'
-                }
-            ];
-
-            const _ = {
-                uniqBy(arr, key) {
-                    expect(key).to.be.equal('sourceColumn');
-                    return arr;
-                }
-            };
-
-            const mapped = queryProcess.mapDependencies(_, dependencies);
-            expect(mapped).to.be.deep.equal([
-                {
-                    sourceTable: 'todos',
-                    sourceColumn: 'user_id',
-                    referencedTable: 'users',
-                    referencedColumn: 'id',
-                    updateRule: 'CASCADE',
-                    deleteRule: 'SET NULL'
-                }
-            ]);
-        });
-    });
-
     describe('#normalizeProcedureDefinition()', () => {
         it('should call escape function, and returns a mapped object', () => {
             const definition = {

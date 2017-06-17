@@ -22,7 +22,6 @@ const mapTables = R.curry((config, tables) =>
     R.map(R.prop(`Tables_in_${config.database}`))(tables));
 
 /**
- * @param {Object} _ - lodash
  * @param {string} database - Database name
  * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
  * @param {Function} escapeQuotesFn - A callback that escape quotes
@@ -192,6 +191,6 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, parseDependencies,
+    escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
     mapTables, getForeignKeys
 }

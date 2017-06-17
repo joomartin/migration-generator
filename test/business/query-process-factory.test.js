@@ -32,15 +32,6 @@ describe('QueryProcessFactory', () => {
         });
     });
 
-    describe('#mapDependenciesFactory', () => {
-        it('should return mapDependencies function', () => {
-            const mapDependenciesFn = queryProcessFactory.mapDependenciesFactory(_);
-
-            expect(mapDependenciesFn).to.be.ok;
-            expect(mapDependenciesFn).to.be.a.function;
-        });
-    });
-
     describe('#normalizeProcedureDefinitionFactory', () => {
         it('should return normalizeProcedureDefinition function', () => {
             const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(_, () => {});
