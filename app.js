@@ -42,7 +42,7 @@ const triggersPromise = query.getTriggers(connection, strUtils.concat)
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
-const tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
+const tableDataPromise = query.getTableData(connection, config)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
     .then(file.getTemplates(ejs, file, config, columnInfoFactory))

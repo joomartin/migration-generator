@@ -1,6 +1,7 @@
 const _ = require('lodash');
 
 const TableContent = require('./stream/table-content');
+const queryProcess = require('../business/query-process');
 const queryProcessFactory = require('../business/query-process-factory');
 const utils = require('../utils/utils');
 const strUtils = require('../utils/str');
@@ -114,17 +115,13 @@ const getTriggers = (connection) =>
 
 /**
  * @param {Object} connection 
- * @param {Object} query 
  * @param {Object} config 
- * @param {Object} queryProcess 
- * @param {Object} utils 
  */
-const getTableData = (connection, query, config, queryProcess, utils) =>
+const getTableData = (connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
-        const tableKey = `Tables_in_${config.database}`;
 
-        query.getTables(connection, strUtils.concat)
+        getTables(connection)
             .then(queryProcess.mapTables(config))
             .then(queryProcess.filterExcluededTables(config))
             .then(tables => {
@@ -136,13 +133,12 @@ const getTableData = (connection, query, config, queryProcess, utils) =>
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(queryProcess.filterIndexes);
                     const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
                     const parseDependenciesFn = queryProcessFactory.parseDependenciesFactory(_, strUtils.substringFrom);
 
-                    let columnsPromise = query.getColumns(connection, table);
-                    let createTablePromise = query.getCreateTable(connection, table);
-                    let contentPromise = query.getContent(content$);
+                    let columnsPromise = getColumns(connection, table);
+                    let createTablePromise = getCreateTable(connection, table);
+                    let contentPromise = getContent(content$);
 
                     Promise.all([columnsPromise, createTablePromise, contentPromise])
                         .then(([columns, createTable, content]) => {
@@ -152,16 +148,16 @@ const getTableData = (connection, query, config, queryProcess, utils) =>
                             tableData[index].content = escapeRowsFn(content);
 
                             if (index === tables.length - 1) {
-                                resolve(tableData);
+                                return resolve(tableData);
                             }
                         })
                         .catch(err => {
-                            reject(err);
+                            return reject(err);
                         });
                 });
             })
             .catch(err => {
-                reject(err);
+                return reject(err);
             });
     });
 
