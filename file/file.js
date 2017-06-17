@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const ejs = require('ejs');
+const R = require('ramda');
 
 const utils = require('../utils/utils');
 
@@ -83,18 +84,17 @@ const getForeignKeyTemplate = (tables, config, ejs) => {
     });
 }
 
-const getViewTablesTemplate = (viewTables, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, {
-            viewTables,
-            migrationClass: 'CreateViewTables'
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
-    });
-}
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Array} viewTables
+ */
+const getViewTablesTemplate = R.curry((ejs, config, viewTables) => 
+    new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }, null, (err, html) => 
+            err ? reject(err) : resolve(html)
+        );
+    }));
 
 const getProcedureTemplate = (procedures, config, ejs) => {
     return new Promise((resolve, reject) => {

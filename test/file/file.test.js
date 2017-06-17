@@ -231,7 +231,7 @@ describe('File', () => {
                 }
             }
 
-            file.getViewTablesTemplate(tables, config, ejs)
+            file.getViewTablesTemplate(ejs, config, tables)
                 .then(data => {
                     expect(data).to.be.equal('html content');
                     done();
@@ -258,7 +258,7 @@ describe('File', () => {
                 }
             }
 
-            file.getViewTablesTemplate(tables, config, ejs)
+            file.getViewTablesTemplate(ejs, config, tables)
                 .then(data => {
                     expect(false).to.be.true;
                 })

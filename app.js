@@ -30,7 +30,7 @@ const mapTriggersFn = queryProcessFactory.mapTriggersFactory(_, utils.escapeQuot
 
 let viewTablesPromise = query.getViewTables(connection, strUtils.concat)
     .then(sanitizeFn)
-    .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
+    .then(file.getViewTablesTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
