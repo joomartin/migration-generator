@@ -77,22 +77,6 @@ const escapeRows = (escapeFn, rows) =>
 
 /**
  * @param {Object} _ - lodash
- * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
- * @return {Array}
- */
-const mapDependencies = (_, dependencies) =>
-    _.uniqBy(dependencies.map(r => (
-        {
-            sourceTable: r['TABLE_NAME'],
-            sourceColumn: r['COLUMN_NAME'],
-            referencedTable: r['REFERENCED_TABLE_NAME'],
-            referencedColumn: r['REFERENCED_COLUMN_NAME'],
-            updateRule: r['UPDATE_RULE'],
-            deleteRule: r['DELETE_RULE']
-        })), 'sourceColumn');
-
-/**
- * @param {Object} _ - lodash
  * @param {Function} escapeFn - A callback that escapes quotes
  * @param {string} type - Procedure or function
  * @param {Object} definition - Definition
