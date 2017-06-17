@@ -124,10 +124,10 @@ const getForeignKeys =
         R.compose(
             R.map(R.trim),
             R.map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
-            R.map(strUtils.substringFromCurry('FOREIGN KEY')),
+            R.map(strUtils.substringFrom('FOREIGN KEY')),
             R.filter(hasLength),
             R.split('CONSTRAINT'),
-            strUtils.substringFromCurry('CONSTRAINT'),
+            strUtils.substringFrom('CONSTRAINT'),
         ),
         R.always([])
     );

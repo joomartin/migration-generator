@@ -5,7 +5,7 @@ describe('Str', () => {
     describe('#substringFrom()', () => {
         it('should return substring from a given string in a given string', () => {
             const str = 'This is a test string';
-            const fromTest = strUtils.substringFrom(str, 'test');
+            const fromTest = strUtils.substringFrom('test', str);
 
             expect(fromTest).to.be.equal('test string');
         });
