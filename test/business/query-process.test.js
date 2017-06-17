@@ -25,7 +25,7 @@ describe('QueryProcess', () => {
             expectResult(queryProcess.filterExcluededTables(config)(tables));
         });
     });
-    
+
     describe('#mapTables', () => {
         const config = { database: 'database' };
         const tables = [
@@ -62,15 +62,9 @@ describe('QueryProcess', () => {
             };
 
             const database = 'test-database';
-            const _ = {
-                clone(obj) {
-                    expect(viewTables).include(obj);
-                    return obj;
-                }
-            }
 
             const sanitized = queryProcess.sanitizeViewTables(
-                _, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables);
+                database, replaceDatabaseNameFn, escapeQuotesFn, viewTables);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
         });

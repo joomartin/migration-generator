@@ -21,8 +21,7 @@ utils.logHeader(config, util, console, chalk);
 let fileNames = [];
 let allTables = [];
 
-const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
-    _, connection.config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+const sanitizeFn = queryProcess.sanitizeViewTables(config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
 
 const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
     _, utils.escapeQuotes);

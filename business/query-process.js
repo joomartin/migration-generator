@@ -29,14 +29,14 @@ const mapTables = R.curry((config, tables) =>
  * @param {Array} viewTables - Raw view tables queried from database
  * @return {Array} - Sanitized view tables
  */
-const sanitizeViewTables = (_, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
+const sanitizeViewTables = R.curry((database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
     viewTables.map(vt => {
-        let viewTable = _.clone(vt);
+        let viewTable = R.clone(vt);
         viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
             database, escapeQuotesFn(vt.VIEW_DEFINITION));
 
         return viewTable;
-    });
+    }));
 
 /**
  * @param {string} database - Database name. Searched value in content to replace
