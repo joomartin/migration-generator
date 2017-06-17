@@ -53,7 +53,7 @@ const filterIndexes =
 /**
  * @param {Function} escapeFn - A callback that escapes quotes
  * @param {Array} rows - raw mysql content
- * @return {Object}
+ * @return {Array}
  */
 const escapeRows = (escapeFn, rows) => 
     R.map(r => {
@@ -64,7 +64,7 @@ const escapeRows = (escapeFn, rows) =>
 
         return escapedRow;
     })(rows);
-    
+
 /**
  * @param {Object} _ - lodash
  * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
@@ -90,9 +90,14 @@ const mapDependencies = (_, dependencies) =>
  */
 const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
     type,
-    name: definition[_.upperFirst(type.toLowerCase())],
-    definition: escapeFn(definition[`Create ${_.upperFirst(type.toLowerCase())}`])
-})
+    name: definition[R.compose(toUpperFirst, R.toLower)(type)],
+    definition: escapeFn(definition[`Create ${toUpperFirst(type.toLowerCase())}`])
+});
+
+const toUpperFirst = R.compose(
+  R.join(''),
+  R.over(R.lensIndex(0), R.toUpper)
+);
 
 /**
  * @param {Object} _ - lodash

@@ -170,7 +170,9 @@ describe('QueryProcess', () => {
             };
 
             const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, 'PROCEDURE', definition);
-
+            expect(normalizedProcedureDefinition.type).eq('PROCEDURE');
+            expect(normalizedProcedureDefinition.definition).eq('Procedure body');
+            expect(normalizedProcedureDefinition.name).eq('Procedure_Name');
         });
     });
 
