@@ -2,6 +2,7 @@ const R = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
 const strUtils = require('../utils/str');
+const utils = require('../utils/utils');
 
 /**
  * @param {Object} config - App config
@@ -23,16 +24,14 @@ const mapTables = R.curry((config, tables) =>
 
 /**
  * @param {string} database - Database name
- * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
- * @param {Function} escapeQuotesFn - A callback that escape quotes
  * @param {Array} viewTables - Raw view tables queried from database
  * @return {Array} - Sanitized view tables
  */
-const sanitizeViewTables = R.curry((database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
+const sanitizeViewTables = R.curry((database, viewTables) =>
     viewTables.map(vt => {
         let viewTable = R.clone(vt);
-        viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
-            database, escapeQuotesFn(vt.VIEW_DEFINITION));
+        viewTable.VIEW_DEFINITION = replaceDatabaseInContent(
+            database, utils.escapeQuotes(vt.VIEW_DEFINITION));
 
         return viewTable;
     }));
@@ -45,31 +44,20 @@ const sanitizeViewTables = R.curry((database, replaceDatabaseNameFn, escapeQuote
 const replaceDatabaseInContent = (database, content) => content.replace(new RegExp('`' + database + '`.', 'g'), '');
 
 /**
- * @param {Function} filterIndexesFn - A callback that filter out index columns
- * @param {Array} columns - Collection of table column objects
- * @return {Object}
- */
-const seperateColumns = (filterIndexesFn, columns) => ({
-    indexes: filterIndexesFn(columns),
-    columns: columns
-});
-
-/**
  * @return {Array} 
  */
 const filterIndexes =
     R.filter(R.either(R.propEq('Key', 'MUL'), R.propEq('Key', 'UNI')));
 
 /**
- * @param {Function} escapeFn - A callback that escapes quotes
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
-const escapeRows = (escapeFn, rows) =>
+const escapeRows = (rows) =>
     R.map(r => {
         let escapedRow = {};
         R.forEach(k =>
-            escapedRow[k] = R.ifElse(R.is(String), escapeFn, R.identity)(r[k])
+            escapedRow[k] = R.ifElse(R.is(String), utils.escapeQuotes, R.identity)(r[k])
         )(R.keys(r));
 
         return escapedRow;
@@ -82,11 +70,11 @@ const escapeRows = (escapeFn, rows) =>
  * @param {Object} definition - Definition
  * @return {Object}
  */
-const normalizeProcedureDefinition = R.curry((escapeFn, procedure) => ({
+const normalizeProcedureDefinition = (procedure) => ({
     type: procedure.type,
     name: procedure.definition[R.compose(toUpperFirst, R.toLower)(procedure.type)],
-    definition: escapeFn(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
-}));
+    definition: utils.escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
+});
 
 const toUpperFirst = R.compose(
     R.join(''),
@@ -95,12 +83,11 @@ const toUpperFirst = R.compose(
 
 /**
  * @param {Object} _ - lodash
- * @param {Function} escapeFn - Callback that escape quotes
  * @param {string} database - Name of database
  * @param {Array} triggers - List of triggers in raw format
  * @return {Object}
  */
-const mapTriggers = R.curry((escapeFn, database, triggers) => {
+const mapTriggers = R.curry((database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
         if (!R.has(t.Table, mapped)) {
@@ -111,7 +98,7 @@ const mapTriggers = R.curry((escapeFn, database, triggers) => {
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
-            statement: escapeFn(t.Statement),
+            statement: utils.escapeQuotes(t.Statement),
             definer: t.Definer,
             table: t.Table,
             database: database
@@ -172,7 +159,7 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
 };
 
 module.exports = {
-    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
     mapTables, getForeignKeys
 }

@@ -133,7 +133,6 @@ const getTableData = (connection, config) =>
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
 
-                    const escapeRowsFn = queryProcessFactory.escapeRowsFactory(utils.escapeQuotes);
                     const parseDependenciesFn = queryProcessFactory.parseDependenciesFactory(_, strUtils.substringFrom);
 
                     let columnsPromise = getColumns(connection, table);
@@ -145,7 +144,7 @@ const getTableData = (connection, config) =>
                             tableData[index].columns = columns;
                             tableData[index].indexes = queryProcess.filterIndexes(columns);
                             tableData[index].dependencies = parseDependenciesFn(table, createTable);
-                            tableData[index].content = escapeRowsFn(content);
+                            tableData[index].content = queryProcess.escapeRows(content);
 
                             if (index === tables.length - 1) {
                                 return resolve(tableData);

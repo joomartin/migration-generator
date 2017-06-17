@@ -14,15 +14,6 @@ describe('QueryProcessFactory', () => {
         });
     });
 
-    describe('#seperateColumnsFactory', () => {
-        it('should return seperateColumns function', () => {
-            const seperateColumnsFn = queryProcessFactory.seperateColumnsFactory(() => {});
-
-            expect(seperateColumnsFn).to.be.ok;
-            expect(seperateColumnsFn).to.be.a.function;
-        });
-    });
-
     describe('#escapeRowsFactory', () => {
         it('should return escapeRows function', () => {
             const escapeRowsFn = queryProcessFactory.escapeRowsFactory(() => {});

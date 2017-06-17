@@ -52,19 +52,10 @@ describe('QueryProcess', () => {
                 { VIEW_DEFINITION: 'view table #1' }, { VIEW_DEFINITION: 'view table #2' }
             ];
             const definitions = viewTables.map(vt => vt.VIEW_DEFINITION);
-            const replaceDatabaseNameFn = (database, content) => {
-                expect(database).to.be.equal('test-database');
-                return content;
-            };
-            const escapeQuotesFn = (content) => {
-                expect(definitions).include(content);
-                return content;
-            };
-
             const database = 'test-database';
 
             const sanitized = queryProcess.sanitizeViewTables(
-                database, replaceDatabaseNameFn, escapeQuotesFn, viewTables);
+                database, viewTables);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
         });
@@ -77,27 +68,6 @@ describe('QueryProcess', () => {
 
             const replaced = queryProcess.replaceDatabaseInContent(database, content);
             expect(replaced).to.be.equal('SELECT * FROM `test-table`');
-        });
-    });
-
-    describe('#seperateColumns()', () => {
-        it('should call filtering function to columns and return a seperated array by columns and indexes', () => {
-            const columns = [
-                { Field: 'id' }, { Field: 'name' }
-            ];
-            const indexFilterFn = (columnsToBeFiltered) => {
-                expect(columnsToBeFiltered).to.be.deep.equal(columns);
-                return [columnsToBeFiltered[0]];
-            };
-
-            const seperated = queryProcess.seperateColumns(indexFilterFn, columns);
-
-            expect(seperated.columns.length).to.be.equal(2);
-            expect(seperated.indexes.length).to.be.equal(1);
-
-            expect(seperated.columns).to.be.deep.equal(columns);
-            expect(seperated.indexes[0]).to.be.deep.equal(columns[0]);
-
         });
     });
 
@@ -123,67 +93,46 @@ describe('QueryProcess', () => {
                 { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 },
             ];
 
-            const escapeFn = (content) => {
-                expect(['Item #1', 'Item #2'].some(i => i === content)).to.be.true;
-                expect(typeof content).to.be.equal('string');
-
-                return content;
-            }
-
-            const escaped = queryProcess.escapeRows(escapeFn, rows);
+            const escaped = queryProcess.escapeRows(rows);
 
             expect(escaped.length).to.be.equal(2);
         });
     });
 
     describe('#normalizeProcedureDefinition()', () => {
-        it('should call escape function, and returns a mapped object', () => {
+        it('should escape definition and map to an object', () => {
             const definition = {
                 'Procedure': 'Procedure_Name',
-                'Create Procedure': 'Procedure body'
+                'Create Procedure': "Procedure body 'quotes' here"
             };
             const procedure = {
                 definition,
                 type: 'PROCEDURE'
             };
-            const escapeFn = (content) => {
-                expect(content).to.be.equal('Procedure body');
-                return content;
-            };
-            const _ = {
-                upperFirst(text) {
-                    expect(text).to.be.equal('procedure');
-                    return 'Procedure';
-                }
-            };
 
-            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(escapeFn, procedure);
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(procedure);
             expect(normalizedProcedureDefinition.type).eq('PROCEDURE');
-            expect(normalizedProcedureDefinition.definition).eq('Procedure body');
+            expect(normalizedProcedureDefinition.definition).eq("Procedure body \\'quotes\\' here");
             expect(normalizedProcedureDefinition.name).eq('Procedure_Name');
         });
     });
 
     describe('#mapTriggers()', () => {
-        it('should call escape function, and returns a mapped object', () => {
+        it('should escape quotes and map triggers to an array of objects', () => {
             const triggers = [
                 {
                     Trigger: 'trigger1', Event: 'INSERT', Timing: 'AFTER',
-                    Statement: 'SET @foo = 1', Definer: 'root@localhost', Table: 'todos'
+                    Statement: "SET @foo = 1 some 'quotes'", Definer: 'root@localhost', Table: 'todos'
                 }
             ];
-            const escapeFn = (content) => {
-                expect(content).to.be.equal('SET @foo = 1');
-                return content;
-            };
 
-            const mappedTriggers = queryProcess.mapTriggers(escapeFn, 'database', triggers);
+            const mappedTriggers = queryProcess.mapTriggers('database', triggers);
             expect(mappedTriggers.todos).to.be.deep.equal([
                 {
                     name: 'trigger1',
                     event: 'INSERT',
                     timing: 'AFTER',
-                    statement: 'SET @foo = 1',
+                    statement: "SET @foo = 1 some \\'quotes\\'",
                     definer: 'root@localhost',
                     table: 'todos',
                     database: 'database'
