@@ -11,7 +11,7 @@ const getFileName = (date, table, index) =>
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
 const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>  
-    Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs))));
+    Promise.all(R.map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
 
 const generateFiles = (contents, fileNames, config, fs, file) => 
     Promise.all(contents.map((content, index) => 
@@ -25,7 +25,7 @@ const generateFiles = (contents, fileNames, config, fs, file) =>
  * @param columnInfoFactory Function
  * @param ejs Object
  */
-const getTemplate = (table, config, columnInfoFactory, ejs) => {
+const getTemplate = R.curry((ejs, config, columnInfoFactory, table) => {
     return new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
@@ -64,7 +64,7 @@ const getTemplate = (table, config, columnInfoFactory, ejs) => {
             resolve({ table: table.table, html });
         });
     });
-}
+});
 
 const getForeignKeyTemplate = (tables, config, ejs) => {
     return new Promise((resolve, reject) => {
