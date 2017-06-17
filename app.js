@@ -52,7 +52,7 @@ let triggersPromise = query.getTriggers(connection, strUtils.concat)
 let tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
     .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
     .then(utils.sideEffect(tables => allTables = tables))
-    .then(tables => file.getTemplates(tables, config, columnInfoFactory, ejs, file))
+    .then(file.getTemplates(ejs, file, config, columnInfoFactory))
     .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
     .catch(err => console.log(chalk.bgRed(err)));
 

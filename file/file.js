@@ -10,8 +10,8 @@ const getFileNames = (date, tables, file, padIndex) =>
 const getFileName = (date, table, index) => 
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
-const getTemplates = (tables, config, columnInfoFactory, ejs, file) =>  
-    Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs)));
+const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>  
+    Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs))));
 
 const generateFiles = (contents, fileNames, config, fs, file) => 
     Promise.all(contents.map((content, index) => 
@@ -129,17 +129,15 @@ const getTriggersTemplate = R.curry((ejs, config, triggersByTables) =>
  * @param timestamp int
  * @return String
  */
-const generateFile = (content, fileName, config, fs) => {
-    return new Promise((resolve, reject) => {
-        const path = `${config.output}/${fileName}`;
-        const options = { highWaterMark: Math.pow(2, 16) };
-        const ws = fs.createWriteStream(path, options);
+const generateFile = (content, fileName, config, fs) => 
+    new Promise((resolve, reject) => {
+        const ws = fs.createWriteStream(`${config.output}/${fileName}`, { highWaterMark: Math.pow(2, 16) });
 
         ws.write(content);
         ws.end();
         resolve(fileName);
     });
-}
+
 
 /**
  * @param tableName String

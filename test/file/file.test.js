@@ -404,7 +404,7 @@ describe('File', () => {
                 }
             }
 
-            file.getTemplates(tables, null, null, null, fileMock)
+            file.getTemplates(null, fileMock, null, null, tables)
                 .then(res => {
                     expect(true).to.be.true;
                     done();
