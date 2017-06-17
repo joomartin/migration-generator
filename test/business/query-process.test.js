@@ -6,20 +6,43 @@ const queryProcess = require('../../business/query-process');
 
 describe('QueryProcess', () => {
     describe('#filterExcluededTables', () => {
+        const config = {
+            excludedTables: ['migrations']
+        };
+        const tables = [
+            'migrations', 'table1', 'table2'
+        ];
+        const expectResult = (result) => {
+            expect(result.length).to.be.eq(2);
+            expect(result).to.be.deep.eq(['table1', 'table2'])
+        };
+
         it('should return filtered tables based on config excluded tables property', () => {
-            const config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
-            const tables = [
-                { 'Tables_in_test': 'migrations' }, { 'Tables_in_test': 'table1' }, { 'Tables_in_test': 'table2' }
-            ];
+            expectResult(queryProcess.filterExcluededTables(config, tables));
+        });
 
-            const filteredTables = queryProcess.filterExcluededTables(tables, config)
+        it('should be curried', () => {
+            expectResult(queryProcess.filterExcluededTables(config)(tables));
+        });
+    });
+    
+    describe('#mapTables', () => {
+        const config = { database: 'database' };
+        const tables = [
+            { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
+        ];
+        const expectResult = result => {
+            expect(result).to.deep.equal([
+                'table1', 'table2', 'table3',
+            ]);
+        }
 
-            console.log(filteredTables);
-            expect(filteredTables.length).to.be.equal(2);
-            expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
+        it('should map an array containing mysql results to an array contains table names', () => {
+            expectResult(queryProcess.mapTables(config, tables));
+        });
+
+        it('should be curries', () => {
+            expectResult(queryProcess.mapTables(config)(tables));
         });
     });
 
@@ -106,7 +129,7 @@ describe('QueryProcess', () => {
                 { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 },
             ];
 
-            const escapeFn = (content) =>  {
+            const escapeFn = (content) => {
                 expect(['Item #1', 'Item #2'].some(i => i === content)).to.be.true;
                 expect(typeof content).to.be.equal('string');
 
@@ -220,7 +243,7 @@ describe('QueryProcess', () => {
     describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
             const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTable); 
+                _, strUtils.substringFrom, 'todos', createTable);
 
             expect(dependencies).to.be.lengthOf(2);
             expect(dependencies).to.be.deep.equal([
@@ -239,30 +262,17 @@ describe('QueryProcess', () => {
                     updateRule: 'SET NULL',
                     deleteRule: 'CASCADE'
                 },
-            ]);          
+            ]);
         });
 
         it('should return return an empty array if no foreign key in table', () => {
             const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTableNoForeignKeys); 
+                _, strUtils.substringFrom, 'todos', createTableNoForeignKeys);
 
             expect(dependencies).to.be.lengthOf(0);
         });
     });
 
-    describe('#mapTables', () => {
-        it('should map an array containing mysql results to an array contains table names', () => {
-            const config = { database: 'database' };
-            const tables = [
-                { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
-            ];
-
-            const tableNames = queryProcess.mapTables(config, tables);
-            expect(tableNames).to.deep.equal([
-                'table1', 'table2', 'table3',
-            ]);
-        });
-    });
 });
 
 const createTable = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";

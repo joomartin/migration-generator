@@ -4,12 +4,22 @@ const { Left, Right } = Either;
 const strUtils = require('../utils/str');
 
 /**
- * @param {Array} tables - List of tables. Raw mysql results
  * @param {Object} config - App config
+ * @param {Array} tables - List of tables. Raw mysql results
  * @return {Array} - Filtered tables
  */
-const filterExcluededTables = (tables, config) =>
-    R.reject(t => config.excludedTables.includes(t[`Tables_in_${config.database}`]), tables);
+const filterExcluededTables = R.curry((config, tables) =>
+    R.reject(
+        R.contains(R.__, config.excludedTables)
+    )(tables));
+
+/**
+ * @param {Object} config  
+ * @param {Array} tables 
+ * @return {Array}
+ */
+const mapTables = R.curry((config, tables) =>
+    R.map(R.prop(`Tables_in_${config.database}`))(tables));
 
 /**
  * @param {Object} _ - lodash
@@ -178,13 +188,7 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
     });
 }
 
-/**
- * @param {Array} tables 
- * @param {Object} config 
- * @return {Array}
- */
-const mapTables = (config, tables) =>
-    R.map(R.prop(`Tables_in_${config.database}`))(tables);
+;
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,

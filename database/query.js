@@ -135,10 +135,10 @@ const getTableData = (connection, query, config, queryProcess, utils) =>
         const tableKey = `Tables_in_${config.database}`;
 
         query.getTables(connection, strUtils.concat)
-            .then(tables => queryProcess.filterExcluededTables(tables, config))
+            .then(queryProcess.mapTables(config))
+            .then(queryProcess.filterExcluededTables(config))
             .then(tables => {
-                tables.forEach((tableRaw, index) => {
-                    const table = tableRaw[tableKey];
+                tables.forEach((table, index) => {
                     tableData.push({
                         table,
                         dependencies: []
