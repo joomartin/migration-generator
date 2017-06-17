@@ -2,17 +2,13 @@ const R = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
 const strUtils = require('../utils/str');
+
 /**
  * @param {Array} tables - List of tables. Raw mysql results
  * @param {Object} config - App config
  * @return {Array} - Filtered tables
  */
 const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
-
-/**
- * Első paraméter táblák, második config
- * Úgy kell meghívnom a filtert, hogy abban legyen egy ilyen predicate: t => config.excludedTables.includes(t)
- */
 
 /**
  * @param {Object} _ - lodash
@@ -49,10 +45,10 @@ const seperateColumns = (filterIndexesFn, columns) => ({
 });
 
 /**
- * @param {Array} columns - Raw mysql columns
  * @return {Array} 
  */
-const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
+const filterIndexes = 
+    R.filter(R.either(R.propEq('Key', 'MUL'), R.propEq('Key', 'UNI')));
 
 /**
  * @param {Function} escapeFn - A callback that escapes quotes
