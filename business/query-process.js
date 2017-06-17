@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const R = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
@@ -131,7 +132,12 @@ const getForeignKeys =
         R.always([])
     );
 
-const parseDependencies = (_, substringFromFn, table, createTable) => {
+/**
+ * @param {String} table 
+ * @param {String} createTable 
+ * @return {Array}
+ */
+const parseDependencies = (table, createTable) => {
     const foreignKeys = getForeignKeys(createTable);
 
     return foreignKeys.map(fk => {

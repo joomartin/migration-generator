@@ -143,8 +143,7 @@ describe('QueryProcess', () => {
 
     describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
-            const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTable);
+            const dependencies = queryProcess.parseDependencies('todos', createTable);
 
             expect(dependencies).to.be.lengthOf(2);
             expect(dependencies).to.be.deep.equal([
@@ -167,8 +166,7 @@ describe('QueryProcess', () => {
         });
 
         it('should return return an empty array if no foreign key in table', () => {
-            const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTableNoForeignKeys);
+            const dependencies = queryProcess.parseDependencies('todos', createTableNoForeignKeys);
 
             expect(dependencies).to.be.lengthOf(0);
         });
