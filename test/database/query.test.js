@@ -254,33 +254,36 @@ describe('Query', () => {
 
     describe('#getProcedures()', () => {
         it('should get all procedures and functions for a database', (done) => {
-            const getProceduresMetaFn = (connection, concatFn) => {
-                expect(true).to.be.true;
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+                    if (queryString.includes('INFORMATION_SCHEMA')) {
+                        callback(undefined, [
+                            {
+                                SPECIFIC_NAME: 'proc1',
+                                ROUTINE_TYPE: 'PROCEDURE'
+                            },
+                            {
+                                SPECIFIC_NAME: 'func1',
+                                ROUTINE_TYPE: 'FUNCTION'
+                            },
+                        ]);
+                    } else if (queryString.includes('SHOW CREATE')) {
+                        if (queryString.includes('FUNCTION')) {
+                            callback(undefined, ['SET @foo = 1']);
+                        }
 
-                return Promise.resolve([
-                    {
-                        SPECIFIC_NAME: 'proc1',
-                        ROUTINE_TYPE: 'PROCEDURE'
-                    },
-                    {
-                        SPECIFIC_NAME: 'func1',
-                        ROUTINE_TYPE: 'FUNCTION'
-                    },
-                ]);
-            }
-            const getProcedureDefinitionFn = (connection, meta, normalizeProcedureDefinitionFn, concatFn) => {
-                expect(['proc1', 'func1']).to.include(meta.name);
-                expect(['PROCEDURE', 'FUNCTION']).to.include(meta.type);
+                        callback(undefined, ['SET @bar = 1']);
+                    }
+                }
+            };
 
-                return Promise.resolve(
-                    meta.type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
-                );
-            }
-
-            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn)
+            query.getProcedures(connection)
                 .then(procedures => {
                     expect(procedures).to.deep.equal([
-                        'SET @bar = 1', 'SET @foo = 1'
+                        { type: 'PROCEDURE', definition: 'SET @bar = 1' },
+                        { type: 'FUNCTION', definition: 'SET @foo = 1' }
                     ]);
 
                     done();

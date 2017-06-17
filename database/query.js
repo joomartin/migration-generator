@@ -68,16 +68,13 @@ const getCreateTable = (connection, table) =>
 
 /**
  * @param {Object} connection - Database connection
- * @param {Function} getProceduresMetaFn - A function that queries procedures meta data
- * @param {Function} getProcedureDefinitionFn - A function that queries a procedure definition
- * @param {Function} concatFn - A function that concats strings
  * @return {Promise} - Contains array
  */
-const getProcedures = (connection, getProceduresMetaFn, getProcedureDefinitionFn) => 
+const getProcedures = (connection) => 
     new Promise((resolve, reject) => {
-        getProceduresMetaFn(connection)
+        getProceduresMeta(connection)
             .then(metas =>
-                metas.map(meta => getProcedureDefinitionFn(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}))
+                metas.map(meta => getProcedureDefinition(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}))
             )
             .then(promises => Promise.all(promises))
             .then(resolve)
