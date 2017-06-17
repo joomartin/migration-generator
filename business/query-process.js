@@ -109,11 +109,11 @@ const toUpperFirst = R.compose(
 const mapTriggers = (_, escapeFn, database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
-        if (!_.has(mapped, t.Table)) {
-            _.set(mapped, t.Table, []);
+        if (!R.has(t.Table, mapped)) {
+            mapped = R.assoc(t.Table, [], mapped);
         }
 
-        mapped[t.Table].push({
+        mapped[t.Table] = R.append({
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
@@ -121,7 +121,7 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
             definer: t.Definer,
             table: t.Table,
             database: database
-        });
+        }, mapped[t.Table]);
     });
 
     return mapped;
