@@ -17,6 +17,7 @@ describe('QueryProcess', () => {
 
             const filteredTables = queryProcess.filterExcluededTables(tables, config)
 
+            console.log(filteredTables);
             expect(filteredTables.length).to.be.equal(2);
             expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
         });

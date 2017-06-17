@@ -8,7 +8,8 @@ const strUtils = require('../utils/str');
  * @param {Object} config - App config
  * @return {Array} - Filtered tables
  */
-const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
+const filterExcluededTables = (tables, config) =>
+    R.reject(t => config.excludedTables.includes(t[`Tables_in_${config.database}`]), tables);
 
 /**
  * @param {Object} _ - lodash
@@ -55,7 +56,7 @@ const filterIndexes =
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
-const escapeRows = (escapeFn, rows) => 
+const escapeRows = (escapeFn, rows) =>
     R.map(r => {
         let escapedRow = {};
         R.forEach(k =>
@@ -95,8 +96,8 @@ const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
 });
 
 const toUpperFirst = R.compose(
-  R.join(''),
-  R.over(R.lensIndex(0), R.toUpper)
+    R.join(''),
+    R.over(R.lensIndex(0), R.toUpper)
 );
 
 /**
@@ -182,7 +183,7 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
  * @param {Object} config 
  * @return {Array}
  */
-const mapTables = (config, tables) => 
+const mapTables = (config, tables) =>
     R.map(R.prop(`Tables_in_${config.database}`))(tables);
 
 module.exports = {
