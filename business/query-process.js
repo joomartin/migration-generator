@@ -47,26 +47,24 @@ const seperateColumns = (filterIndexesFn, columns) => ({
 /**
  * @return {Array} 
  */
-const filterIndexes = 
+const filterIndexes =
     R.filter(R.either(R.propEq('Key', 'MUL'), R.propEq('Key', 'UNI')));
 
 /**
  * @param {Function} escapeFn - A callback that escapes quotes
  * @param {Array} rows - raw mysql content
- * @return {Array}
+ * @return {Object}
  */
-const escapeRows = (escapeFn, rows) =>
-    rows.map(r => {
-        let escapedRow = [];
-
-        Object.keys(r).forEach(k => {
-            escapedRow.push((typeof r[k] === 'string')
-                ? escapeFn(r[k]) : r[k]);
-        });
+const escapeRows = (escapeFn, rows) => 
+    R.map(r => {
+        let escapedRow = {};
+        R.forEach(k =>
+            escapedRow[k] = R.ifElse(R.is(String), escapeFn, R.identity)(r[k])
+        )(R.keys(r));
 
         return escapedRow;
-    });
-
+    })(rows);
+    
 /**
  * @param {Object} _ - lodash
  * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
@@ -127,7 +125,7 @@ const mapTriggers = (_, escapeFn, database, triggers) => {
 /**
  * @return {boolean}
  */
-const hasLength = 
+const hasLength =
     R.compose(R.gt(R.__, 0), R.length, R.trim);
 
 /**

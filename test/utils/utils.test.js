@@ -34,7 +34,7 @@ describe('Utils', () => {
     });
 
     describe('#logHeader()', () => {
-        it('should destroy my code coverage', () => {
+        it('should not destroy my code coverage', () => {
             const config = { database: 'database' };
             const consoleMock = { log(msg) { expect(true).to.be.true; } };
             const utilMock = { log(msg) { expect(true).to.be.true; } };
