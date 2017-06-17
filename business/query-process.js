@@ -180,8 +180,10 @@ const parseDependencies = (_, substringFromFn, table, createTable) => {
 /**
  * @param {Array} tables 
  * @param {Object} config 
+ * @return {Array}
  */
-const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
+const mapTables = (config, tables) => 
+    R.map(R.prop(`Tables_in_${config.database}`))(tables);
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,

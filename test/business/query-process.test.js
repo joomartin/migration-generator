@@ -252,7 +252,7 @@ describe('QueryProcess', () => {
                 { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
             ];
 
-            const tableNames = queryProcess.mapTables(tables, config);
+            const tableNames = queryProcess.mapTables(config, tables);
             expect(tableNames).to.deep.equal([
                 'table1', 'table2', 'table3',
             ]);
