@@ -44,7 +44,7 @@ let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta,
 
 let triggersPromise = query.getTriggers(connection, strUtils.concat)
     .then(mapTriggersFn)
-    .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
+    .then(file.getTriggersTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));

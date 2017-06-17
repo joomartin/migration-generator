@@ -336,7 +336,7 @@ describe('File', () => {
                 }
             };
 
-            file.getTriggersTemplate(triggers, config, ejs)
+            file.getTriggersTemplate(ejs, config, triggers)
                 .then(html => {
                     expect(html).to.be.equal('html content');
                     done();
@@ -360,7 +360,7 @@ describe('File', () => {
                 }
             };
 
-            file.getTriggersTemplate(triggers, config, ejs)
+            file.getTriggersTemplate(ejs, config, triggers)
                 .then(data => {
                     expect(false).to.be.true;
                 })

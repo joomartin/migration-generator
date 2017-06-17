@@ -96,6 +96,11 @@ const getViewTablesTemplate = R.curry((ejs, config, viewTables) =>
         );
     }));
 
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Array} procedures
+ */
 const getProcedureTemplate = R.curry((ejs, config, procedures) => 
     new Promise((resolve, reject) => {
         ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, { procedures }, null, (err, html) => 
@@ -103,19 +108,18 @@ const getProcedureTemplate = R.curry((ejs, config, procedures) =>
         );
     }));
 
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Object} triggersByTables
+ */
+const getTriggersTemplate = R.curry((ejs, config, triggersByTables) => 
+    new Promise((resolve, reject) => {
+        ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, { triggersByTables }, null, (err, html) => 
+            err ? reject(err) : resolve(html)
+        );
+    }));
 
-const getTriggersTemplate = (triggersByTables, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, {            
-            migrationClass: 'CreateTriggers',
-            triggersByTables,
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
-    });
-}
 
 /**
  * @param content String
