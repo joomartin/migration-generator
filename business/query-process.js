@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const R = require('ramda');
+const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys } = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
 const strUtils = require('../utils/str');
@@ -10,9 +10,9 @@ const utils = require('../utils/utils');
  * @param {Array} tables - List of tables. Raw mysql results
  * @return {Array} - Filtered tables
  */
-const filterExcluededTables = R.curry((config, tables) =>
-    R.reject(
-        R.contains(R.__, config.excludedTables)
+const filterExcluededTables = curry((config, tables) =>
+    reject(
+        contains(__, config.excludedTables)
     )(tables));
 
 /**
@@ -20,17 +20,17 @@ const filterExcluededTables = R.curry((config, tables) =>
  * @param {Array} tables 
  * @return {Array}
  */
-const mapTables = R.curry((config, tables) =>
-    R.map(R.prop(`Tables_in_${config.database}`))(tables));
+const mapTables = curry((config, tables) =>
+    map(prop(`Tables_in_${config.database}`))(tables));
 
 /**
  * @param {string} database - Database name
  * @param {Array} viewTables - Raw view tables queried from database
  * @return {Array} - Sanitized view tables
  */
-const sanitizeViewTables = R.curry((database, viewTables) =>
+const sanitizeViewTables = curry((database, viewTables) =>
     viewTables.map(vt => {
-        let viewTable = R.clone(vt);
+        let viewTable = clone(vt);
         viewTable.VIEW_DEFINITION = replaceDatabaseInContent(
             database, strUtils.escapeQuotes(vt.VIEW_DEFINITION));
 
@@ -48,18 +48,18 @@ const replaceDatabaseInContent = (database, content) => content.replace(new RegE
  * @return {Array} 
  */
 const filterIndexes =
-    R.filter(R.either(R.propEq('Key', 'MUL'), R.propEq('Key', 'UNI')));
+    filter(either(propEq('Key', 'MUL'), propEq('Key', 'UNI')));
 
 /**
  * @param {Array} rows - raw mysql content
  * @return {Array}
  */
 const escapeRows = (rows) =>
-    R.map(r => {
+    map(r => {
         let escapedRow = {};
-        R.forEach(k =>
-            escapedRow[k] = R.ifElse(R.is(String), strUtils.escapeQuotes, R.identity)(r[k])
-        )(R.keys(r));
+        forEach(k =>
+            escapedRow[k] = ifElse(is(String), strUtils.escapeQuotes, identity)(r[k])
+        )(keys(r));
 
         return escapedRow;
     })(rows);
@@ -73,7 +73,7 @@ const escapeRows = (rows) =>
  */
 const normalizeProcedureDefinition = (procedure) => ({
     type: procedure.type,
-    name: procedure.definition[R.compose(strUtils.toUpperFirst, R.toLower)(procedure.type)],
+    name: procedure.definition[compose(strUtils.toUpperFirst, toLower)(procedure.type)],
     definition: strUtils.escapeQuotes(procedure.definition[`Create ${strUtils.toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
@@ -83,14 +83,14 @@ const normalizeProcedureDefinition = (procedure) => ({
  * @param {Array} triggers - List of triggers in raw format
  * @return {Object}
  */
-const mapTriggers = R.curry((database, triggers) => {
+const mapTriggers = curry((database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
-        if (!R.has(t.Table, mapped)) {
-            mapped = R.assoc(t.Table, [], mapped);
+        if (!has(t.Table, mapped)) {
+            mapped = assoc(t.Table, [], mapped);
         }
 
-        mapped[t.Table] = R.append({
+        mapped[t.Table] = append({
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
@@ -108,23 +108,23 @@ const mapTriggers = R.curry((database, triggers) => {
  * @return {boolean}
  */
 const hasLength =
-    R.compose(R.gt(R.__, 0), R.length, R.trim);
+    compose(gt(__, 0), length, trim);
 
 /**
  * @return {Array}
  */
 const getForeignKeys =
-    R.ifElse(
-        R.contains('CONSTRAINT'),
-        R.compose(
-            R.map(R.trim),
-            R.map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
-            R.map(strUtils.substringFrom('FOREIGN KEY')),
-            R.filter(hasLength),
-            R.split('CONSTRAINT'),
+    ifElse(
+        contains('CONSTRAINT'),
+        compose(
+            map(trim),
+            map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
+            map(strUtils.substringFrom('FOREIGN KEY')),
+            filter(hasLength),
+            split('CONSTRAINT'),
             strUtils.substringFrom('CONSTRAINT'),
         ),
-        R.always([])
+        always([])
     );
 
 /**
