@@ -146,7 +146,9 @@ const parseDependencies = (table, createTable) => {
         }
 
         const deleteRule = fk.slice(fk.indexOf('ON DELETE'), fk.indexOf('ON UPDATE')).slice(9);
-        const updateRule = compose(slice(9, Infinity), slice(__, Infinity, fk), indexOf('ON UPDATE'))(fk);
+        const updateRule = compose(
+            slice(9, Infinity), slice(__, Infinity, fk), indexOf('ON UPDATE')
+        )(fk);
 
         return {
             sourceTable: table,

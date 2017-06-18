@@ -1,9 +1,8 @@
 const fs = require('fs');
 const ejs = require('ejs');
-const _ = require('lodash');
 const chalk = require('chalk');
 const util = require('util');
-const R = require('ramda');
+const { map } = require('ramda');
 
 const connection = require('./database/connection');
 const columnInfoFactory = require('./database/column-info/factory');
@@ -28,7 +27,7 @@ const viewTablesPromise = query.getViewTables(connection)
     .catch(err => console.log(chalk.bgRed(err)));
 
 const proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition)
-    .then(R.map(queryProcess.normalizeProcedureDefinition))
+    .then(map(queryProcess.normalizeProcedureDefinition))
     .then(file.getProcedureTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
