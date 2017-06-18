@@ -73,14 +73,14 @@ const escapeRows = (rows) =>
  */
 const normalizeProcedureDefinition = (procedure) => ({
     type: procedure.type,
-    name: procedure.definition[R.compose(toUpperFirst, R.toLower)(procedure.type)],
-    definition: strUtils.escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
+    name: procedure.definition[R.compose(strUtils.toUpperFirst, R.toLower)(procedure.type)],
+    definition: strUtils.escapeQuotes(procedure.definition[`Create ${strUtils.toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
-const toUpperFirst = R.compose(
-    R.join(''),
-    R.over(R.lensIndex(0), R.toUpper)
-);
+// const toUpperFirst = R.compose(
+//     R.join(''),
+//     R.over(R.lensIndex(0), R.toUpper)
+// );
 
 /**
  * @param {Object} _ - lodash

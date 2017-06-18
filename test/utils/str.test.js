@@ -30,4 +30,34 @@ describe('Str', () => {
             expect(strUtils.escapeQuotes(standard)).to.be.equal('Test standard string');
         });
     });
+
+    describe('#camelCase', () => {
+        it('should return camelCased version of a string', () => {
+            expect(strUtils.camelCase('foo')).to.be.eq('foo');
+
+            expect(strUtils.camelCase('table_name')).to.be.eq('tableName');
+            expect(strUtils.camelCase('complicated_table_name_test')).to.be.eq('complicatedTableNameTest');
+
+            expect(strUtils.camelCase('css-selector')).to.be.eq('cssSelector');
+            expect(strUtils.camelCase('space seperated')).to.be.eq('spaceSeperated');
+        });
+    });
+
+    describe('#toUpperFirst', () => {
+        it('should return Uppercased version of a string', () => {
+            expect(strUtils.toUpperFirst('foo')).to.be.eq('Foo');
+            expect(strUtils.toUpperFirst('Foo')).to.be.eq('Foo');
+            expect(strUtils.toUpperFirst(' foo')).to.be.eq(' foo');
+            expect(strUtils.toUpperFirst('foo bar baz')).to.be.eq('Foo bar baz');
+        });
+    });
+
+    describe('#toLowerFirst', () => {
+        it('should return lowercased version of a string', () => {
+            expect(strUtils.toLowerFirst('foo')).to.be.eq('foo');
+            expect(strUtils.toLowerFirst('Foo')).to.be.eq('foo');
+            expect(strUtils.toLowerFirst(' foo')).to.be.eq(' foo');
+            expect(strUtils.toLowerFirst('Foo bar baz')).to.be.eq('foo bar baz');
+        });
+    });
 });

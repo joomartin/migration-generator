@@ -3,6 +3,7 @@ const ejs = require('ejs');
 const R = require('ramda');
 
 const utils = require('../utils/utils');
+const strUtils = require('../utils/str');
 
 const getFileNames = (date, tables, file, padIndex) =>
     tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
@@ -127,25 +128,18 @@ const generateFile = (content, fileName, config, fs) =>
         resolve(fileName);
     });
 
+const getClassName = 
+    R.compose(
+        R.concat('Create'),
+        R.compose(R.concat(R.__, 'Table'), R.join(''), R.map(strUtils.toUpperFirst), R.split('_'))
+    )
 
 /**
  * @param tableName String
  * @return String
  */
-const getClassName = (tableName) => {
-    const tableNameCamel = tableName
-        .split('_')
-        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1))
-        .reduce((carry, current) => carry + current);
+const getVariableName = tableName => strUtils.camelCase(tableName);
 
-    return `Create${tableNameCamel}Table`;
-}
-
-/**
- * @param tableName String
- * @return String
- */
-const getVariableName = (tableName) => _.camelCase(tableName);
 
 module.exports = {
     getTemplate,
