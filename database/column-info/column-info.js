@@ -1,5 +1,5 @@
-const _ = require('lodash');
 const utils = require('../../utils/utils');
+const { compose, split, nth, head, isEmpty } = require('ramda');
 
 /**
  * @param field Array
@@ -52,6 +52,9 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     return options;
 }
 
+const parseIntFromArray = (getter, arr) =>
+    compose(parseInt, getter)(arr);
+
 /**
  * @return Object
  */
@@ -63,30 +66,19 @@ ColumnInfo.prototype.getType = function () {
     let scale = null;
     let precision = null;
 
-    const unsigned = [type]
-        .filter(t => this.isUnsigned(t))
-        .length !== 0;
-
     if (this.isTypeOf(type, 'decimal')) {
-        const splitted = parts[1].split(',');
-        precision = [splitted[0]]
-            .map(s => parseInt(s))
-            .shift();
-
-        scale = [splitted[1]]
-            .map(s => parseInt(s))
-            .shift();
+        const splitted = compose(split(','), nth(1))(parts);
+        precision = parseIntFromArray(head, splitted);
+        scale = parseIntFromArray(nth(1), splitted);
 
     } else if (parts[1]) { 
-        length = [parts[1]]
-            .map(s => parseInt(s))
-            .shift();
+        length = parseIntFromArray(nth(1), parts);
     } 
 
     return {
         name: parts[0].trim(),
         options: this.mapTypeOptions(
-            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned), type)
+            this.getTypeOptions(this.field['Type'], precision, scale, length, this.isUnsigned(type)), type)
     };
 }
 
@@ -102,7 +94,7 @@ ColumnInfo.prototype.getOptions = function () {
     utils.setKey(options, 'default', this.field['Default']);
     utils.setKey(options, 'auto_increment', true, undefined, () => this.field['Extra'] === 'auto_increment');
 
-    return (_.isEmpty(options)) 
+    return (isEmpty(options)) 
         ? null : this.mapOptions(options);
 }
 
