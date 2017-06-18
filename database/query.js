@@ -1,3 +1,5 @@
+const { compose, prop, nth } = require('ramda');
+
 const TableContent = require('./stream/table-content');
 const queryProcess = require('../business/query-process');
 
@@ -19,7 +21,7 @@ const getColumns = (connection, table) =>
 
 const getCreateTable = (connection, table) => 
         run(connection, 'SHOW CREATE TABLE `' +  table +  '`')
-            .then(results => results[0]['Create Table']);
+            .then(compose(prop('Create Table'), nth(0)));
 
 const getProceduresMeta = connection => 
         run(connection, `SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '${connection.config.database}'`);
