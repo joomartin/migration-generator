@@ -1,40 +1,35 @@
-const _ = require('lodash');
-
 const TableContent = require('./stream/table-content');
 const queryProcess = require('../business/query-process');
-const utils = require('../utils/utils');
-const strUtils = require('../utils/str');
 
-/**
- * @param {Object} connection - Database connection
- * @return {Promise} - Contains array
- */
-const getTables = (connection) => 
-    new Promise((resolve, reject) => {
-        connection.query('SHOW FULL TABLES IN `' + connection.config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"', (err, tables) => 
-            err ? reject(err) : resolve(tables));
-    });
+const run = (connection, queryString) =>
+    new Promise((resolve, reject) => 
+        connection.query(queryString, (err, results) => 
+            err ? reject(err) : resolve(results)   
+        )
+    );
 
-/**
- * @param {Object} connection - Database connection
- * @return {Promise} - Contains array
- */
-const getViewTables = (connection) => 
-    new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`, (err, viewTables) => 
-            err ? reject(err) : resolve(viewTables));
-    });
+const getTables = connection =>
+    run(connection, 'SHOW FULL TABLES IN `' + connection.config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"');
 
-/**
- * @param {Object} connection - Database connection
- * @param {string} table - Table name
- * @return {Promise} - Contains array
- */
+const getViewTables = connection =>
+    run(connection, `SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = '${connection.config.database}'`)
+
 const getColumns = (connection, table) =>
-    new Promise((resolve, reject) => {
-        connection.query('SHOW FULL COLUMNS FROM `' + table + '`', (err, columns) => 
-            err ? reject(err) : resolve(columns));
-    });
+    run(connection, 'SHOW FULL COLUMNS FROM `' + table + '`');
+
+const getCreateTable = (connection, table) => 
+        run(connection, 'SHOW CREATE TABLE `' +  table +  '`')
+            .then(results => results[0]['Create Table']);
+
+const getProceduresMeta = connection => 
+        run(connection, `SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '${connection.config.database}'`);
+
+const getProcedureDefinition = (connection, meta) =>
+        run(connection, 'SHOW CREATE ' + meta.type.toUpperCase() + ' `' + meta.name + '`')
+            .then(results => ({ type: meta.type, definition: results[0] }));
+
+const getTriggers = connection => 
+        run(connection, 'SHOW TRIGGERS FROM `' + connection.config.database + '`');
 
 /**
  * @param {TableContent} content$ - Readable stream that reads content of a tablo
@@ -57,17 +52,6 @@ const getContent = (content$) =>
 
 /**
  * @param {Object} connection - Database connection
- * @param {string} table - Table name
- * @returns {Promise} - Contains array
- */
-const getCreateTable = (connection, table) => 
-    new Promise((resolve, reject) => {
-        connection.query('SHOW CREATE TABLE `' +  table +  '`', (err, result) => 
-            err ? reject(err) : resolve(result[0]['Create Table']));
-    });
-
-/**
- * @param {Object} connection - Database connection
  * @return {Promise} - Contains array
  */
 const getProcedures = (connection) => 
@@ -79,37 +63,6 @@ const getProcedures = (connection) =>
             .then(promises => Promise.all(promises))
             .then(resolve)
             .catch(reject);
-    });
-
-/**
- * @param {Object} connection - Database connection
- * @return {Promise} - Contains array
- */
-const getProceduresMeta = (connection) => 
-    new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '${connection.config.database}'`, (err, procedures) => 
-            err ? reject(err) : resolve(procedures));
-    });
-
-/**
- * @param {Object} connection - Database connection
- * @param {Object} meta - Contains meta data about procedure like name, type
- * @return {Promise} - Contains an object
- */
-const getProcedureDefinition = (connection, meta) =>
-    new Promise((resolve, reject) => {
-        connection.query('SHOW CREATE ' + meta.type.toUpperCase() + ' `' + meta.name + '`', (err, definition) => 
-            (err) ? reject(err) : resolve({ type: meta.type, definition: definition[0] }));
-    });
-
-/**
- * @param {Object} connection - Database connection
- * @return {Promise} - Contains array
- */
-const getTriggers = (connection) => 
-    new Promise((resolve, reject) => {
-        connection.query('SHOW TRIGGERS FROM `' + connection.config.database + '`', (err, triggers) => 
-            (err) ? reject(err) : resolve(triggers));
     });
 
 /**
@@ -168,5 +121,5 @@ module.exports = {
     getTriggers,
     getViewTables,
     getProceduresMeta,
-    getProcedureDefinition
+    getProcedureDefinition,
 }
