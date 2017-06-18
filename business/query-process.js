@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys } = require('ramda');
+const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith } = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
 const strUtils = require('../utils/str');
@@ -146,7 +146,7 @@ const parseDependencies = (table, createTable) => {
         }
 
         const deleteRule = fk.slice(fk.indexOf('ON DELETE'), fk.indexOf('ON UPDATE')).slice(9);
-        const updateRule = fk.slice(fk.indexOf('ON UPDATE')).slice(9);
+        const updateRule = compose(slice(9, Infinity), slice(__, Infinity, fk), indexOf('ON UPDATE'))(fk);
 
         return {
             sourceTable: table,
