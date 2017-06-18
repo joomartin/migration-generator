@@ -174,7 +174,7 @@ describe('File', () => {
                 }
             }
 
-            file.getForeignKeyTemplate(tables, config, ejs)
+            file.getForeignKeyTemplate(ejs, config, tables)
                 .then(data => {
                     expect(data).to.be.equal('html content');
                     done();
@@ -201,7 +201,7 @@ describe('File', () => {
                 }
             }
 
-            file.getForeignKeyTemplate(tables, config, ejs)
+            file.getForeignKeyTemplate(ejs, config, tables)
                 .then(data => {
                     expect(false).to.be.true;
                 })

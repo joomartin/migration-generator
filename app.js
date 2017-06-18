@@ -50,7 +50,7 @@ const tableDataPromise = query.getTableData(connection, config)
 
 const foreignKeyTemplate = tableDataPromise
     .then(res =>
-        file.getForeignKeyTemplate(allTables, config, ejs)
+        file.getForeignKeyTemplate(ejs, config, allTables)
             .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(993)}_add_foreign_keys.php`, config, fs))
             .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
             .catch(err => console.log(chalk.bgRed(err)))

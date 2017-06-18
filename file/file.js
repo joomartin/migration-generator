@@ -4,19 +4,19 @@ const R = require('ramda');
 
 const utils = require('../utils/utils');
 
-const getFileNames = (date, tables, file, padIndex) => 
+const getFileNames = (date, tables, file, padIndex) =>
     tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
 
-const getFileName = (date, table, index) => 
+const getFileName = (date, table, index) =>
     `${utils.getDate()}${index}_create_${table}_table.php`;
 
-const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>  
+const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>
     Promise.all(R.map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
 
-const generateFiles = (contents, fileNames, config, fs, file) => 
-    Promise.all(contents.map((content, index) => 
+const generateFiles = (contents, fileNames, config, fs, file) =>
+    Promise.all(contents.map((content, index) =>
         file.generateFile(content.html, fileNames[index], config, fs)
-            .then(file => console.log(`${fileNames[index]} was generated successfully`))
+            .then(file =>  console.log(`${fileNames[index]} was generated successfully`))
     ));
 
 /**
@@ -66,53 +66,48 @@ const getTemplate = R.curry((ejs, config, columnInfoFactory, table) => {
     });
 });
 
-const getForeignKeyTemplate = (tables, config, ejs) => 
-    new Promise((resolve, reject) => {
-        let variableNames = {};
-        tables.forEach(table => {
-            variableNames[table.table] = _.camelCase(table.table);
-        });
+const render = (ejs, fileName, data) =>
+    new Promise((resolve, reject) =>
+        ejs.renderFile(fileName, data, null, (err, html) =>
+            err ? reject(err) : resolve(html)));
 
-        ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, { tables, variableNames }, null, (err, html) => 
-            err ? reject(err) : resolve(html)
-        );
+/**
+ * @param {Array} tables 
+ * @param {Object} config 
+ * @param {Object} ejs 
+ */
+const getForeignKeyTemplate = (ejs, config, tables) => {
+    let variableNames = {};
+    tables.forEach(table => {
+        variableNames[table.table] = _.camelCase(table.table);
     });
+
+    return render(ejs, `./templates/${config['migrationLib']}-dependencies.ejs`, { tables, variableNames });
+}
 
 /**
  * @param {Object} ejs
  * @param {Object} config
  * @param {Array} viewTables
  */
-const getViewTablesTemplate = R.curry((ejs, config, viewTables) => 
-    new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }, null, (err, html) => 
-            err ? reject(err) : resolve(html)
-        );
-    }));
+const getViewTablesTemplate = R.curry((ejs, config, viewTables) =>
+    render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
 
 /**
  * @param {Object} ejs
  * @param {Object} config
  * @param {Array} procedures
  */
-const getProcedureTemplate = R.curry((ejs, config, procedures) => 
-    new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, { procedures }, null, (err, html) => 
-            err ? reject(err) : resolve(html)
-        );
-    }));
+const getProcedureTemplate = R.curry((ejs, config, procedures) =>
+    render(ejs, `./templates/${config['migrationLib']}-procedures.ejs`, { procedures }));
 
 /**
  * @param {Object} ejs
  * @param {Object} config
  * @param {Object} triggersByTables
  */
-const getTriggersTemplate = R.curry((ejs, config, triggersByTables) => 
-    new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, { triggersByTables }, null, (err, html) => 
-            err ? reject(err) : resolve(html)
-        );
-    }));
+const getTriggersTemplate = R.curry((ejs, config, triggersByTables) =>
+    render(ejs, `./templates/${config['migrationLib']}-triggers.ejs`, { triggersByTables }));
 
 
 /**
@@ -123,7 +118,7 @@ const getTriggersTemplate = R.curry((ejs, config, triggersByTables) =>
  * @param timestamp int
  * @return String
  */
-const generateFile = (content, fileName, config, fs) => 
+const generateFile = (content, fileName, config, fs) =>
     new Promise((resolve, reject) => {
         const ws = fs.createWriteStream(`${config.output}/${fileName}`, { highWaterMark: Math.pow(2, 16) });
 
