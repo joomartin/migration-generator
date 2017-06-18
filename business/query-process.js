@@ -77,11 +77,6 @@ const normalizeProcedureDefinition = (procedure) => ({
     definition: strUtils.escapeQuotes(procedure.definition[`Create ${strUtils.toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
-// const toUpperFirst = R.compose(
-//     R.join(''),
-//     R.over(R.lensIndex(0), R.toUpper)
-// );
-
 /**
  * @param {Object} _ - lodash
  * @param {string} database - Name of database
@@ -167,5 +162,5 @@ const parseDependencies = (table, createTable) => {
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys
+    mapTables, getForeignKeys 
 }

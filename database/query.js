@@ -1,4 +1,4 @@
-const { compose, prop, nth } = require('ramda');
+const { compose, prop, nth, map, curry } = require('ramda');
 
 const TableContent = require('./stream/table-content');
 const queryProcess = require('../business/query-process');
@@ -26,9 +26,9 @@ const getCreateTable = (connection, table) =>
 const getProceduresMeta = connection => 
         run(connection, `SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = '${connection.config.database}'`);
 
-const getProcedureDefinition = (connection, meta) =>
+const getProcedureDefinition = curry((connection, meta) =>
         run(connection, 'SHOW CREATE ' + meta.type.toUpperCase() + ' `' + meta.name + '`')
-            .then(results => ({ type: meta.type, definition: results[0] }));
+            .then(results => ({ type: meta.type, definition: results[0] })));
 
 const getTriggers = connection => 
         run(connection, 'SHOW TRIGGERS FROM `' + connection.config.database + '`');
@@ -59,9 +59,8 @@ const getContent = (content$) =>
 const getProcedures = (connection) => 
     new Promise((resolve, reject) => {
         getProceduresMeta(connection)
-            .then(metas =>
-                metas.map(meta => getProcedureDefinition(connection, { name: meta['SPECIFIC_NAME'], type: meta['ROUTINE_TYPE']}))
-            )
+            .then(map(m => ({ name: m['SPECIFIC_NAME'], type: m['ROUTINE_TYPE']})))
+            .then(map(getProcedureDefinition(connection)))
             .then(promises => Promise.all(promises))
             .then(resolve)
             .catch(reject);
