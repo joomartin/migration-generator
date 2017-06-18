@@ -80,17 +80,12 @@ const getTableData = (connection, config) =>
             .then(queryProcess.filterExcluededTables(config))
             .then(tables => {
                 tables.forEach((table, index) => {
-                    tableData.push({
-                        table,
-                        dependencies: []
-                    });
+                    tableData.push({ table });
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
-
-
-                    let columnsPromise = getColumns(connection, table);
-                    let createTablePromise = getCreateTable(connection, table);
-                    let contentPromise = getContent(content$);
+                    const columnsPromise = getColumns(connection, table);
+                    const createTablePromise = getCreateTable(connection, table);
+                    const contentPromise = getContent(content$);
 
                     Promise.all([columnsPromise, createTablePromise, contentPromise])
                         .then(([columns, createTable, content]) => {
