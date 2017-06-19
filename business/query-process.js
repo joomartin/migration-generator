@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten } = require('ramda');
-const { Either, Maybe } = require('ramda-fantasy');
-const { Left, Right } = Either;
+const { Maybe } = require('ramda-fantasy');
 const strUtils = require('../utils/str');
 const utils = require('../utils/utils');
 
@@ -105,12 +104,6 @@ const mapTriggers = curry((database, triggers) => {
 });
 
 /**
- * @return {boolean}
- */
-const hasLength =
-    compose(gt(__, 0), length, trim);
-
-/**
  * @return {Array}
  */
 const getForeignKeys1 =
@@ -120,7 +113,7 @@ const getForeignKeys1 =
             map(trim),
             map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
             map(strUtils.substringFrom('FOREIGN KEY')),
-            filter(hasLength),
+            filter(strUtils.hasLength),
             split('CONSTRAINT'),
             strUtils.substringFrom('CONSTRAINT'),
         ),
@@ -131,7 +124,7 @@ const getForeignKeys = createTable =>
     Maybe(contains('CONSTRAINT', createTable) ? createTable : null)
         .map(strUtils.substringFrom('CONSTRAINT'))
         .map(split('CONSTRAINT'))
-        .map(filter(hasLength))
+        .map(filter(strUtils.hasLength))
         .map(map(strUtils.substringFrom('FOREIGN KEY')))
         .map(map(fk => fk.slice(0, fk.indexOf(') ENGINE'))))
         .map(map(trim))
@@ -142,10 +135,8 @@ const getForeignKeys = createTable =>
  * @param {String} createTable 
  * @return {Array}
  */
-const parseDependencies = (table, createTable) => {
-    const foreignKeys = getForeignKeys(createTable);
-
-    return foreignKeys.map(fk => {
+const parseDependencies = (table, createTable) => 
+    getForeignKeys(createTable).map(fk => {
         const regex = /`[a-z_]*`/g;
         let matches = regex.exec(fk);
         let data = [];
@@ -169,10 +160,9 @@ const parseDependencies = (table, createTable) => {
             deleteRule: _.trim(deleteRule, ' ,')
         };
     });
-};
 
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys, getForeignKeys1
+    mapTables, getForeignKeys 
 }

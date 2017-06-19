@@ -1,11 +1,11 @@
-const R = require('ramda');
+const { compose, join, over, lensIndex, gt, length, trim, toUpper, toLower, map, split, curry, __ } = require('ramda');
 
 /**
  * @param {string} src 
  * @param {string} str 
  * @return {string}
  */
-const substringFrom = R.curry((str, src) => src.substring(src.indexOf(str)));
+const substringFrom = curry((str, src) => src.substring(src.indexOf(str)));
 
 /**
  * @param {string} content - Any string
@@ -13,21 +13,24 @@ const substringFrom = R.curry((str, src) => src.substring(src.indexOf(str)));
  */
 const escapeQuotes = content => content.replace(/'/g, "\\'");
 
-const transformFirstChar = R.curry((transformFn, str) =>
-    R.compose(
-        R.join(''),
-        R.over(R.lensIndex(0), transformFn)
+const transformFirstChar = curry((transformFn, str) =>
+    compose(
+        join(''),
+        over(lensIndex(0), transformFn)
     )(str));
 
-const toUpperFirst = transformFirstChar(R.toUpper);
-const toLowerFirst = transformFirstChar(R.toLower);
+const toUpperFirst = transformFirstChar(toUpper);
+const toLowerFirst = transformFirstChar(toLower);
+
+const hasLength =
+    compose(gt(__, 0), length, trim);
 
 const camelCase = 
-    R.compose(
+    compose(
         toLowerFirst,
-        R.join(''),
-        R.map(toUpperFirst), 
-        R.split(/[-_| ]/g)
+        join(''),
+        map(toUpperFirst), 
+        split(/[-_| ]/g)
     );
 
 /**
@@ -37,5 +40,5 @@ const camelCase =
 const concat = (...values) => values.reduce((carry, current) => carry + current, '');
 
 module.exports = {
-    substringFrom, concat, escapeQuotes, toUpperFirst, camelCase, toLowerFirst
+    substringFrom, concat, escapeQuotes, toUpperFirst, camelCase, toLowerFirst, hasLength
 }
