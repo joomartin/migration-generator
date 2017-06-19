@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten } = require('ramda');
+const { replace, init, curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten, tail, head, nth } = require('ramda');
 const { Maybe } = require('ramda-fantasy');
 const strUtils = require('../utils/str');
 const utils = require('../utils/utils');
@@ -161,12 +161,8 @@ const parseDependencies = (table, createTable) =>
         };
     });
 
-const parseColumns = createTable => {
-    
-};
-
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys, parseColumns
+    mapTables, getForeignKeys 
 }
