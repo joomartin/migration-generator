@@ -161,8 +161,12 @@ const parseDependencies = (table, createTable) =>
         };
     });
 
+const parseColumns = createTable => {
+    
+};
+
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys 
+    mapTables, getForeignKeys, parseColumns
 }

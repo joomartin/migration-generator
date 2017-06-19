@@ -143,7 +143,7 @@ describe('QueryProcess', () => {
 
     describe('#getForeignKeys', () => {
         it('should get an array of foreign key sql commands', () => {
-            const foreignKeys = queryProcess.getForeignKeys(createTable);
+            const foreignKeys = queryProcess.getForeignKeys(CREATE_TABLE);
             expect(foreignKeys).to.be.lengthOf(2);
 
             expect(foreignKeys[0]).to.include('category_id')
@@ -153,7 +153,7 @@ describe('QueryProcess', () => {
 
     describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
-            const dependencies = queryProcess.parseDependencies('todos', createTable);
+            const dependencies = queryProcess.parseDependencies('todos', CREATE_TABLE);
 
             expect(dependencies).to.be.lengthOf(2);
             expect(dependencies).to.be.deep.equal([
@@ -176,12 +176,79 @@ describe('QueryProcess', () => {
         });
 
         it('should return return an empty array if no foreign key in table', () => {
-            const dependencies = queryProcess.parseDependencies('todos', createTableNoForeignKeys);
+            const dependencies = queryProcess.parseDependencies('todos', CREATE_TABL_NO_FOREIGN_KEYS);
 
             expect(dependencies).to.be.lengthOf(0);
         });
     });
+
+    describe('#parseColumns', () => {
+        it('should parse columns from a CREATE TABLE query into an array of objects', () => {
+            const columns = queryProcess.parseColumns(CREATE_TABLE);
+
+            expect(columns).to.be.deep.eq(COLUMNS);
+        });
+    });
 });
 
-const createTable = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";
-const createTableNoForeignKeys = "CREATE TABLE `users` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(100) DEFAULT 'user', `ratings` decimal(10,2) DEFAULT '10.00', PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8";
+const CREATE_TABLE = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";
+const CREATE_TABL_NO_FOREIGN_KEYS = "CREATE TABLE `users` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(100) DEFAULT 'user', `ratings` decimal(10,2) DEFAULT '10.00', PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8";
+
+const COLUMNS = [{
+        Field: 'id',
+        Type: 'int(11) unsigned',
+        Null: 'NO',
+        Key: 'PRI',
+        Default: null,
+        Extra: 'auto_increment',
+    }, {
+        Field: 'title',
+        Type: 'varchar(100)',
+        Null: 'YES',
+        Key: '',
+        Default: null,
+        Privileges: 'select,insert,update,references',
+    }, {
+        Field: 'category_id',
+        Type: 'int(11) unsigned',
+        Null: 'YES',
+        Key: 'MUL',
+        Default: null,
+        Privileges: 'select,insert,update,references',
+    }, {
+        Field: 'hours',
+        Type: 'decimal(10,2) unsigned',
+        Null: 'YES',
+        Key: '',
+        Default: null,
+        Comment: ''
+    }, {
+        Field: 'description',
+        Type: 'longtext',
+        Null: 'YES',
+        Key: '',
+        Default: null,
+        Comment: ''
+    }, {
+        Field: 'is_done',
+        Type: 'tinyint(1)',
+        Null: 'YES',
+        Key: 'MUL',
+        Default: null,
+        Comment: ''
+    }, {
+        Field: 'unique_id',
+        Type: 'tinyint(1)',
+        Null: 'YES',
+        Key: 'UNI',
+        Default: null,
+        Comment: ''
+    }, {
+        Field: 'user_id',
+        Type: 'int(11) unsigned',
+        Null: 'YES',
+        Key: 'MUL',
+        Default: null,
+        Comment: ''
+    }
+];
