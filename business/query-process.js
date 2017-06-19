@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith } = require('ramda');
+const { curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten } = require('ramda');
 const { Either, Maybe } = require('ramda-fantasy');
 const { Left, Right } = Either;
 const strUtils = require('../utils/str');
@@ -113,7 +113,7 @@ const hasLength =
 /**
  * @return {Array}
  */
-const getForeignKeys =
+const getForeignKeys1 =
     ifElse(
         contains('CONSTRAINT'),
         compose(
@@ -126,6 +126,16 @@ const getForeignKeys =
         ),
         always([])
     );
+    
+const getForeignKeys = createTable =>
+    Maybe(contains('CONSTRAINT', createTable) ? createTable : null)
+        .map(strUtils.substringFrom('CONSTRAINT'))
+        .map(split('CONSTRAINT'))
+        .map(filter(hasLength))
+        .map(map(strUtils.substringFrom('FOREIGN KEY')))
+        .map(map(fk => fk.slice(0, fk.indexOf(') ENGINE'))))
+        .map(map(trim))
+        .getOrElse([]);
 
 /**
  * @param {String} table 
@@ -164,5 +174,5 @@ const parseDependencies = (table, createTable) => {
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys 
+    mapTables, getForeignKeys, getForeignKeys1
 }

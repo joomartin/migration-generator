@@ -141,6 +141,16 @@ describe('QueryProcess', () => {
         });
     });
 
+    describe('#getForeignKeys', () => {
+        it('should get an array of foreign key sql commands', () => {
+            const foreignKeys = queryProcess.getForeignKeys(createTable);
+            expect(foreignKeys).to.be.lengthOf(2);
+
+            expect(foreignKeys[0]).to.include('category_id')
+            expect(foreignKeys[1]).to.include('user_id')
+        });
+    });
+
     describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
             const dependencies = queryProcess.parseDependencies('todos', createTable);
