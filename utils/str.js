@@ -22,9 +22,15 @@ const transformFirstChar = curry((transformFn, str) =>
 const toUpperFirst = transformFirstChar(toUpper);
 const toLowerFirst = transformFirstChar(toLower);
 
+/**
+ * @return {boolean}
+ */
 const hasLength =
     compose(gt(__, 0), length, trim);
 
+/**
+ * @return {String}
+ */
 const camelCase = 
     compose(
         toLowerFirst,

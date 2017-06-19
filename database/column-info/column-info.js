@@ -94,8 +94,7 @@ ColumnInfo.prototype.getOptions = function () {
     utils.setKey(options, 'default', this.field['Default']);
     utils.setKey(options, 'auto_increment', true, undefined, () => this.field['Extra'] === 'auto_increment');
 
-    return (isEmpty(options)) 
-        ? null : this.mapOptions(options);
+    return this.mapOptions(options);
 }
 
 module.exports = ColumnInfo;

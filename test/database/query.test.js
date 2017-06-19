@@ -476,7 +476,7 @@ describe('Query', () => {
                 .catch(console.error);
         });
 
-        xit('should reject if error in getTables query', (done) => {
+        it('should reject if error in getTables query', (done) => {
             const tablesMock = [
                 { table: 'table1' }, { table: 'table2' }
             ];
@@ -485,27 +485,29 @@ describe('Query', () => {
                 excludedTables: ['migrations']
             };
             const connection = {
-            };
-            const queryMock = {
-                getTables() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        reject('ERROR');
-                    });
+                config: { database: 'database' },                
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+
+                    if (queryString.includes('SHOW FULL TABLES IN')) {
+                        return callback('ERROR');
+                    }
+
+                    return callback(null, queryString);
                 }
             };
 
-            query.getTableData(connection, queryMock, config, queryProcess, utils)
+            query.getTableData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })
                 .catch(err => {
-                    expect(err).to.be.equal('ERROR');
+                    expect(err).to.be.eq('ERROR');
                     done();
                 });
         });
 
-        xit('should reject if any inner query', (done) => {
+        it('should reject if any inner query', (done) => {
             const tablesMock = [
                 { table: 'table1' }, { table: 'table2' }
             ];
@@ -514,40 +516,24 @@ describe('Query', () => {
                 excludedTables: ['migrations']
             };
             const connection = {
-            };
-            const queryMock = {
-                getTables() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve(tablesMock);
-                    });
-                },
-                getColumns() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        reject('ERROR');
-                    });
-                },
-                getCreateTable() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve('CREATE TABLE table1');
-                    });
-                },
-                getContent() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
-                    });
+                config: { database: 'database' },                
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+
+                    if (queryString.includes('SHOW CREATE TABLE')) {
+                        return callback('ERROR');
+                    }
+
+                    return callback(null, queryString);
                 }
             };
 
-            query.getTableData(connection, queryMock, config, queryProcess, utils)
+            query.getTableData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })
                 .catch(err => {
-                    expect(err).to.be.equal('ERROR');
+                    expect(err).to.be.eq('ERROR');
                     done();
                 });
         });
