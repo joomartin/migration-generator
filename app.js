@@ -10,7 +10,7 @@ const query = require('./database/query');
 const file = require('./file/file');
 const utils = require('./utils/utils');
 const strUtils = require('./utils/str');
-const queryProcess = require('./business/query-process');
+const { normalizeProcedureDefinition, sanitizeViewTables, mapTriggers } = require('./business/query-process');
 
 const config = require('./config.json');
  
@@ -20,21 +20,21 @@ let fileNames = [];
 let allTables = [];
 
 const viewTablesPromise = query.getViewTables(connection)
-    .then(queryProcess.sanitizeViewTables(config.database))
+    .then(sanitizeViewTables(config.database))
     .then(file.getViewTablesTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
     .then(tap(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
 const proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition)
-    .then(map(queryProcess.normalizeProcedureDefinition))
+    .then(map(normalizeProcedureDefinition))
     .then(file.getProcedureTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
     .then(tap(filename => console.log(`${filename} was generated successfully`)))
     .catch(err => console.log(chalk.bgRed(err)));
 
 const triggersPromise = query.getTriggers(connection, strUtils.concat)
-    .then(queryProcess.mapTriggers(config.database))
+    .then(mapTriggers(config.database))
     .then(file.getTriggersTemplate(ejs, config))
     .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
     .then(tap(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
