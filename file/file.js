@@ -91,8 +91,9 @@ const getForeignKeyTemplate = (ejs, config, tables) => {
  * @param {Object} config
  * @param {Array} viewTables
  */
-const getViewTablesTemplate = R.curry((ejs, config, viewTables) =>
+const getViewTablesTemplate = R.curry(async (ejs, config, viewTables) => 
     render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
+    
 
 /**
  * @param {Object} ejs
@@ -110,7 +111,6 @@ const getProcedureTemplate = R.curry((ejs, config, procedures) =>
 const getTriggersTemplate = R.curry((ejs, config, triggersByTables) =>
     render(ejs, `./templates/${config['migrationLib']}-triggers.ejs`, { triggersByTables }));
 
-
 /**
  * @param content String
  * @param tableName String
@@ -119,14 +119,14 @@ const getTriggersTemplate = R.curry((ejs, config, triggersByTables) =>
  * @param timestamp int
  * @return String
  */
-const generateFile = (content, fileName, config, fs) =>
+const generateFile = R.curry((fs, config, fileName, content) =>
     new Promise((resolve, reject) => {
         const ws = fs.createWriteStream(`${config.output}/${fileName}`, { highWaterMark: Math.pow(2, 16) });
 
         ws.write(content);
         ws.end();
         resolve(fileName);
-    });
+    }));
 
 const getClassName = 
     R.compose(

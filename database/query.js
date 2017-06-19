@@ -6,9 +6,7 @@ const queryProcess = require('../business/query-process');
 const run = (connection, queryString) =>
     new Promise((resolve, reject) => 
         connection.query(queryString, (err, results) => 
-            err ? reject(err) : resolve(results)   
-        )
-    );
+            err ? reject(err) : resolve(results)));
 
 const getTables = connection =>
     run(connection, 'SHOW FULL TABLES IN `' + connection.config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"');
