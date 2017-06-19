@@ -5,7 +5,6 @@ const query = require('../../database/query');
 const queryProcess = require('../../business/query-process');
 const TableContent = require('../../database/stream/table-content');
 const utils = require('../../utils/utils');
-const queryProcessFactory = require('../../business/query-process-factory');
 const strUtils = require('../../utils/str');
 
 describe('Query', () => {
@@ -22,13 +21,8 @@ describe('Query', () => {
                 },
                 config: { database: 'test' }
             }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
-            }
-
-            query.getTables(connection, concatFn)
+            query.getTables(connection)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res[0]['Tables_in_database']).to.be.equal('table1');
@@ -48,13 +42,8 @@ describe('Query', () => {
                 },
                 config: { database: 'test' }
             }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL TABLES IN `test` WHERE TABLE_TYPE NOT LIKE "VIEW"';
-            }
-
-            query.getTables(connection, concatFn)
+            query.getTables(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -79,13 +68,8 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
-            };
-
-            query.getViewTables(connection, concatFn)
+            query.getViewTables(connection)
                 .then(res => {
                     expect(res.length).to.be.equal(2);
                     expect(res).to.be.deep.equal([
@@ -107,13 +91,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SELECT * FROM information_schema.views WHERE TABLE_SCHEMA = 'test'";
-            };
-
-            query.getViewTables(connection, concatFn)
+            query.getViewTables(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -138,13 +117,8 @@ describe('Query', () => {
                     callback(undefined, columnsMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL COLUMNS FROM `table`';
-            };
-
-            query.getColumns(connection, 'table', concatFn)
+            query.getColumns(connection, 'table')
                 .then(columns => {
                     expect(columns.length).to.be.equal(5);
                     expect(columns).to.be.deep.equal(columnsMock);
@@ -166,13 +140,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW FULL COLUMNS FROM `table`';
-            };
-
-            query.getColumns(connection, 'table', concatFn)
+            query.getColumns(connection, 'table')
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -199,13 +168,8 @@ describe('Query', () => {
                     ]);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW CREATE TABLE `table1`';
-            };
-
-            query.getCreateTable(connection, 'table1', concatFn)
+            query.getCreateTable(connection, 'table1')
                 .then(createTable => {
                     expect(createTable).to.be.equal('CREATE TABLE table1');
                     done();
@@ -224,13 +188,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return 'SHOW CREATE TABLE `table1`';
-            };
-
-            query.getCreateTable(connection, 'table1', concatFn)
+            query.getCreateTable(connection, 'table1')
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -294,36 +253,36 @@ describe('Query', () => {
 
     describe('#getProcedures()', () => {
         it('should get all procedures and functions for a database', (done) => {
-            const getProceduresMetaFn = (connection, concatFn) => {
-                expect(true).to.be.true;
+            const connection = {
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+                    if (queryString.includes('INFORMATION_SCHEMA')) {
+                        return callback(undefined, [
+                            {
+                                SPECIFIC_NAME: 'proc1',
+                                ROUTINE_TYPE: 'PROCEDURE'
+                            },
+                            {
+                                SPECIFIC_NAME: 'func1',
+                                ROUTINE_TYPE: 'FUNCTION'
+                            },
+                        ]);
+                    } else if (queryString.includes('SHOW CREATE')) {
+                        if (queryString.includes('FUNCTION')) {
+                            return callback(undefined, ['SET @foo = 1']);
+                        }
 
-                return Promise.resolve([
-                    {
-                        SPECIFIC_NAME: 'proc1',
-                        ROUTINE_TYPE: 'PROCEDURE'
-                    },
-                    {
-                        SPECIFIC_NAME: 'func1',
-                        ROUTINE_TYPE: 'FUNCTION'
-                    },
-                ]);
-            }
-            const getProcedureDefinitionFn = (connection, meta, normalizeProcedureDefinitionFn, concatFn) => {
-                expect(['proc1', 'func1']).to.include(meta.name);
-                expect(['PROCEDURE', 'FUNCTION']).to.include(meta.type);
+                        return callback(undefined, ['SET @bar = 1']);
+                    }
+                }
+            };
 
-                return Promise.resolve(
-                    meta.type === 'FUNCTION' ? 'SET @foo = 1' : 'SET @bar = 1'
-                );
-            }
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-            }
-
-            query.getProcedures({}, getProceduresMetaFn, getProcedureDefinitionFn, concatFn)
+            query.getProcedures(connection)
                 .then(procedures => {
                     expect(procedures).to.deep.equal([
-                        'SET @bar = 1', 'SET @foo = 1'
+                        { type: 'PROCEDURE', definition: 'SET @bar = 1' },
+                        { type: 'FUNCTION', definition: 'SET @foo = 1' }
                     ]);
 
                     done();
@@ -351,12 +310,7 @@ describe('Query', () => {
                     callback(null, proceduresMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
-            }
-            query.getProceduresMeta(connection, concatFn)
+            query.getProceduresMeta(connection)
                 .then(procedures => {
                     expect(procedures).to.be.deep.equal(proceduresMock);
                     done();
@@ -372,12 +326,7 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'database'";
-            }
-            query.getProceduresMeta(connection, concatFn)
+            query.getProceduresMeta(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -398,13 +347,8 @@ describe('Query', () => {
                     callback(null, ['SET @foo = 1']);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SHOW CREATE PROCEDURE `proc1`";
-            }
             const meta = { type: 'procedure', name: 'proc1' };
-            query.getProcedureDefinition(connection, meta, concatFn)
+            query.getProcedureDefinition(connection, meta)
                 .then(p => {
                     expect(p.definition).to.be.equal('SET @foo = 1');
                     expect(p.type).to.be.equal('procedure');
@@ -422,13 +366,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
-
-                return "SHOW CREATE PROCEDURE `proc1`";
-            }
             const meta = { type: 'procedure', name: 'proc1' };
-            query.getProcedureDefinition(connection, meta, concatFn)
+            query.getProcedureDefinition(connection, meta)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -453,13 +392,8 @@ describe('Query', () => {
                     callback(null, triggersMock);
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SHOW TRIGGERS FROM `database`";
-            }
-
-            query.getTriggers(connection, concatFn)
+            query.getTriggers(connection)
                 .then(triggers => {
                     expect(triggers).to.be.equal(triggersMock)
 
@@ -482,13 +416,8 @@ describe('Query', () => {
                     callback('ERROR');
                 }
             };
-            const concatFn = (str) => {
-                expect(true).to.be.true;
 
-                return "SHOW TRIGGERS FROM `database`";
-            }
-
-            query.getTriggers(connection, concatFn)
+            query.getTriggers(connection)
                 .then(res => {
                     expect(false).to.be.true;
                 })
@@ -500,7 +429,7 @@ describe('Query', () => {
     });
 
     describe('#getTableData', () => {
-        it('should call all function that produces table data', (done) => {
+        it('should run all queries that produces table data', (done) => {
             const tablesMock = [
                 { table: 'table1' }, { table: 'table2' }
             ];
@@ -509,41 +438,42 @@ describe('Query', () => {
                 excludedTables: ['migrations']
             };
             const connection = {
-            };
-            const queryMock = {
-                getTables() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve(tablesMock);
-                    });
-                },
-                getColumns() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve([
-                            { Field: 'column1' }, { Field: 'column2' }
+                config: { database: 'database' },
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+                    if (queryString.includes('SHOW FULL TABLES IN')) {
+                        return callback(undefined, [
+                            { 'Tables_in_database': 'table1' },
+                            { 'Tables_in_database': 'table2' },
                         ]);
-                    });
-                },
-                getCreateTable() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve('CREATE TABLE table1');
-                    });
-                },
-                getContent() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
-                    });
+                    }
+
+                    if (queryString.includes('SHOW CREATE TABLE')) {
+                        return callback(undefined, [
+                            { 'Create Table': 'CREATE TABLE table1' } 
+                        ]);
+                    }
+
+                    if (queryString.includes('SELECT')) {
+                        return callback(undefined, [
+                            { id: 1, name: 'First' }, { id: 2, name: 'Second' }
+                        ])
+                    }
+
+                    if (queryString.includes('SHOW FULL COLUMNS FROM ')) {
+                        return callback(undefined, []);
+                    }
+
+                    return callback(queryString);
                 }
             };
 
-            query.getTableData(connection, queryMock, config, queryProcess, utils)
+            query.getTableData(connection, config)
                 .then(() => {
+                    expect(true).to.be.true;
                     done()
                 })
-                .catch(console.log);
+                .catch(console.error);
         });
 
         it('should reject if error in getTables query', (done) => {
@@ -555,22 +485,24 @@ describe('Query', () => {
                 excludedTables: ['migrations']
             };
             const connection = {
-            };
-            const queryMock = {
-                getTables() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        reject('ERROR');
-                    });
+                config: { database: 'database' },                
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+
+                    if (queryString.includes('SHOW FULL TABLES IN')) {
+                        return callback('ERROR');
+                    }
+
+                    return callback(null, queryString);
                 }
             };
 
-            query.getTableData(connection, queryMock, config, queryProcess, utils)
+            query.getTableData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })
                 .catch(err => {
-                    expect(err).to.be.equal('ERROR');
+                    expect(err).to.be.eq('ERROR');
                     done();
                 });
         });
@@ -584,40 +516,24 @@ describe('Query', () => {
                 excludedTables: ['migrations']
             };
             const connection = {
-            };
-            const queryMock = {
-                getTables() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve(tablesMock);
-                    });
-                },
-                getColumns() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        reject('ERROR');
-                    });
-                },
-                getCreateTable() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve('CREATE TABLE table1');
-                    });
-                },
-                getContent() {
-                    return new Promise((resolve, reject) => {
-                        expect(true).to.be.true;
-                        resolve([{ id: 1, name: 'First' }, { id: 2, name: 'Second' }]);
-                    });
+                config: { database: 'database' },                
+                query(queryString, callback) {
+                    expect(true).to.be.true;
+
+                    if (queryString.includes('SHOW CREATE TABLE')) {
+                        return callback('ERROR');
+                    }
+
+                    return callback(null, queryString);
                 }
             };
 
-            query.getTableData(connection, queryMock, config, queryProcess, utils)
+            query.getTableData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })
                 .catch(err => {
-                    expect(err).to.be.equal('ERROR');
+                    expect(err).to.be.eq('ERROR');
                     done();
                 });
         });

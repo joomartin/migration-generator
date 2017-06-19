@@ -144,6 +144,16 @@ describe('ColumnInfo', () => {
         });
     });
 
+    describe('#getTypeOptions', () => {
+        it('should get length if it is a string', () => {
+            const typeOptions = (new ColumnInfo({
+                Type: 'LONGTEXT'
+            })).getTypeOptions('LONGTEXT', null, null, 'LONG', false);
+
+            expect(typeOptions.length).to.be.eq('LONG');
+        });
+    }); 
+
     describe('#mapOptions', () => {
         it('should return the given object', () => {
             let options = {

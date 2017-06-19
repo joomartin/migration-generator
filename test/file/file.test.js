@@ -1,4 +1,5 @@
 const expect = require('chai').expect;
+const R = require('ramda');
 
 const file = require('../../file/file');
 
@@ -99,7 +100,7 @@ describe('File', () => {
                 }
             }
 
-            file.getTemplate(table, config, columnInfoFactory, ejs)
+            file.getTemplate(ejs, config, columnInfoFactory, table)
                 .then(data => {
                     expect(data.table).to.be.equal('todos');
                     done();
@@ -142,7 +143,7 @@ describe('File', () => {
                 }
             }
 
-            file.getTemplate(table, config, columnInfoFactory, ejs)
+            file.getTemplate(ejs, config, columnInfoFactory, table)
                 .then(data => {
                     expect(false).to.be.true;
                 })
@@ -173,7 +174,7 @@ describe('File', () => {
                 }
             }
 
-            file.getForeignKeyTemplate(tables, config, ejs)
+            file.getForeignKeyTemplate(ejs, config, tables)
                 .then(data => {
                     expect(data).to.be.equal('html content');
                     done();
@@ -200,7 +201,7 @@ describe('File', () => {
                 }
             }
 
-            file.getForeignKeyTemplate(tables, config, ejs)
+            file.getForeignKeyTemplate(ejs, config, tables)
                 .then(data => {
                     expect(false).to.be.true;
                 })
@@ -231,7 +232,7 @@ describe('File', () => {
                 }
             }
 
-            file.getViewTablesTemplate(tables, config, ejs)
+            file.getViewTablesTemplate(ejs, config, tables)
                 .then(data => {
                     expect(data).to.be.equal('html content');
                     done();
@@ -258,7 +259,7 @@ describe('File', () => {
                 }
             }
 
-            file.getViewTablesTemplate(tables, config, ejs)
+            file.getViewTablesTemplate(ejs, config, tables)
                 .then(data => {
                     expect(false).to.be.true;
                 })
@@ -285,7 +286,7 @@ describe('File', () => {
                 }
             };
 
-            file.getProcedureTemplate(procedures, config, ejs)
+            file.getProcedureTemplate(ejs, config, procedures)
                 .then(html => {
                     expect(html).to.be.equal('html content');
                     done();
@@ -309,7 +310,7 @@ describe('File', () => {
                 }
             };
 
-            file.getProcedureTemplate(procedures, config, ejs)
+            file.getProcedureTemplate(ejs, config, procedures)
                 .then(data => {
                     expect(false).to.be.true;
                 })
@@ -336,7 +337,7 @@ describe('File', () => {
                 }
             };
 
-            file.getTriggersTemplate(triggers, config, ejs)
+            file.getTriggersTemplate(ejs, config, triggers)
                 .then(html => {
                     expect(html).to.be.equal('html content');
                     done();
@@ -360,7 +361,7 @@ describe('File', () => {
                 }
             };
 
-            file.getTriggersTemplate(triggers, config, ejs)
+            file.getTriggersTemplate(ejs, config, triggers)
                 .then(data => {
                     expect(false).to.be.true;
                 })
@@ -399,12 +400,12 @@ describe('File', () => {
         it('should call getTemplate', (done) => {
             const tables = ['table1', 'table2'];
             const fileMock = {
-                getTemplate(table) {
+                getTemplate: R.curry((ejs, config, columnInfoFactory, table) => {
                     expect(tables).include(table);
-                }
-            }
+                })
+            };
 
-            file.getTemplates(tables, null, null, null, fileMock)
+            file.getTemplates(null, fileMock, null, null, tables)
                 .then(res => {
                     expect(true).to.be.true;
                     done();
