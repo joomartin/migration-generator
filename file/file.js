@@ -14,11 +14,15 @@ const getFileName = (date, table, index) =>
 const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>
     Promise.all(R.map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
 
-const generateFiles = (contents, fileNames, config, fs, file) =>
-    Promise.all(contents.map((content, index) =>
-        file.generateFile(content.html, fileNames[index], config, fs)
+const generateFiles = R.curry((fs, file, config, fileNames, contents) => {
+    console.log('DEBUG');
+    console.log(fileNames);
+    return Promise.all(contents.map((content, index) =>
+        file.generateFile(fs, config, fileNames[index], content.html)
             .then(file =>  console.log(`${fileNames[index]} was generated successfully`))
     ));
+});
+    
 
 /**
  * @param table Object

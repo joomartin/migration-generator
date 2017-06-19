@@ -45,6 +45,31 @@ const proceduresPromise = composeP(
     query.getProcedures
 )(connection);
 
+const triggersPromise = composeP(
+    tap(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)),
+    file.generateFile(fs, config, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`),
+    file.getTriggersTemplate(ejs, config),
+    mapTriggers(config.database),
+    query.getTriggers
+)(connection);
+
+const tableDataPromise = composeP(
+    file.generateFiles(fs, file, config, fileNames),
+    file.getTemplates(ejs, file, config, columnInfoFactory),
+    tap(tables => allTables = tables),
+    tap(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)),
+    query.getTableData(connection)
+)(config);
+
+tableDataPromise.catch(console.error);
+
+// const tableDataPromise = query.getTableData(connection, config)
+//     .then(tap(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
+//     .then(tap(tables => allTables = tables))
+//     .then(file.getTemplates(ejs, file, config, columnInfoFactory))
+//     .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
+//     .catch(err => console.log(chalk.bgRed(err)))
+
 // const viewTablesPromise = query.getViewTables(connection)
 //     .then(sanitizeViewTables(config.database))
 //     .then(file.getViewTablesTemplate(ejs, config))

@@ -68,7 +68,7 @@ const getProcedures = (connection) =>
  * @param {Object} connection 
  * @param {Object} config 
  */
-const getTableData = (connection, config) =>
+const getTableData = curry((connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
 
@@ -103,7 +103,7 @@ const getTableData = (connection, config) =>
             .catch(err => {
                 return reject(err);
             });
-    });
+    }));
 
 module.exports = {
     getTables,
