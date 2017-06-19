@@ -6,19 +6,43 @@ const queryProcess = require('../../business/query-process');
 
 describe('QueryProcess', () => {
     describe('#filterExcluededTables', () => {
+        const config = {
+            excludedTables: ['migrations']
+        };
+        const tables = [
+            'migrations', 'table1', 'table2'
+        ];
+        const expectResult = (result) => {
+            expect(result.length).to.be.eq(2);
+            expect(result).to.be.deep.eq(['table1', 'table2'])
+        };
+
         it('should return filtered tables based on config excluded tables property', () => {
-            const config = {
-                excludedTables: ['migrations'],
-                database: 'test'
-            };
-            const tables = [
-                { 'Tables_in_test': 'migrations' }, { 'Tables_in_test': 'table1' }, { 'Tables_in_test': 'table2' }
-            ];
+            expectResult(queryProcess.filterExcluededTables(config, tables));
+        });
 
-            const filteredTables = queryProcess.filterExcluededTables(tables, config)
+        it('should be curried', () => {
+            expectResult(queryProcess.filterExcluededTables(config)(tables));
+        });
+    });
 
-            expect(filteredTables.length).to.be.equal(2);
-            expect(filteredTables).to.include({ 'Tables_in_test': 'table1' });
+    describe('#mapTables', () => {
+        const config = { database: 'database' };
+        const tables = [
+            { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
+        ];
+        const expectResult = result => {
+            expect(result).to.deep.equal([
+                'table1', 'table2', 'table3',
+            ]);
+        }
+
+        it('should map an array containing mysql results to an array contains table names', () => {
+            expectResult(queryProcess.mapTables(config, tables));
+        });
+
+        it('should be curries', () => {
+            expectResult(queryProcess.mapTables(config)(tables));
         });
     });
 
@@ -28,25 +52,10 @@ describe('QueryProcess', () => {
                 { VIEW_DEFINITION: 'view table #1' }, { VIEW_DEFINITION: 'view table #2' }
             ];
             const definitions = viewTables.map(vt => vt.VIEW_DEFINITION);
-            const replaceDatabaseNameFn = (database, content) => {
-                expect(database).to.be.equal('test-database');
-                return content;
-            };
-            const escapeQuotesFn = (content) => {
-                expect(definitions).include(content);
-                return content;
-            };
-
             const database = 'test-database';
-            const _ = {
-                clone(obj) {
-                    expect(viewTables).include(obj);
-                    return obj;
-                }
-            }
 
             const sanitized = queryProcess.sanitizeViewTables(
-                _, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables);
+                database, viewTables);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
         });
@@ -59,27 +68,6 @@ describe('QueryProcess', () => {
 
             const replaced = queryProcess.replaceDatabaseInContent(database, content);
             expect(replaced).to.be.equal('SELECT * FROM `test-table`');
-        });
-    });
-
-    describe('#seperateColumns()', () => {
-        it('should call filtering function to columns and return a seperated array by columns and indexes', () => {
-            const columns = [
-                { Field: 'id' }, { Field: 'name' }
-            ];
-            const indexFilterFn = (columnsToBeFiltered) => {
-                expect(columnsToBeFiltered).to.be.deep.equal(columns);
-                return [columnsToBeFiltered[0]];
-            };
-
-            const seperated = queryProcess.seperateColumns(indexFilterFn, columns);
-
-            expect(seperated.columns.length).to.be.equal(2);
-            expect(seperated.indexes.length).to.be.equal(1);
-
-            expect(seperated.columns).to.be.deep.equal(columns);
-            expect(seperated.indexes[0]).to.be.deep.equal(columns[0]);
-
         });
     });
 
@@ -105,103 +93,46 @@ describe('QueryProcess', () => {
                 { id: 1, name: 'Item #1', user_id: 12 }, { id: 2, name: 'Item #2', user_id: 5 },
             ];
 
-            const escapeFn = (content) =>  {
-                expect(['Item #1', 'Item #2'].some(i => i === content)).to.be.true;
-                expect(typeof content).to.be.equal('string');
-
-                return content;
-            }
-
-            const escaped = queryProcess.escapeRows(escapeFn, rows);
+            const escaped = queryProcess.escapeRows(rows);
 
             expect(escaped.length).to.be.equal(2);
         });
     });
 
-    describe('#mapDependencies()', () => {
-        it('should return a unique mapped array', () => {
-            const dependencies = [
-                {
-                    TABLE_NAME: 'todos',
-                    COLUMN_NAME: 'user_id',
-                    REFERENCED_TABLE_NAME: 'users',
-                    REFERENCED_COLUMN_NAME: 'id',
-                    UPDATE_RULE: 'CASCADE',
-                    DELETE_RULE: 'SET NULL'
-                }
-            ];
-
-            const _ = {
-                uniqBy(arr, key) {
-                    expect(key).to.be.equal('sourceColumn');
-                    return arr;
-                }
-            };
-
-            const mapped = queryProcess.mapDependencies(_, dependencies);
-            expect(mapped).to.be.deep.equal([
-                {
-                    sourceTable: 'todos',
-                    sourceColumn: 'user_id',
-                    referencedTable: 'users',
-                    referencedColumn: 'id',
-                    updateRule: 'CASCADE',
-                    deleteRule: 'SET NULL'
-                }
-            ]);
-        });
-    });
-
     describe('#normalizeProcedureDefinition()', () => {
-        it('should call escape function, and returns a mapped object', () => {
+        it('should escape definition and map to an object', () => {
             const definition = {
                 'Procedure': 'Procedure_Name',
-                'Create Procedure': 'Procedure body'
+                'Create Procedure': "Procedure body 'quotes' here"
             };
-            const escapeFn = (content) => {
-                expect(content).to.be.equal('Procedure body');
-                return content;
-            };
-            const _ = {
-                upperFirst(text) {
-                    expect(text).to.be.equal('procedure');
-                    return 'Procedure';
-                }
+            const procedure = {
+                definition,
+                type: 'PROCEDURE'
             };
 
-            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(_, escapeFn, 'PROCEDURE', definition);
-
+            const normalizedProcedureDefinition = queryProcess.normalizeProcedureDefinition(procedure);
+            expect(normalizedProcedureDefinition.type).eq('PROCEDURE');
+            expect(normalizedProcedureDefinition.definition).eq("Procedure body \\'quotes\\' here");
+            expect(normalizedProcedureDefinition.name).eq('Procedure_Name');
         });
     });
 
     describe('#mapTriggers()', () => {
-        it('should call escape function, and returns a mapped object', () => {
+        it('should escape quotes and map triggers to an array of objects', () => {
             const triggers = [
                 {
                     Trigger: 'trigger1', Event: 'INSERT', Timing: 'AFTER',
-                    Statement: 'SET @foo = 1', Definer: 'root@localhost', Table: 'todos'
+                    Statement: "SET @foo = 1 some 'quotes'", Definer: 'root@localhost', Table: 'todos'
                 }
             ];
-            const escapeFn = (content) => {
-                expect(content).to.be.equal('SET @foo = 1');
-                return content;
-            };
-            const _ = {
-                has() {
-                    return false;
-                },
-                set(arr, key, val) {
-                    arr[key] = val;
-                }
-            };
 
-            const mappedTriggers = queryProcess.mapTriggers(_, escapeFn, 'database', triggers);
+            const mappedTriggers = queryProcess.mapTriggers('database', triggers);
             expect(mappedTriggers.todos).to.be.deep.equal([
                 {
                     name: 'trigger1',
                     event: 'INSERT',
                     timing: 'AFTER',
-                    statement: 'SET @foo = 1',
+                    statement: "SET @foo = 1 some \\'quotes\\'",
                     definer: 'root@localhost',
                     table: 'todos',
                     database: 'database'
@@ -210,10 +141,19 @@ describe('QueryProcess', () => {
         });
     });
 
+    describe('#getForeignKeys', () => {
+        it('should get an array of foreign key sql commands', () => {
+            const foreignKeys = queryProcess.getForeignKeys(CREATE_TABLE);
+            expect(foreignKeys).to.be.lengthOf(2);
+
+            expect(foreignKeys[0]).to.include('category_id')
+            expect(foreignKeys[1]).to.include('user_id')
+        });
+    });
+
     describe('#parseDependencies()', () => {
         it('should return an array of objects that contains all foreign keys and meta data for a table', () => {
-            const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTable); 
+            const dependencies = queryProcess.parseDependencies('todos', CREATE_TABLE);
 
             expect(dependencies).to.be.lengthOf(2);
             expect(dependencies).to.be.deep.equal([
@@ -232,31 +172,16 @@ describe('QueryProcess', () => {
                     updateRule: 'SET NULL',
                     deleteRule: 'CASCADE'
                 },
-            ]);          
+            ]);
         });
 
         it('should return return an empty array if no foreign key in table', () => {
-            const dependencies = queryProcess.parseDependencies(
-                _, strUtils.substringFrom, 'todos', createTableNoForeignKeys); 
+            const dependencies = queryProcess.parseDependencies('todos', CREATE_TABL_NO_FOREIGN_KEYS);
 
             expect(dependencies).to.be.lengthOf(0);
         });
     });
-
-    describe('#mapTables', () => {
-        it('should map an array containing mysql results to an array contains table names', () => {
-            const config = { database: 'database' };
-            const tables = [
-                { 'Tables_in_database': 'table1' }, { 'Tables_in_database': 'table2' }, { 'Tables_in_database': 'table3' }
-            ];
-
-            const tableNames = queryProcess.mapTables(tables, config);
-            expect(tableNames).to.deep.equal([
-                'table1', 'table2', 'table3',
-            ]);
-        });
-    });
 });
 
-const createTable = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";
-const createTableNoForeignKeys = "CREATE TABLE `users` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(100) DEFAULT 'user', `ratings` decimal(10,2) DEFAULT '10.00', PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8";
+const CREATE_TABLE = "CREATE TABLE `todos` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `title` varchar(100) DEFAULT NULL, `category_id` int(11) unsigned DEFAULT NULL, `hours` decimal(10,2) unsigned DEFAULT NULL, `description` longtext, `is_done` tinyint(1) DEFAULT NULL, `unique_id` tinyint(1) DEFAULT NULL, `user_id` int(11) unsigned DEFAULT NULL, PRIMARY KEY (`id`), UNIQUE KEY `unique_id` (`unique_id`), KEY `category_id` (`category_id`), KEY `is_done` (`is_done`), KEY `user_id` (`user_id`), CONSTRAINT `todos_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT `todos_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8";
+const CREATE_TABL_NO_FOREIGN_KEYS = "CREATE TABLE `users` ( `id` int(11) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(100) DEFAULT 'user', `ratings` decimal(10,2) DEFAULT '10.00', PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8";

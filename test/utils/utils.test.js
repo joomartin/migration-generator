@@ -3,15 +3,7 @@ const expect = require('chai').expect;
 const utils = require('../../utils/utils');
 
 describe('Utils', () => {
-    describe('#escapeQuotes()', () => {
-        it('should return a string with escaped quotes', () => {
-            const quoted = "it has 'some' quotes";
-            const standard = 'Test standard string';
-
-            expect(utils.escapeQuotes(quoted)).to.be.equal("it has \\'some\\' quotes");
-            expect(utils.escapeQuotes(standard)).to.be.equal('Test standard string');
-        });
-    });
+    
 
     describe('#getSerial()', () => {
         it('should return a padded serial number', () => {
@@ -34,7 +26,7 @@ describe('Utils', () => {
     });
 
     describe('#logHeader()', () => {
-        it('should destroy my code coverage', () => {
+        it('should not destroy my code coverage', () => {
             const config = { database: 'database' };
             const consoleMock = { log(msg) { expect(true).to.be.true; } };
             const utilMock = { log(msg) { expect(true).to.be.true; } };
