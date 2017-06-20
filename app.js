@@ -49,7 +49,7 @@ const generateTablesPromise = composeP(
     generateFile(fs, config, `${getDate()}${getSerial(993)}_add_foreign_keys.php`),    
     (_) => getForeignKeyTemplate(ejs, config, allTables),    
     (templates) => generateFiles(fs, file, config, fileNames, templates),
-    (_) => getTemplates(ejs, file, config, columnInfoFactory, allTables),
+    (_) => getTemplates(ejs, config, columnInfoFactory, allTables),
     tap(fns => fileNames = fns),
     getFileNames,
     tap(tables => allTables = tables),    

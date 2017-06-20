@@ -10,8 +10,8 @@ const getFileNames =
 const getFileName = (table, index) =>
     `${getDate()}${index}_create_${table}_table.php`;
 
-const getTemplates = curry((ejs, file, config, columnInfoFactory, tables) =>
-    Promise.all(map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
+const getTemplates = curry((ejs, config, columnInfoFactory, tables) =>
+    Promise.all(map(getTemplate(ejs, config, columnInfoFactory))(tables)));
 
 const generateFiles = curry((fs, file, config, fileNames, contents) =>
     Promise.all(contents.map((content, index) => {

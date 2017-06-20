@@ -2,6 +2,7 @@ const expect = require('chai').expect;
 const { curry } = require('ramda');
 
 const file = require('../../file/file');
+const columnInfoPhinx = require('../../database/column-info/column-info-phinx');
 
 describe('File', () => {
     describe('#getClassName()', () => {
@@ -394,19 +395,44 @@ describe('File', () => {
 
     describe('#getTemplates()', () => {
         it('should call getTemplate', (done) => {
-            const tables = ['table1', 'table2'];
-            const fileMock = {
-                getTemplate: curry((ejs, config, columnInfoFactory, table) => {
-                    expect(tables).include(table);
-                })
+            const tables = [
+                {table: 'table1', columns: [{ Field: 'id' }]}, 
+                {table: 'table2', columns: [{ Field: 'id' }]}
+            ];            
+            const columnInfoFactory = field => ({
+                isPrimaryKey() {
+                    return true;
+                },
+                getType() {
+                    return {name: 'INT'};
+                },
+                getOptions() {
+                    return {unsigned: true};
+                },
+                mapType(nativeType) {
+                    return 'integer';
+                }
+            });
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(true).to.be.true;
+                    callback(null, 'content');
+                }
             };
 
-            file.getTemplates(null, fileMock, null, null, tables)
+            file.getTemplates(ejs, config, columnInfoFactory, tables)
                 .then(res => {
                     expect(true).to.be.true;
+                    expect(res).to.be.deep.eq([
+                        { table: 'table1', html: 'content' },
+                        { table: 'table2', html: 'content' }
+                    ]);
                     done();
                 })
-                .catch(console.log);
+                .catch(console.error);
         });
     });
 
