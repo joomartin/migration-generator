@@ -1,7 +1,8 @@
 const expect = require('chai').expect;
-const R = require('ramda');
+const { curry } = require('ramda');
 
 const file = require('../../file/file');
+const columnInfoPhinx = require('../../database/column-info/column-info-phinx');
 
 describe('File', () => {
     describe('#getClassName()', () => {
@@ -56,10 +57,11 @@ describe('File', () => {
                 }
             }
 
-            file.generateFile(content, `${timestamp}_create_todos_table.php`, config, fs)
+            file.generateFile(fs, config, `${timestamp}_create_todos_table.php`, content)
                 .then(fileName => {
                     expect(fileName).to.be.equal(`${timestamp}_create_todos_table.php`);
                 })
+                .catch(console.error);
         });
     });
 
@@ -374,15 +376,11 @@ describe('File', () => {
 
     describe('#getFileNames()', () => {
         it('should get file names', () => {
-            const tables = [{table: 'table 1'}];
-            const padIndex = (index) => index;
-            const fileMock = {
-                getFileName() {
-                    expect(true).to.be.true;
-                }
-            };
+            const tables = [{table: 'table_1'}, {table: 'table_2'}];
+            const result = file.getFileNames(tables);
 
-            file.getFileNames(null, tables, fileMock, padIndex);
+            expect(result[0]).to.include('create_table_1_table.php');
+            expect(result[1]).to.include('create_table_2_table.php');
         });
     });
 
@@ -391,26 +389,51 @@ describe('File', () => {
             const table = 'table1';
             const index = 1;
 
-            const fileName = file.getFileName(null, table, index);
+            const fileName = file.getFileName(table, index);
             expect(fileName).to.include('1_create_table1_table.php');
         });
     });
 
     describe('#getTemplates()', () => {
         it('should call getTemplate', (done) => {
-            const tables = ['table1', 'table2'];
-            const fileMock = {
-                getTemplate: R.curry((ejs, config, columnInfoFactory, table) => {
-                    expect(tables).include(table);
-                })
+            const tables = [
+                {table: 'table1', columns: [{ Field: 'id' }]}, 
+                {table: 'table2', columns: [{ Field: 'id' }]}
+            ];            
+            const columnInfoFactory = field => ({
+                isPrimaryKey() {
+                    return true;
+                },
+                getType() {
+                    return {name: 'INT'};
+                },
+                getOptions() {
+                    return {unsigned: true};
+                },
+                mapType(nativeType) {
+                    return 'integer';
+                }
+            });
+            const config = {
+                migrationLib: 'phinx'
+            };
+            const ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(true).to.be.true;
+                    callback(null, 'content');
+                }
             };
 
-            file.getTemplates(null, fileMock, null, null, tables)
+            file.getTemplates(ejs, config, columnInfoFactory, tables)
                 .then(res => {
                     expect(true).to.be.true;
+                    expect(res).to.be.deep.eq([
+                        { table: 'table1', html: 'content' },
+                        { table: 'table2', html: 'content' }
+                    ]);
                     done();
                 })
-                .catch(console.log);
+                .catch(console.error);
         });
     });
 
@@ -418,21 +441,39 @@ describe('File', () => {
         it('should call generateFile', (done) => {
             const contents = [{ html: 'html content1' }];
             const fileNames = ['filename1'];
-            const fileMock = {
-                generateFile(html) {
-                    return new Promise((resolve, reject) => {
-                        expect(html).to.be.equal('html content1');
-                        resolve(html);
-                    })
+            const config = {
+                migrationLib: 'phinx',
+                output: 'outputDir'
+            };
+            const ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(true).to.be.true;
+                    callback(null, 'content');
                 }
-            }
+            };
+            const ws = {
+                write(content) {
+                    expect(content).to.be.not.empty;
+                },
+                end() {
+                    expect(true).to.be.true;
+                }
+            };
+            const fs = {
+                createWriteStream() {
+                    return ws;
+                }
+            };
 
-            file.generateFiles(contents, fileNames, null, null, fileMock)
+            file.generateFiles(fs, config, fileNames, contents)
                 .then(res => {
                     expect(true).to.be.true;
                     done();
                 })
-                .catch(console.log);
+                .catch(err => {
+                    console.error(err);
+                    expect(true).to.be.false;
+                });
         });
     });
 });
