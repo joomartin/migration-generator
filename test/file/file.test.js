@@ -382,7 +382,7 @@ describe('File', () => {
                 }
             };
 
-            file.getFileNames(null, tables, fileMock, padIndex);
+            file.getFileNames(null, fileMock, tables);
         });
     });
 
@@ -427,7 +427,7 @@ describe('File', () => {
                 }
             }
 
-            file.generateFiles(contents, fileNames, null, null, fileMock)
+            file.generateFiles(null, fileMock, null, fileNames, contents)
                 .then(res => {
                     expect(true).to.be.true;
                     done();
