@@ -1,8 +1,7 @@
 const _ = require('lodash');
-const { replace, init, curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten, tail, head, nth } = require('ramda');
 const { Maybe } = require('ramda-fantasy');
-const strUtils = require('../utils/str');
-const utils = require('../utils/utils');
+const { escapeQuotes, toUpperFirst, hasLength, substringFrom } = require('../utils/str');
+const { replace, init, curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten, tail, head, nth } = require('ramda');
 
 /**
  * @param {Object} config - App config
@@ -31,7 +30,7 @@ const sanitizeViewTables = curry((database, viewTables) =>
     viewTables.map(vt => {
         let viewTable = clone(vt);
         viewTable.VIEW_DEFINITION = replaceDatabaseInContent(
-            database, strUtils.escapeQuotes(vt.VIEW_DEFINITION));
+            database, escapeQuotes(vt.VIEW_DEFINITION));
 
         return viewTable;
     }));
@@ -57,7 +56,7 @@ const escapeRows = (rows) =>
     map(r => {
         let escapedRow = {};
         forEach(k =>
-            escapedRow[k] = ifElse(is(String), strUtils.escapeQuotes, identity)(r[k])
+            escapedRow[k] = ifElse(is(String), escapeQuotes, identity)(r[k])
         )(keys(r));
 
         return escapedRow;
@@ -72,8 +71,8 @@ const escapeRows = (rows) =>
  */
 const normalizeProcedureDefinition = (procedure) => ({
     type: procedure.type,
-    name: procedure.definition[compose(strUtils.toUpperFirst, toLower)(procedure.type)],
-    definition: strUtils.escapeQuotes(procedure.definition[`Create ${strUtils.toUpperFirst(procedure.type.toLowerCase())}`])
+    name: procedure.definition[compose(toUpperFirst, toLower)(procedure.type)],
+    definition: escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
 });
 
 /**
@@ -93,7 +92,7 @@ const mapTriggers = curry((database, triggers) => {
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
-            statement: strUtils.escapeQuotes(t.Statement),
+            statement: escapeQuotes(t.Statement),
             definer: t.Definer,
             table: t.Table,
             database: database
@@ -106,30 +105,20 @@ const mapTriggers = curry((database, triggers) => {
 /**
  * @return {Array}
  */
-const getForeignKeys1 =
+const getForeignKeys =
     ifElse(
         contains('CONSTRAINT'),
         compose(
             map(trim),
             map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
-            map(strUtils.substringFrom('FOREIGN KEY')),
-            filter(strUtils.hasLength),
+            map(substringFrom('FOREIGN KEY')),
+            filter(hasLength),
             split('CONSTRAINT'),
-            strUtils.substringFrom('CONSTRAINT')
+            substringFrom('CONSTRAINT')
         ),
         always([])
     );
     
-const getForeignKeys = createTable =>
-    Maybe(contains('CONSTRAINT', createTable) ? createTable : null)
-        .map(strUtils.substringFrom('CONSTRAINT'))
-        .map(split('CONSTRAINT'))
-        .map(filter(strUtils.hasLength))
-        .map(map(strUtils.substringFrom('FOREIGN KEY')))
-        .map(map(fk => fk.slice(0, fk.indexOf(') ENGINE'))))
-        .map(map(trim))
-        .getOrElse([]);
-
 /**
  * @param {String} table 
  * @param {String} createTable 
