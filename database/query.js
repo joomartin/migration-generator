@@ -1,14 +1,12 @@
-const { compose, prop, nth, map, curry } = require('ramda');
+const { compose, prop, nth, map, curry, concat } = require('ramda');
 
 const TableContent = require('./stream/table-content');
-const queryProcess = require('../business/query-process');
+const { mapTables, filterExcluededTables, filterIndexes, parseDependencies, escapeRows } = require('../business/query-process');
 
 const run = (connection, queryString) =>
     new Promise((resolve, reject) => 
         connection.query(queryString, (err, results) => 
-            err ? reject(err) : resolve(results)   
-        )
-    );
+            err ? reject(err) : resolve(results)));
 
 const getTables = connection =>
     run(connection, 'SHOW FULL TABLES IN `' + connection.config.database + '` WHERE TABLE_TYPE NOT LIKE "VIEW"');
@@ -70,13 +68,13 @@ const getProcedures = (connection) =>
  * @param {Object} connection 
  * @param {Object} config 
  */
-const getTableData = (connection, config) =>
+const getTableData = curry((connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
 
         getTables(connection)
-            .then(queryProcess.mapTables(config))
-            .then(queryProcess.filterExcluededTables(config))
+            .then(mapTables(config))
+            .then(filterExcluededTables(config))
             .then(tables => {
                 tables.forEach((table, index) => {
                     tableData.push({ table });
@@ -89,9 +87,9 @@ const getTableData = (connection, config) =>
                     Promise.all([columnsPromise, createTablePromise, contentPromise])
                         .then(([columns, createTable, content]) => {
                             tableData[index].columns = columns;
-                            tableData[index].indexes = queryProcess.filterIndexes(columns);
-                            tableData[index].dependencies = queryProcess.parseDependencies(table, createTable);
-                            tableData[index].content = queryProcess.escapeRows(content);
+                            tableData[index].indexes = filterIndexes(columns);
+                            tableData[index].dependencies = parseDependencies(table, createTable);
+                            tableData[index].content = escapeRows(content);
 
                             if (index === tables.length - 1) {
                                 return resolve(tableData);
@@ -105,7 +103,7 @@ const getTableData = (connection, config) =>
             .catch(err => {
                 return reject(err);
             });
-    });
+    }));
 
 module.exports = {
     getTables,
