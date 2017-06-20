@@ -374,15 +374,11 @@ describe('File', () => {
 
     describe('#getFileNames()', () => {
         it('should get file names', () => {
-            const tables = [{table: 'table 1'}];
-            const padIndex = (index) => index;
-            const fileMock = {
-                getFileName() {
-                    expect(true).to.be.true;
-                }
-            };
+            const tables = [{table: 'table_1'}, {table: 'table_2'}];
+            const result = file.getFileNames(tables);
 
-            file.getFileNames(fileMock, tables);
+            expect(result[0]).to.include('create_table_1_table.php');
+            expect(result[1]).to.include('create_table_2_table.php');
         });
     });
 

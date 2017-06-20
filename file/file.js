@@ -1,11 +1,11 @@
 const ejs = require('ejs');
-const { curry, compose, concat, join, map, split, __ } = require('ramda');
+const { curry, compose, concat, join, map, split, __, inc } = require('ramda');
 
 const { getSerial, getDate } = require('../utils/utils');
 const { toUpperFirst, camelCase } = require('../utils/str');
 
-const getFileNames = curry((file, tables) =>
-    tables.map((table, index) => file.getFileName(table.table, getSerial(index + 1))));
+const getFileNames = 
+    map((table, index) => getFileName(table.table, compose(getSerial, inc)(index)));
 
 const getFileName = (table, index) =>
     `${getDate()}${index}_create_${table}_table.php`;
