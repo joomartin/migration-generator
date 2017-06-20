@@ -51,7 +51,7 @@ const generateTablesPromise = composeP(
     (templates) => generateFiles(fs, file, config, fileNames, templates),
     (_) => getTemplates(ejs, file, config, columnInfoFactory, allTables),
     tap(fns => fileNames = fns),
-    getFileNames(new Date, file),
+    getFileNames(file),
     tap(tables => allTables = tables),    
     getTableData(connection)
 )(config);

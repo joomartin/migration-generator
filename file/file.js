@@ -4,10 +4,10 @@ const { curry, compose, concat, join, map, split, __ } = require('ramda');
 const { getSerial, getDate } = require('../utils/utils');
 const { toUpperFirst, camelCase } = require('../utils/str');
 
-const getFileNames = curry((date, file, tables) =>
-    tables.map((table, index) => file.getFileName(date, table.table, getSerial(index + 1))));
+const getFileNames = curry((file, tables) =>
+    tables.map((table, index) => file.getFileName(table.table, getSerial(index + 1))));
 
-const getFileName = (date, table, index) =>
+const getFileName = (table, index) =>
     `${getDate()}${index}_create_${table}_table.php`;
 
 const getTemplates = curry((ejs, file, config, columnInfoFactory, tables) =>
@@ -25,8 +25,8 @@ const generateFiles = curry((fs, file, config, fileNames, contents) =>
  * @param columnInfoFactory Function
  * @param ejs Object
  */
-const getTemplate = curry((ejs, config, columnInfoFactory, table) => {
-    return new Promise((resolve, reject) => {
+const getTemplate = curry((ejs, config, columnInfoFactory, table) => 
+    new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
 
@@ -63,8 +63,7 @@ const getTemplate = curry((ejs, config, columnInfoFactory, table) => {
 
             resolve({ table: table.table, html });
         });
-    });
-});
+    }));
 
 const render = (ejs, fileName, data) =>
     new Promise((resolve, reject) =>
@@ -92,7 +91,6 @@ const getForeignKeyTemplate = (ejs, config, tables) => {
  */
 const getViewTablesTemplate = curry(async (ejs, config, viewTables) =>
     render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
-
 
 /**
  * @param {Object} ejs

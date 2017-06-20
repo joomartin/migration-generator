@@ -382,7 +382,7 @@ describe('File', () => {
                 }
             };
 
-            file.getFileNames(null, fileMock, tables);
+            file.getFileNames(fileMock, tables);
         });
     });
 
@@ -391,7 +391,7 @@ describe('File', () => {
             const table = 'table1';
             const index = 1;
 
-            const fileName = file.getFileName(null, table, index);
+            const fileName = file.getFileName(table, index);
             expect(fileName).to.include('1_create_table1_table.php');
         });
     });
