@@ -57,10 +57,11 @@ describe('File', () => {
                 }
             }
 
-            file.generateFile(content, `${timestamp}_create_todos_table.php`, config, fs)
+            file.generateFile(fs, config, `${timestamp}_create_todos_table.php`, content)
                 .then(fileName => {
                     expect(fileName).to.be.equal(`${timestamp}_create_todos_table.php`);
                 })
+                .catch(console.error);
         });
     });
 
@@ -440,21 +441,39 @@ describe('File', () => {
         it('should call generateFile', (done) => {
             const contents = [{ html: 'html content1' }];
             const fileNames = ['filename1'];
-            const fileMock = {
-                generateFile(html) {
-                    return new Promise((resolve, reject) => {
-                        expect(html).to.be.equal('html content1');
-                        resolve(html);
-                    })
+            const config = {
+                migrationLib: 'phinx',
+                output: 'outputDir'
+            };
+            const ejs = {
+                renderFile(path, data, options, callback) {
+                    expect(true).to.be.true;
+                    callback(null, 'content');
                 }
-            }
+            };
+            const ws = {
+                write(content) {
+                    expect(content).to.be.not.empty;
+                },
+                end() {
+                    expect(true).to.be.true;
+                }
+            };
+            const fs = {
+                createWriteStream() {
+                    return ws;
+                }
+            };
 
-            file.generateFiles(null, fileMock, null, fileNames, contents)
+            file.generateFiles(fs, config, fileNames, contents)
                 .then(res => {
                     expect(true).to.be.true;
                     done();
                 })
-                .catch(console.log);
+                .catch(err => {
+                    console.error(err);
+                    expect(true).to.be.false;
+                });
         });
     });
 });

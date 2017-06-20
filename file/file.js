@@ -13,9 +13,9 @@ const getFileName = (table, index) =>
 const getTemplates = curry((ejs, config, columnInfoFactory, tables) =>
     Promise.all(map(getTemplate(ejs, config, columnInfoFactory))(tables)));
 
-const generateFiles = curry((fs, file, config, fileNames, contents) =>
+const generateFiles = curry((fs, config, fileNames, contents) =>
     Promise.all(contents.map((content, index) => {
-        file.generateFile(fs, config, fileNames[index], content.html)
+        generateFile(fs, config, fileNames[index], content.html)
             .then(file => console.log(`${fileNames[index]} was generated successfully`))
     })));
 
