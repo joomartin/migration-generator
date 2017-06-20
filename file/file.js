@@ -5,8 +5,8 @@ const R = require('ramda');
 const utils = require('../utils/utils');
 const strUtils = require('../utils/str');
 
-const getFileNames = (date, tables, file) =>
-    tables.map((table, index) => file.getFileName(date, table.table, utils.getSerial(index + 1)))
+const getFileNames = R.curry((date, file, tables) =>
+    tables.map((table, index) => file.getFileName(date, table.table, utils.getSerial(index + 1))));
 
 const getFileName = (date, table, index) =>
     `${utils.getDate()}${index}_create_${table}_table.php`;
@@ -15,11 +15,10 @@ const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>
     Promise.all(R.map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
 
 const generateFiles = R.curry((fs, file, config, fileNames, contents) =>
-    Promise.all(contents.map((content, index) =>
+    Promise.all(contents.map((content, index) => {
         file.generateFile(fs, config, fileNames[index], content.html)
-            .then(file =>  console.log(`${fileNames[index]} was generated successfully`))
-    )));
-    
+            .then(file => console.log(`${fileNames[index]} was generated successfully`))
+    })));
 
 /**
  * @param table Object
@@ -92,9 +91,9 @@ const getForeignKeyTemplate = (ejs, config, tables) => {
  * @param {Object} config
  * @param {Array} viewTables
  */
-const getViewTablesTemplate = R.curry(async (ejs, config, viewTables) => 
+const getViewTablesTemplate = R.curry(async (ejs, config, viewTables) =>
     render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
-    
+
 
 /**
  * @param {Object} ejs
@@ -129,7 +128,7 @@ const generateFile = R.curry((fs, config, fileName, content) =>
         resolve(fileName);
     }));
 
-const getClassName = 
+const getClassName =
     R.compose(
         R.concat('Create'),
         R.compose(R.concat(R.__, 'Table'), R.join(''), R.map(strUtils.toUpperFirst), R.split('_'))
