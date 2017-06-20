@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower } = require('ramda');
 
 /**
  * @param field Array
@@ -24,9 +24,15 @@ ColumnInfo.prototype.isTypeOf = function (actual, expected) {
     return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
 }
 
+const isTypeOf = (expected, actual) => or(
+    compose(contains(actual), toUpper)(expected), 
+    compose(contains(actual), toLower)(expected));
+
 ColumnInfo.prototype.isUnsigned = function (type) {
     return type.includes('unsigned') || type.includes('UNSIGNED');
 }
+
+const isUnsigned = or(contains('unsigned'), contains('UNSIGNED'));
 
 /**
  * @return bool
@@ -34,6 +40,8 @@ ColumnInfo.prototype.isUnsigned = function (type) {
 ColumnInfo.prototype.isPrimaryKey = function () {
     return this.field['Key'] === 'PRI';
 }
+
+const isPrimaryKey = compose(equals('PRI'), prop('Key'));
 
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
     const parts = this.field['Type'].split('(');
