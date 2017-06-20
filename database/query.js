@@ -68,15 +68,15 @@ const getProcedures = (connection) =>
  * @param {Object} connection 
  * @param {Object} config 
  */
-const getTableData = curry(async (connection, config) =>
+const getTableData = curry((connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
 
         getTables(connection)
             .then(mapTables(config))
             .then(filterExcluededTables(config))
-            .then(async tables => {
-                tables.forEach(async (table, index) => {
+            .then(tables => {
+                tables.forEach((table, index) => {
                     tableData.push({ table });
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });

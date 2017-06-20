@@ -115,7 +115,7 @@ const getForeignKeys1 =
             map(strUtils.substringFrom('FOREIGN KEY')),
             filter(strUtils.hasLength),
             split('CONSTRAINT'),
-            strUtils.substringFrom('CONSTRAINT'),
+            strUtils.substringFrom('CONSTRAINT')
         ),
         always([])
     );

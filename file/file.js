@@ -1,11 +1,11 @@
 const ejs = require('ejs');
-const { curry, compose, concat, join, map, split, __, inc } = require('ramda');
+const { curry, compose, concat, join, map, split, __, inc, addIndex } = require('ramda');
 
-const { getSerial, getDate } = require('../utils/utils');
+const { getSerial, getDate, mapIndex } = require('../utils/utils');
 const { toUpperFirst, camelCase } = require('../utils/str');
 
 const getFileNames = 
-    map((table, index) => getFileName(table.table, compose(getSerial, inc)(index)));
+    mapIndex((table, index) => getFileName(table.table, compose(getSerial, inc)(index)));
 
 const getFileName = (table, index) =>
     `${getDate()}${index}_create_${table}_table.php`;
@@ -89,7 +89,7 @@ const getForeignKeyTemplate = (ejs, config, tables) => {
  * @param {Object} config
  * @param {Array} viewTables
  */
-const getViewTablesTemplate = curry(async (ejs, config, viewTables) =>
+const getViewTablesTemplate = curry((ejs, config, viewTables) =>
     render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
 
 /**

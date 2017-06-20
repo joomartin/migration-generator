@@ -1,6 +1,9 @@
 const util = require('util');
 const chalk = require('chalk');
 const _ = require('lodash');
+const { addIndex, map } = require('ramda');
+
+const mapIndex = addIndex(map);
 
 const sideEffect = fn => v => {
     fn(v);
@@ -45,5 +48,5 @@ const logHeader = (config, util, console, chalk) => {
 
 module.exports = {
     sideEffect, getDate, logHeader,
-    getSerial, setKey 
+    getSerial, setKey, mapIndex
 }
