@@ -5,8 +5,8 @@ const R = require('ramda');
 const utils = require('../utils/utils');
 const strUtils = require('../utils/str');
 
-const getFileNames = (date, tables, file, padIndex) =>
-    tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
+const getFileNames = (date, tables, file) =>
+    tables.map((table, index) => file.getFileName(date, table.table, utils.getSerial(index + 1)))
 
 const getFileName = (date, table, index) =>
     `${utils.getDate()}${index}_create_${table}_table.php`;
@@ -14,14 +14,11 @@ const getFileName = (date, table, index) =>
 const getTemplates = R.curry((ejs, file, config, columnInfoFactory, tables) =>
     Promise.all(R.map(file.getTemplate(ejs, config, columnInfoFactory))(tables)));
 
-const generateFiles = R.curry((fs, file, config, fileNames, contents) => {
-    console.log('DEBUG');
-    console.log(fileNames);
-    return Promise.all(contents.map((content, index) =>
+const generateFiles = R.curry((fs, file, config, fileNames, contents) =>
+    Promise.all(contents.map((content, index) =>
         file.generateFile(fs, config, fileNames[index], content.html)
             .then(file =>  console.log(`${fileNames[index]} was generated successfully`))
-    ));
-});
+    )));
     
 
 /**
