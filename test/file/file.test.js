@@ -1,5 +1,5 @@
 const expect = require('chai').expect;
-const R = require('ramda');
+const { curry } = require('ramda');
 
 const file = require('../../file/file');
 
@@ -400,7 +400,7 @@ describe('File', () => {
         it('should call getTemplate', (done) => {
             const tables = ['table1', 'table2'];
             const fileMock = {
-                getTemplate: R.curry((ejs, config, columnInfoFactory, table) => {
+                getTemplate: curry((ejs, config, columnInfoFactory, table) => {
                     expect(tables).include(table);
                 })
             };

@@ -1,7 +1,7 @@
-const { compose, prop, nth, map, curry } = require('ramda');
+const { compose, prop, nth, map, curry, concat } = require('ramda');
 
 const TableContent = require('./stream/table-content');
-const queryProcess = require('../business/query-process');
+const { mapTables, filterExcluededTables, filterIndexes, parseDependencies, escapeRows } = require('../business/query-process');
 
 const run = (connection, queryString) =>
     new Promise((resolve, reject) => 
@@ -68,15 +68,15 @@ const getProcedures = (connection) =>
  * @param {Object} connection 
  * @param {Object} config 
  */
-const getTableData = curry((connection, config) =>
+const getTableData = curry(async (connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
 
         getTables(connection)
-            .then(queryProcess.mapTables(config))
-            .then(queryProcess.filterExcluededTables(config))
-            .then(tables => {
-                tables.forEach((table, index) => {
+            .then(mapTables(config))
+            .then(filterExcluededTables(config))
+            .then(async tables => {
+                tables.forEach(async (table, index) => {
                     tableData.push({ table });
 
                     const content$ = new TableContent(connection, table, { max: 1, highWaterMark: Math.pow(2, 16) });
@@ -87,9 +87,9 @@ const getTableData = curry((connection, config) =>
                     Promise.all([columnsPromise, createTablePromise, contentPromise])
                         .then(([columns, createTable, content]) => {
                             tableData[index].columns = columns;
-                            tableData[index].indexes = queryProcess.filterIndexes(columns);
-                            tableData[index].dependencies = queryProcess.parseDependencies(table, createTable);
-                            tableData[index].content = queryProcess.escapeRows(content);
+                            tableData[index].indexes = filterIndexes(columns);
+                            tableData[index].dependencies = parseDependencies(table, createTable);
+                            tableData[index].content = escapeRows(content);
 
                             if (index === tables.length - 1) {
                                 return resolve(tableData);
