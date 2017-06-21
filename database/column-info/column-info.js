@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve } = require('ramda');
 
 /**
  * @param field Array
@@ -15,6 +15,8 @@ ColumnInfo.prototype.mapType = function (nativeType) {
 ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
     return typeOptions;
 }
+
+const mapTypeOptions = (typeOptions, type) => typeOptions;
 
 ColumnInfo.prototype.mapOptions = function (options) {
     return options;
@@ -55,6 +57,19 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     return options;
 }
 
+const getTypeOptions = (type, precision, scale, length, unsigned) => {
+    const parts = type.split('(');
+    let options = {};
+
+    options = assoc('length', normalizeLength(length), options);
+
+    utils.setKey(options, 'precision', precision, parseInt);
+    utils.setKey(options, 'scale', scale, parseInt);
+    utils.setKey(options, 'unsigned', unsigned, undefined, () => or(isTypeOf('decimal', type), isTypeOf('int', type)));
+
+    return options;
+}
+
 const normalizeLength =
     cond([
         [and(compose(not, isEmpty), compose(not, isNaN)), parseInt],
@@ -79,7 +94,6 @@ ColumnInfo.prototype.getType = function () {
         const splitted = compose(split(','), nth(1))(parts);
         precision = parseIntFromArray(head, splitted);
         scale = parseIntFromArray(nth(1), splitted);
-
     } else if (parts[1]) { 
         length = parseIntFromArray(nth(1), parts);
     } 
@@ -88,6 +102,42 @@ ColumnInfo.prototype.getType = function () {
         name: parts[0].trim(),
         options: this.mapTypeOptions(
             this.getTypeOptions(this.field['Type'], precision, scale, length, isUnsigned(type)), type)
+    };
+}
+
+const getType = (field) => {
+    const type = prop('Type', field);
+
+    const parts = type.split('(');      
+    let precision = null;
+    let scale = null;
+    let length = null;
+    
+    let options = {
+        length: null, scale: null, precision: null
+    };
+
+    if (isTypeOf('decimal', type)) {
+        const splitted = compose(split(','), nth(1))(parts);
+        // options = evolve({
+        //     precision: parseIntFromArray(head, splitted),
+        //     scale: parseIntFromArray(nth(1), splitted)
+        // }, options);
+        precision = parseIntFromArray(head, splitted);
+        scale = parseIntFromArray(nth(1), splitted);
+    } else if (nth(1, parts)) {
+        // options = evolve({
+        //     length: parseIntFromArray(nth(1), parts) 
+        // });
+        length = parseIntFromArray(nth(1), parts);
+    }
+
+    options = assoc('unsigned', isUnsigned(type), options);
+
+    return {
+        name: parts[0].trim(),
+        options: mapTypeOptions(
+            getTypeOptions(field['Type'], precision, scale, length, isUnsigned(type)), type)
     };
 }
 
@@ -124,5 +174,5 @@ const getOptions = field => {
 
 
 module.exports = {
-    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions
+    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType
 };

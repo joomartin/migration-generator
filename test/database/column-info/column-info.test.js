@@ -1,4 +1,4 @@
-const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions } = require('../../../database/column-info/column-info');
+const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType } = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
 const { head, nth } = require('ramda');
 
@@ -105,27 +105,6 @@ describe('ColumnInfo', () => {
             const options = getOptions(field);
             expect(options.auto_increment).to.be.undefined;
         });
-
-        xit('should return column options as an object excluding non existing options', () => {
-            const field = {
-                Default: 'Value'
-            };
-
-            const options = getOptions(field);
-
-            expect(options.null).to.be.true;
-            expect(options.default).to.be.equal('Value');
-        });
-
-        xit('should return default object when column does not have options', () => {
-            const field = {
-                Type: 'INT (10)'
-            };
-
-            const options = getOptions(field);
-
-            expect(options).to.be.deep.equal({null: true});
-        });
     })
     
     describe('#getType()', () => {
@@ -210,6 +189,93 @@ describe('ColumnInfo', () => {
             let type = (new ColumnInfo({
                 Type: 'TINYINT (1)'
             })).getType();
+
+            expect(type.name).to.be.equal('TINYINT');
+            expect(type.options.length).to.be.equal(1);
+        });
+    });
+
+    describe('#getType()', () => {
+        it('should return int type with length', () => {
+            // INT (10)
+            const type = getType({
+                Type: 'INT (10)'
+            });
+
+            expect(type.name).to.be.equal('INT');
+            expect(type.options.length).to.be.equal(10);
+            expect(type.options.unsigned).to.be.false;
+        });
+
+        it('should return varchar type with length', () => {
+            // VARCHAR (100)
+            const type = getType({
+                Type: 'VARCHAR (100)'
+            });
+
+            expect(type.name).to.be.equal('VARCHAR');
+            expect(type.options.length).to.be.equal(100);
+            expect(type.options.unsigned).to.be.undefined;
+        });
+
+        it('should return text type', () => {
+            // TEXT
+            const type = getType({
+                Type: 'TEXT'
+            });
+
+            expect(type.name).to.be.equal('TEXT');
+        });
+
+        it('should return long text type', () => {
+            // LONGTEXT
+            const type = getType({
+                Type: 'LONGTEXT'
+            });
+
+            expect(type.name).to.be.equal('LONGTEXT');
+        });
+
+        it('should return int type with length and signed', () => {
+            // INT (10) UNSIGNED
+            const type = getType({
+                Type: 'INT (11) UNSIGNED'
+            });
+
+            expect(type.name).to.be.equal('INT');
+            expect(type.options.length).to.be.equal(11);
+            expect(type.options.unsigned).to.be.true;
+        });
+
+        it('should return decimal type with precision and scale', () => {
+            // DECIMAL (10, 2)
+            const type = getType({
+                Type: 'DECIMAL (10, 2)'
+            });
+
+            expect(type.name).to.be.equal('DECIMAL');
+            expect(type.options.precision).to.be.equal(10);
+            expect(type.options.scale).to.be.equal(2);
+            expect(type.options.unsigned).to.be.false;
+        });
+
+        it('should return decimal type with precision, scale and unsigned', () => {
+            // DECIMAL (10, 2) UNSIGNED
+            const type = getType({
+                Type: 'DECIMAL (12, 4) UNSIGNED'
+            });
+
+            expect(type.name).to.be.equal('DECIMAL');
+            expect(type.options.precision).to.be.equal(12);
+            expect(type.options.scale).to.be.equal(4);
+            expect(type.options.unsigned).to.be.true;
+        });
+
+        it('should return tinyint with length', () => {
+            // TINYINT (1)
+            const type = getType({
+                Type: 'TINYINT (1)'
+            });
 
             expect(type.name).to.be.equal('TINYINT');
             expect(type.options.length).to.be.equal(1);
