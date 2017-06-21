@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse } = require('ramda');
 
 /**
  * @param field Array
@@ -106,6 +106,22 @@ ColumnInfo.prototype.getOptions = function () {
     return this.mapOptions(options);
 }
 
+const isNull = compose(not, propEq('Null', 'NO'));
+const isAutoIncrement = propEq('Extra', 'auto_increment');
+
+const getOptions = field => {
+    let options = {
+    };
+
+    options = assoc('null', isNull(field), options);
+    // options = assoc('default', propOr('', 'Default', field), options); 
+    // options = assoc('auto_increment', isAutoIncrement(field), options);
+    // options = assoc('auto_increment', ifElse(equals(prop('Extra', field), 'auto_increment'), T, F), options);     
+
+    return options;
+}
+
+
 module.exports = {
-    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey
+    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions
 };

@@ -1,4 +1,4 @@
-const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey } = require('../../../database/column-info/column-info');
+const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions } = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
 const { head, nth } = require('ramda');
 
@@ -56,6 +56,59 @@ describe('ColumnInfo', () => {
             expect(options).to.be.deep.equal({null: true});
         });
     });
+
+    describe('#getOptions1()', () => {
+        it('should assoc the null property as false if value "NO" given', () => {
+            const field = {
+                Null: 'NO'
+            }
+
+            const options = getOptions(field);
+            expect(options.null).to.be.false;
+        });
+
+        it('should assoc the null property as true, if nothing given', () => {
+            const field = {}
+
+            const options = getOptions(field);
+            expect(options.null).to.be.true;
+        });
+           
+
+        xit('should return column options as an object', () => {
+            const field = {
+                Null: 'NO',
+                Default: 'Value',
+                Key: 'UNI'
+            };
+
+            const options = getOptions(field);
+
+            expect(options.null).to.be.false;
+            expect(options.default).to.be.equal('Value');
+        });
+
+        xit('should return column options as an object excluding non existing options', () => {
+            const field = {
+                Default: 'Value'
+            };
+
+            const options = getOptions(field);
+
+            expect(options.null).to.be.true;
+            expect(options.default).to.be.equal('Value');
+        });
+
+        xit('should return default object when column does not have options', () => {
+            const field = {
+                Type: 'INT (10)'
+            };
+
+            const options = getOptions(field);
+
+            expect(options).to.be.deep.equal({null: true});
+        });
+    })
     
     describe('#getType()', () => {
         it('should return int type with length', () => {
