@@ -110,13 +110,14 @@ const isNull = compose(not, propEq('Null', 'NO'));
 const isAutoIncrement = propEq('Extra', 'auto_increment');
 
 const getOptions = field => {
-    let options = {
-    };
+    let options = {};
 
     options = assoc('null', isNull(field), options);
     options = assoc('default', propOr(undefined, 'Default', field), options); 
-    // options = assoc('auto_increment', isAutoIncrement(field), options);
-    // options = assoc('auto_increment', ifElse(equals(prop('Extra', field), 'auto_increment'), T, F), options);     
+
+    if (field['Extra'] === 'auto_increment') {
+        options.auto_increment = true;
+    }
 
     return options;
 }

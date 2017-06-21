@@ -90,6 +90,22 @@ describe('ColumnInfo', () => {
             expect(options.default).to.be.undefined;
         });
 
+        it('should assoc the auto_increment property as true if given data', () => {
+            const field = {
+                Extra: 'auto_increment'
+            };
+
+            const options = getOptions(field);
+            expect(options.auto_increment).to.be.true;
+        });
+
+        it('should assoc the auto_increment property as undefined if no given data', () => {
+            const field = {};
+
+            const options = getOptions(field);
+            expect(options.auto_increment).to.be.undefined;
+        });
+
         xit('should return column options as an object excluding non existing options', () => {
             const field = {
                 Default: 'Value'
