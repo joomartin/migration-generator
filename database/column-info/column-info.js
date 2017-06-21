@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith } = require('ramda');
 
 /**
  * @param field Array
@@ -24,15 +24,13 @@ ColumnInfo.prototype.isTypeOf = function (actual, expected) {
     return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
 }
 
-const isTypeOf = (expected, actual) => or(
-    compose(contains(expected), toUpper)(actual), 
-    compose(contains(expected), toLower)(actual));
+const isTypeOf = (expected, actual) =>
+    useWith(contains, [toLower, toLower])(expected, actual);
 
 ColumnInfo.prototype.isUnsigned = function (type) {
     return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
-// const isUnsigned = or(contains('unsigned'), contains('UNSIGNED'));
 const isUnsigned = compose(contains('unsigned'), toLower);
 
 /**
@@ -52,7 +50,7 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
 
     utils.setKey(options, 'precision', precision, parseInt);
     utils.setKey(options, 'scale', scale, parseInt);
-    utils.setKey(options, 'unsigned', unsigned, undefined, () => this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int'));
+    utils.setKey(options, 'unsigned', unsigned, undefined, () => or(isTypeOf('decimal', type), isTypeOf('int', type)));
 
     return options;
 }
@@ -77,7 +75,7 @@ ColumnInfo.prototype.getType = function () {
     let scale = null;
     let precision = null;
 
-    if (this.isTypeOf(type, 'decimal')) {
+    if (isTypeOf('decimal', type)) {
         const splitted = compose(split(','), nth(1))(parts);
         precision = parseIntFromArray(head, splitted);
         scale = parseIntFromArray(nth(1), splitted);
@@ -89,7 +87,7 @@ ColumnInfo.prototype.getType = function () {
     return {
         name: parts[0].trim(),
         options: this.mapTypeOptions(
-            this.getTypeOptions(this.field['Type'], precision, scale, length, this.isUnsigned(type)), type)
+            this.getTypeOptions(this.field['Type'], precision, scale, length, isUnsigned(type)), type)
     };
 }
 
