@@ -1,6 +1,6 @@
 const { compose, map, filter, ifElse, head, equals, prop, toLower, clone, always } = require('ramda');
 
-const ColumnInfo = require('./column-info');
+const { ColumnInfo } = require('./column-info');
 
 function ColumnInfoPhinx(field) {
     ColumnInfo.call(this, field);

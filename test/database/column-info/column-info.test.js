@@ -1,5 +1,6 @@
-const ColumnInfo = require('../../../database/column-info/column-info');
+const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey } = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
+const { head, nth } = require('ramda');
 
 describe('ColumnInfo', () => {
     describe('#isPrimaryKey()', () => {
@@ -181,6 +182,89 @@ describe('ColumnInfo', () => {
             let mapped = (new ColumnInfo).mapType('int');
 
             expect(mapped).to.be.equal('int');
+        });
+    });
+
+    describe('#normalizeLength()', () => {
+        it('should parse integer, if length is number', () => {
+            const result = normalizeLength('12');
+            expect(result).to.be.eq(12);
+        });
+
+        it('should return length if it is not a number', () => {
+            const result = normalizeLength('LONG');
+            expect(result).to.be.eq('LONG');
+        })
+    });
+
+    describe('#parseIntFromArray()', () => {
+        it('should parse any item of an array as integer', () => {
+            const arr = ['1', 2, '3.11'];
+
+            expect(parseIntFromArray(head, arr)).to.be.eq(1);
+            expect(parseIntFromArray(nth(1), arr)).to.be.eq(2);
+            expect(parseIntFromArray(nth(2), arr)).to.be.eq(3);
+        });
+    });
+
+    describe('#isTypeOf()', () => {
+        it('should return true if a given string is type of an expected type', () => {
+            expect(isTypeOf('decimal', 'decimal (10, 2)')).to.be.true; 
+            expect(isTypeOf('INT', 'INT (11)')).to.be.true; 
+            expect(isTypeOf('INT', 'TINYINT (1)')).to.be.true; 
+        });
+
+        it('should return false if a given string is NOT type of an expected type', () => {
+            expect(isTypeOf('decimal', 'float (10, 2)')).to.be.false; 
+            expect(isTypeOf('INT', 'VARCHAR (20)')).to.be.false; 
+        });
+
+        it('should ignore case sensitive', () => {
+            expect(isTypeOf('DECIMAL', 'decimal (10, 2)')).to.be.true; 
+            expect(isTypeOf('int', 'INT (11)')).to.be.true; 
+            expect(isTypeOf('INT', 'tinyint (1)')).to.be.true; 
+
+            expect(isTypeOf('DECIMAL', 'float (10, 2)')).to.be.false; 
+            
+        });
+    });
+
+    describe('#isUnsigned()', () => {
+        it('should return true, if a given type is unsigned', () => {
+            expect(isUnsigned('INT (11) UNSIGNED')).to.be.true;
+            expect(isUnsigned('DECIMAL (10, 2) NOT NULL UNSIGNED')).to.be.true;
+        });
+
+        it('should return false, if a given type is NOT unsigned', () => {
+            expect(isUnsigned('INT (11)')).to.be.false;
+            expect(isUnsigned('DECIMAL (10, 2) NOT NULL')).to.be.false;
+        });
+
+        it('should ignore case sensitive', () => {
+            expect(isUnsigned('INT (11) unsigned')).to.be.true;
+            expect(isUnsigned('INT (11) UNSIGNED')).to.be.true;
+            expect(isUnsigned('DECIMAL (10, 2) NOT NULL unsigned')).to.be.true;
+            expect(isUnsigned('DECIMAL (10, 2) NOT NULL UNSIGNED')).to.be.true;
+
+            expect(isUnsigned('INT (11)')).to.be.false;
+            expect(isUnsigned('int (11)')).to.be.false;            
+        });
+    });
+
+    describe('#isPrimaryKey()', () => {
+        it('should return true if the given column has key PRI', () => {
+            expect(isPrimaryKey({ Key: 'PRI' })).to.be.true;
+            expect(isPrimaryKey({ Field: 'id', Key: 'PRI' })).to.be.true;
+        });
+
+        it('should return false if the given column NOT have key PRI', () => {
+            expect(isPrimaryKey({ Field: 'user_id', Key: 'MUL' })).to.be.false;
+            expect(isPrimaryKey({ Field: 'id' })).to.be.false;
+        });
+
+        it('should ignore case sensitive', () => {
+            expect(isPrimaryKey({ Key: 'pri' })).to.be.true;
+            expect(isPrimaryKey({ Field: 'id', Key: 'pri' })).to.be.true;
         });
     });
 });

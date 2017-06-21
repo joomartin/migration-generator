@@ -1,4 +1,4 @@
-const ColumnInfo = require('./column-info');
+const { ColumnInfo } = require('./column-info');
 const ColumnInfoPhinx = require('./column-info-phinx');
 const assert = require('assert');
 

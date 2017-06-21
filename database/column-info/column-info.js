@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr } = require('ramda');
 
 /**
  * @param field Array
@@ -25,14 +25,15 @@ ColumnInfo.prototype.isTypeOf = function (actual, expected) {
 }
 
 const isTypeOf = (expected, actual) => or(
-    compose(contains(actual), toUpper)(expected), 
-    compose(contains(actual), toLower)(expected));
+    compose(contains(expected), toUpper)(actual), 
+    compose(contains(expected), toLower)(actual));
 
 ColumnInfo.prototype.isUnsigned = function (type) {
     return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
-const isUnsigned = or(contains('unsigned'), contains('UNSIGNED'));
+// const isUnsigned = or(contains('unsigned'), contains('UNSIGNED'));
+const isUnsigned = compose(contains('unsigned'), toLower);
 
 /**
  * @return bool
@@ -41,17 +42,13 @@ ColumnInfo.prototype.isPrimaryKey = function () {
     return this.field['Key'] === 'PRI';
 }
 
-const isPrimaryKey = compose(equals('PRI'), prop('Key'));
+const isPrimaryKey = compose(equals('PRI'), toUpper, propOr('', 'Key'));
 
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
     const parts = this.field['Type'].split('(');
     let options = {};
 
-    if (length && !isNaN(length)) {
-        options.length = parseInt(length);
-    } else if (length) {
-        options.length = length;
-    }
+    options = assoc('length', normalizeLength(length), options);
 
     utils.setKey(options, 'precision', precision, parseInt);
     utils.setKey(options, 'scale', scale, parseInt);
@@ -59,6 +56,12 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
 
     return options;
 }
+
+const normalizeLength =
+    cond([
+        [and(compose(not, isEmpty), compose(not, isNaN)), parseInt],
+        [compose(not, isEmpty), identity]
+    ]);
 
 const parseIntFromArray = (getter, arr) =>
     compose(parseInt, getter)(arr);
@@ -105,4 +108,6 @@ ColumnInfo.prototype.getOptions = function () {
     return this.mapOptions(options);
 }
 
-module.exports = ColumnInfo;
+module.exports = {
+    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey
+};
