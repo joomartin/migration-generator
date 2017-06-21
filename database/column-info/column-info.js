@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve, always, curry } = require('ramda');
 
 /**
  * @param field Array
@@ -26,8 +26,8 @@ ColumnInfo.prototype.isTypeOf = function (actual, expected) {
     return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
 }
 
-const isTypeOf = (expected, actual) =>
-    useWith(contains, [toLower, toLower])(expected, actual);
+const isTypeOf = curry((expected, actual) =>
+    useWith(contains, [toLower, toLower])(expected, actual));
 
 ColumnInfo.prototype.isUnsigned = function (type) {
     return type.includes('unsigned') || type.includes('UNSIGNED');
@@ -119,20 +119,29 @@ const getType = (field) => {
 
     if (isTypeOf('decimal', type)) {
         const splitted = compose(split(','), nth(1))(parts);
-        // options = evolve({
-        //     precision: parseIntFromArray(head, splitted),
-        //     scale: parseIntFromArray(nth(1), splitted)
-        // }, options);
+        options = evolve({
+            precision: parseIntFromArray(head, splitted),
+            scale: parseIntFromArray(nth(1), splitted)
+        }, options);
         precision = parseIntFromArray(head, splitted);
         scale = parseIntFromArray(nth(1), splitted);
     } else if (nth(1, parts)) {
-        // options = evolve({
-        //     length: parseIntFromArray(nth(1), parts) 
-        // });
+        options = evolve({
+            length: parseIntFromArray(nth(1), parts) 
+        });
         length = parseIntFromArray(nth(1), parts);
     }
 
-    options = assoc('unsigned', isUnsigned(type), options);
+    console.log(type);
+    const unsigned = ifElse(
+        or(isTypeOf('decimal'), isTypeOf('int')),
+        isUnsigned,
+        always(undefined)
+    )(type);
+
+    options = assoc('unsigned', unsigned, options);
+    console.log(options);
+    // utils.setKey(options, 'unsigned', unsigned, undefined, () => or(isTypeOf('decimal', type), isTypeOf('int', type)));
 
     return {
         name: parts[0].trim(),
