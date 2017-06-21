@@ -73,19 +73,21 @@ describe('ColumnInfo', () => {
             const options = getOptions(field);
             expect(options.null).to.be.true;
         });
-           
 
-        xit('should return column options as an object', () => {
+        it('should assoc the default property as the given data', () => {
             const field = {
-                Null: 'NO',
                 Default: 'Value',
-                Key: 'UNI'
             };
 
             const options = getOptions(field);
-
-            expect(options.null).to.be.false;
             expect(options.default).to.be.equal('Value');
+        });
+
+        it('should assoc the default property as undefined if no data given', () => {
+            const field = {}; 
+
+            const options = getOptions(field);
+            expect(options.default).to.be.undefined;
         });
 
         xit('should return column options as an object excluding non existing options', () => {

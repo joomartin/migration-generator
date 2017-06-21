@@ -114,7 +114,7 @@ const getOptions = field => {
     };
 
     options = assoc('null', isNull(field), options);
-    // options = assoc('default', propOr('', 'Default', field), options); 
+    options = assoc('default', propOr(undefined, 'Default', field), options); 
     // options = assoc('auto_increment', isAutoIncrement(field), options);
     // options = assoc('auto_increment', ifElse(equals(prop('Extra', field), 'auto_increment'), T, F), options);     
 
