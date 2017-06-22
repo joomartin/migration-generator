@@ -132,16 +132,8 @@ const getType = (field) => {
         length = parseIntFromArray(nth(1), parts);
     }
 
-    console.log(type);
-    const unsigned = ifElse(
-        or(isTypeOf('decimal'), isTypeOf('int')),
-        isUnsigned,
-        always(undefined)
-    )(type);
-
+    const unsigned = isTypeOf('decimal', type) || isTypeOf('int', type) ? isUnsigned(type) : undefined;
     options = assoc('unsigned', unsigned, options);
-    console.log(options);
-    // utils.setKey(options, 'unsigned', unsigned, undefined, () => or(isTypeOf('decimal', type), isTypeOf('int', type)));
 
     return {
         name: parts[0].trim(),
