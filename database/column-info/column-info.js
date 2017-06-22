@@ -1,5 +1,5 @@
 const utils = require('../../utils/utils');
-const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve, always, curry } = require('ramda');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve, always, curry, trim } = require('ramda');
 
 /**
  * @param field Array
@@ -57,18 +57,7 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
     return options;
 }
 
-const getTypeOptions = (type, precision, scale, length, unsigned) => {
-    const parts = type.split('(');
-    let options = {};
 
-    options = assoc('length', normalizeLength(length), options);
-
-    utils.setKey(options, 'precision', precision, parseInt);
-    utils.setKey(options, 'scale', scale, parseInt);
-    utils.setKey(options, 'unsigned', unsigned, undefined, () => or(isTypeOf('decimal', type), isTypeOf('int', type)));
-
-    return options;
-}
 
 const normalizeLength =
     cond([
@@ -107,11 +96,7 @@ ColumnInfo.prototype.getType = function () {
 
 const getType = (field) => {
     const type = prop('Type', field);
-
     const parts = type.split('(');      
-    let precision = null;
-    let scale = null;
-    let length = null;
     
     let options = {
         length: null, scale: null, precision: null
@@ -119,26 +104,20 @@ const getType = (field) => {
 
     if (isTypeOf('decimal', type)) {
         const splitted = compose(split(','), nth(1))(parts);
-        options = evolve({
-            precision: parseIntFromArray(head, splitted),
-            scale: parseIntFromArray(nth(1), splitted)
-        }, options);
-        precision = parseIntFromArray(head, splitted);
-        scale = parseIntFromArray(nth(1), splitted);
-    } else if (nth(1, parts)) {
-        options = evolve({
-            length: parseIntFromArray(nth(1), parts) 
-        });
-        length = parseIntFromArray(nth(1), parts);
+        options = assoc('precision', parseIntFromArray(head, splitted), options);
+        options = assoc('scale', parseIntFromArray(nth(1), splitted), options);
+    } 
+    
+    if (nth(1, parts)) {
+        options = assoc('length', normalizeLength(parseIntFromArray(nth(1), parts)), options);
     }
 
     const unsigned = isTypeOf('decimal', type) || isTypeOf('int', type) ? isUnsigned(type) : undefined;
     options = assoc('unsigned', unsigned, options);
 
     return {
-        name: parts[0].trim(),
-        options: mapTypeOptions(
-            getTypeOptions(field['Type'], precision, scale, length, isUnsigned(type)), type)
+        name: compose(trim, head)(parts),
+        options: mapTypeOptions(options)
     };
 }
 
