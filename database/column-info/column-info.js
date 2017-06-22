@@ -12,15 +12,19 @@ ColumnInfo.prototype.mapType = function (nativeType) {
     return nativeType;
 }
 
+const mapType = nativeType => nativeType;
+
 ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
     return typeOptions;
 }
 
-const mapTypeOptions = (typeOptions, type) => typeOptions;
+const mapTypeOptions = (options, type) => options;
 
 ColumnInfo.prototype.mapOptions = function (options) {
     return options;
 }
+
+const mapOptions = (options, type) => options;
 
 ColumnInfo.prototype.isTypeOf = function (actual, expected) {
     return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
@@ -56,8 +60,6 @@ ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, 
 
     return options;
 }
-
-
 
 const normalizeLength =
     cond([
@@ -96,11 +98,9 @@ ColumnInfo.prototype.getType = function () {
 
 const getType = (field) => {
     const type = prop('Type', field);
-    const parts = type.split('(');      
+    const parts = split('(', type);
     
-    let options = {
-        length: null, scale: null, precision: null
-    };
+    let options = {};
 
     if (isTypeOf('decimal', type)) {
         const splitted = compose(split(','), nth(1))(parts);
@@ -117,7 +117,7 @@ const getType = (field) => {
 
     return {
         name: compose(trim, head)(parts),
-        options: mapTypeOptions(options)
+        options: mapOptions(options)
     };
 }
 
@@ -152,7 +152,6 @@ const getOptions = field => {
     return options;
 }
 
-
 module.exports = {
-    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType
+    ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType, mapOptions, mapTypeOptions, mapType
 };
