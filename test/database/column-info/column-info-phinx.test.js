@@ -1,4 +1,4 @@
-const { ColumnInfoPhinx, mapTypeOptions } = require('../../../database/column-info/column-info-phinx')
+const { ColumnInfoPhinx, mapTypeOptions, mapOptions, mapType } = require('../../../database/column-info/column-info-phinx')
 const expect = require('chai').expect;
 
 describe('ColumnInfoPhinx', () => {
@@ -159,6 +159,18 @@ describe('ColumnInfoPhinx', () => {
         });
     });
 
+    describe('#mapOptions1()', () => {
+        it('should map auto increment to identity', () => {
+            const options = {
+                auto_increment: true
+            };
+            const mapped = mapOptions(options);
+
+            expect(mapped.identity).to.be.true;
+            expect(mapped.auto_increment).to.be.undefined;
+        });
+    })
+
     describe('#mapTypeOptions', () => {
         it('should map unsigned to signed', () => {
             let options = {
@@ -234,6 +246,17 @@ describe('ColumnInfoPhinx', () => {
             
             mapped = (new ColumnInfoPhinx()).mapType('longtext');
             expect(mapped).to.be.equal('text');
+        });
+    });
+
+    describe('#mapType1()', () => {
+        it('should map native mysql types to phinx specific types', () => {
+            expect(mapType('varchar')).to.be.equal('string');
+            expect(mapType('int')).to.be.equal('integer');
+            expect(mapType('bigint')).to.be.equal('biginteger');
+            expect(mapType('tinyint')).to.be.equal('integer');
+            expect(mapType('decimal')).to.be.equal('decimal');
+            expect(mapType('longtext')).to.be.equal('text');
         });
     });
 });

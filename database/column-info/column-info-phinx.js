@@ -36,7 +36,7 @@ const mapTypeOptions = (typeOptions, type) => {
     }
 
     if (isTypeOf(type, 'longtext')) {
-        mapped = assoc('length', 'MysqlAdapter::TEXT_LONG', mapped);        
+        mapped = assoc('length', 'MysqlAdapter::TEXT_LONG', mapped);
     }
 
     return mapped;
@@ -53,6 +53,20 @@ ColumnInfoPhinx.prototype.mapOptions = function (options) {
     return mapped;
 }
 
+const mapOptions = options => {
+    let mapped = clone(options);
+
+    if (prop('auto_increment', options)) {
+        mapped = assoc('identity', prop('auto_increment', options), mapped);
+        mapped = dissoc('auto_increment', mapped);
+        // mapped.identity = options.auto_increment;
+        // delete mapped.auto_increment;
+    }
+
+    return mapped;
+}
+
+
 /**
  * @param type String
  */
@@ -61,11 +75,21 @@ ColumnInfoPhinx.prototype.mapType = function (nativeType) {
         ifElse(head, head, always(nativeType.toLowerCase())),
         map(prop('mapped')),
         filter(compose(
-            equals(toLower(nativeType)), 
+            equals(toLower(nativeType)),
             prop('native')
         ))
     )(TYPES);
 }
+
+const mapType = nativeType =>
+    compose(
+        ifElse(head, head, always(nativeType.toLowerCase())),
+        map(prop('mapped')),
+        filter(compose(
+            equals(toLower(nativeType)),
+            prop('native')
+        ))
+    )(TYPES);
 
 const TYPES = [
     { native: 'varchar', mapped: 'string' },
@@ -77,5 +101,5 @@ const TYPES = [
 ];
 
 module.exports = {
-    ColumnInfoPhinx, mapTypeOptions
+    ColumnInfoPhinx, mapTypeOptions, mapOptions, mapType
 };
