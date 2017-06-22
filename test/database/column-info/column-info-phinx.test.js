@@ -1,4 +1,4 @@
-const ColumnInfoPhinx = require('../../../database/column-info/column-info-phinx')
+const { ColumnInfoPhinx, mapTypeOptions } = require('../../../database/column-info/column-info-phinx')
 const expect = require('chai').expect;
 
 describe('ColumnInfoPhinx', () => {
@@ -182,6 +182,34 @@ describe('ColumnInfoPhinx', () => {
         it('should map longtext to longtext with specific length options', () => {
             let type = 'longtext';
             let mapped = (new ColumnInfoPhinx()).mapTypeOptions({}, type);
+
+            expect(mapped.length).to.be.equal('MysqlAdapter::TEXT_LONG');
+        });
+    });
+
+    describe('#mapTypeOptions1', () => {
+        it('should map unsigned to signed', () => {
+            let options = {
+                unsigned: true
+            };
+            let type = 'int (11) unsigned';
+            let mapped = mapTypeOptions(options, type);
+
+            expect(mapped.signed).to.be.false;
+            expect(mapped.unsigned).to.be.undefined;
+
+            options = {
+                unsigned: false
+            };
+            mapped = (new ColumnInfoPhinx()).mapTypeOptions(options, type);
+
+            expect(mapped.signed).to.be.true;
+            expect(mapped.unsigned).to.be.undefined;
+        });
+
+        it('should map longtext to longtext with specific length options', () => {
+            const type = 'longtext';
+            const mapped = mapTypeOptions({}, type);
 
             expect(mapped.length).to.be.equal('MysqlAdapter::TEXT_LONG');
         });

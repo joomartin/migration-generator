@@ -1,9 +1,13 @@
-const { compose, map, filter, ifElse, head, equals, prop, toLower, clone, always } = require('ramda');
+const { compose, map, filter, ifElse, head, equals, prop, toLower, clone, always, assoc, dissoc, not } = require('ramda');
 
-const { ColumnInfo } = require('./column-info');
+const { ColumnInfo, isTypeOf } = require('./column-info');
 
 function ColumnInfoPhinx(field) {
     ColumnInfo.call(this, field);
+}
+
+ColumnInfoPhinx.prototype.isTypeOf = function (actual, expected) {
+    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
 }
 
 ColumnInfoPhinx.prototype = Object.create(ColumnInfo.prototype);
@@ -18,6 +22,21 @@ ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
 
     if (this.isTypeOf(type, 'longtext')) {
         mapped.length = 'MysqlAdapter::TEXT_LONG';
+    }
+
+    return mapped;
+}
+
+const mapTypeOptions = (typeOptions, type) => {
+    let mapped = clone(typeOptions);
+
+    if (isTypeOf('int', type) || isTypeOf('decimal', type)) {
+        mapped = assoc('signed', not(prop('unsigned', typeOptions)), mapped);
+        mapped = dissoc('unsigned', mapped);
+    }
+
+    if (isTypeOf(type, 'longtext')) {
+        mapped = assoc('length', 'MysqlAdapter::TEXT_LONG', mapped);        
     }
 
     return mapped;
@@ -57,4 +76,6 @@ const TYPES = [
     { native: 'longtext', mapped: 'text' }
 ];
 
-module.exports = ColumnInfoPhinx;
+module.exports = {
+    ColumnInfoPhinx, mapTypeOptions
+};

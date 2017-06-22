@@ -96,6 +96,10 @@ ColumnInfo.prototype.getType = function () {
     };
 }
 
+/**
+ * Visszaadja a mező típusát, és a típusra vonatkozó optionöket (precision, scale, length, unsigned)
+ * @param {Object} field 
+ */
 const getType = (field) => {
     const type = prop('Type', field);
     const parts = split('(', type);
@@ -117,7 +121,7 @@ const getType = (field) => {
 
     return {
         name: compose(trim, head)(parts),
-        options: mapOptions(options)
+        options: mapTypeOptions(options)
     };
 }
 
@@ -139,6 +143,10 @@ ColumnInfo.prototype.getOptions = function () {
 const isNull = compose(not, propEq('Null', 'NO'));
 const isAutoIncrement = propEq('Extra', 'auto_increment');
 
+/**
+ * Visszaadja a mezőre vonatkozó optionöket (null, defualt, auto_increment)
+ * @param {Object} field 
+ */
 const getOptions = field => {
     let options = {};
 
@@ -149,7 +157,7 @@ const getOptions = field => {
         options.auto_increment = true;
     }
 
-    return options;
+    return mapOptions(options);
 }
 
 module.exports = {
