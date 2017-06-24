@@ -1,4 +1,4 @@
-const { ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType, mapOptions, mapTypeOptions, mapType } = require('../../../database/column-info/column-info');
+const { normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType, mapOptions, mapTypeOptions, mapType } = require('../../../database/column-info/column-info');
 const expect = require('chai').expect;
 const { head, nth } = require('ramda');
 
