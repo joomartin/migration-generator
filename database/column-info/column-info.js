@@ -128,7 +128,7 @@ const getType = curry((mapTypeOptionsFn, field) => {
 
     return {
         name: compose(trim, head)(parts),
-        options: mapTypeOptionsFn(options)
+        options: mapTypeOptionsFn(options, type)
     };
 });
 

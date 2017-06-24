@@ -1,25 +1,25 @@
 const expect = require('chai').expect;
 
-const { ColumnInfo } = require('../../../database/column-info/column-info');
-const { ColumnInfoPhinx } = require('../../../database/column-info/column-info-phinx');
 const columnInfoFactory = require('../../../database/column-info/factory');
 
 describe('ColumnInfo Factory', () => {
     it('should create default ColumnInfo', () => {
-        let config = {
+        const config = {
             migrationLib: 'not-supported'
         };
-        let columnInfo = columnInfoFactory(config, { Type: 'int (10)', Field: 'id'});
+        const columnInfo = columnInfoFactory(config);
 
-        expect(columnInfo instanceof ColumnInfo).to.be.true;
+        expect(columnInfo.getType).to.be.not.empty;
+        expect(columnInfo.getOptions).to.be.not.empty;
     });
 
     it('should create Phinx ColumnInfo', () => {
-        let config = {
+        const config = {
             migrationLib: 'phinx'
         };
-        let columnInfo = columnInfoFactory(config, { Type: 'int (10)', Field: 'id'});
+        const columnInfo = columnInfoFactory(config);
 
-        expect(columnInfo instanceof ColumnInfoPhinx).to.be.true;
+        expect(columnInfo.getType).to.be.not.empty;
+        expect(columnInfo.getOptions).to.be.not.empty;
     });
 });
