@@ -107,7 +107,7 @@ ColumnInfo.prototype.getType = function () {
  * Visszaadja a mező típusát, és a típusra vonatkozó optionöket (precision, scale, length, unsigned)
  * @param {Object} field 
  */
-const getType = (field, mapTypeOptionsFn) => {
+const getType = curry((mapTypeOptionsFn, field) => {
     const type = prop('Type', field);
     const parts = split('(', type);
     
@@ -130,7 +130,7 @@ const getType = (field, mapTypeOptionsFn) => {
         name: compose(trim, head)(parts),
         options: mapTypeOptionsFn(options)
     };
-}
+});
 
 /**
  * @return null | Object
@@ -157,7 +157,7 @@ const isAutoIncrement = propEq('Extra', 'auto_increment');
  * Visszaadja a mezőre vonatkozó optionöket (null, defualt, auto_increment)
  * @param {Object} field 
  */
-const getOptions = (field, getOptionsFn) => {
+const getOptions = curry((mapOptionsFn, field) => {
     let options = {};
 
     options = assoc('null', isNull(field), options);
@@ -168,7 +168,7 @@ const getOptions = (field, getOptionsFn) => {
     }
 
     return mapOptionsFn(options);
-}
+});
 
 module.exports = {
     ColumnInfo, normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType, mapOptions, mapTypeOptions, mapType

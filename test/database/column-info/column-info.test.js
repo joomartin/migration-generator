@@ -21,19 +21,20 @@ describe('ColumnInfo', () => {
     })
 
     describe('#getOptions()', () => {
+        const mapOptionsFn = x => x;        
         it('should assoc the null property as false if value "NO" given', () => {
             const field = {
                 Null: 'NO'
-            }
+            };
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.null).to.be.false;
         });
 
         it('should assoc the null property as true, if nothing given', () => {
             const field = {}
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.null).to.be.true;
         });
 
@@ -42,14 +43,14 @@ describe('ColumnInfo', () => {
                 Default: 'Value',
             };
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.default).to.be.equal('Value');
         });
 
         it('should assoc the default property as undefined if no data given', () => {
             const field = {}; 
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.default).to.be.undefined;
         });
 
@@ -58,22 +59,23 @@ describe('ColumnInfo', () => {
                 Extra: 'auto_increment'
             };
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.auto_increment).to.be.true;
         });
 
         it('should assoc the auto_increment property as undefined if no given data', () => {
             const field = {};
 
-            const options = getOptions(field);
+            const options = getOptions(mapOptionsFn, field);
             expect(options.auto_increment).to.be.undefined;
         });
     });
 
     describe('#getType()', () => {
+        const mapTypeOptionsFn = x => x;        
         it('should return int type with length', () => {
             // INT (10)
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'INT (10)'
             });
 
@@ -84,7 +86,7 @@ describe('ColumnInfo', () => {
 
         it('should return varchar type with length', () => {
             // VARCHAR (100)
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'VARCHAR (100)'
             });
 
@@ -95,7 +97,7 @@ describe('ColumnInfo', () => {
 
         it('should return text type', () => {
             // TEXT
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'TEXT'
             });
 
@@ -104,7 +106,7 @@ describe('ColumnInfo', () => {
 
         it('should return long text type', () => {
             // LONGTEXT
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'LONGTEXT'
             });
 
@@ -113,7 +115,7 @@ describe('ColumnInfo', () => {
 
         it('should return int type with length and signed', () => {
             // INT (10) UNSIGNED
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'INT (11) UNSIGNED'
             });
 
@@ -124,7 +126,7 @@ describe('ColumnInfo', () => {
 
         it('should return decimal type with precision and scale', () => {
             // DECIMAL (10, 2)
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'DECIMAL (10, 2)'
             });
 
@@ -136,7 +138,7 @@ describe('ColumnInfo', () => {
 
         it('should return decimal type with precision, scale and unsigned', () => {
             // DECIMAL (10, 2) UNSIGNED
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'DECIMAL (12, 4) UNSIGNED'
             });
 
@@ -148,7 +150,7 @@ describe('ColumnInfo', () => {
 
         it('should return tinyint with length', () => {
             // TINYINT (1)
-            const type = getType({
+            const type = getType(mapTypeOptionsFn, {
                 Type: 'TINYINT (1)'
             });
 

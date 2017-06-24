@@ -1,5 +1,6 @@
-const { ColumnInfo } = require('./column-info');
-const { ColumnInfoPhinx } = require('./column-info-phinx');
+const { ColumnInfo, getType, getOptions } = require('./column-info');
+const { ColumnInfoPhinx, mapTypeOptions, mapOptions } = require('./column-info-phinx');
+const { assoc } = require('ramda');
 const assert = require('assert');
 
 const columnInfoFactory = (config, field) => {
@@ -15,6 +16,19 @@ const columnInfoFactory = (config, field) => {
 
     assert.ok(columnInfo);
     return columnInfo;
+}
+
+const v2 = config => {
+    let obj = {};
+    switch (config.migrationLib) {
+        case 'phinx': 
+            obj = assoc('getType', getType(mapTypeOptions), obj);
+            obj = assoc('getOptions', getOptions(mapOptions), obj);
+            break;
+        default: 
+            columnInfo = new ColumnInfo(field);
+            break;
+    }
 }
 
 module.exports = columnInfoFactory;
