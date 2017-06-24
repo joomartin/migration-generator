@@ -123,8 +123,9 @@ const getType = curry((mapTypeOptionsFn, field) => {
         options = assoc('length', normalizeLength(parseIntFromArray(nth(1), parts)), options);
     }
 
-    const unsigned = isTypeOf('decimal', type) || isTypeOf('int', type) ? isUnsigned(type) : undefined;
-    options = assoc('unsigned', unsigned, options);
+    if (isTypeOf('decimal', type) || isTypeOf('int', type)) {
+        options = assoc('unsigned', isUnsigned(type), options);
+    }
 
     return {
         name: compose(trim, head)(parts),
@@ -161,7 +162,9 @@ const getOptions = curry((mapOptionsFn, field) => {
     let options = {};
 
     options = assoc('null', isNull(field), options);
-    options = assoc('default', propOr(undefined, 'Default', field), options); 
+    if (field['Default']) {
+        options = assoc('default', prop('Default', field), options);         
+    }
 
     if (isAutoIncrement(field)) {
         options = assoc('auto_increment', true, options);

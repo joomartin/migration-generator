@@ -35,7 +35,7 @@ const getTemplate = curry((ejs, config, columnInfoFactory, table) =>
         const fieldsData = table.columns.map(f => {
             const field = prop('Field', f);
             const columnInfo = columnInfoFactory(config);
-            const options = columnInfo.getOptions(field);
+            const options = columnInfo.getOptions(f);
 
             if (columnInfo.isPrimaryKey(field)) {
                 primaryKey.push(field);
