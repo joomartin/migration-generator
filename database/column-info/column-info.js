@@ -12,24 +12,28 @@ ColumnInfo.prototype.mapType = function (nativeType) {
     return nativeType;
 }
 
+// mapType :: String -> String
 const mapType = nativeType => nativeType;
 
 ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
     return typeOptions;
 }
 
+// mapTypeOptions :: Object, String -> Object
 const mapTypeOptions = (options, type) => options;
 
 ColumnInfo.prototype.mapOptions = function (options) {
     return options;
 }
 
+// mapOptions :: Object, String -> Object
 const mapOptions = (options, type) => options;
 
 ColumnInfo.prototype.isTypeOf = function (actual, expected) {
     return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
 }
 
+// isTypeOf -> String -> (String) -> bool
 const isTypeOf = curry((expected, actual) =>
     useWith(contains, [toLower, toLower])(expected, actual));
 
@@ -37,6 +41,7 @@ ColumnInfo.prototype.isUnsigned = function (type) {
     return type.includes('unsigned') || type.includes('UNSIGNED');
 }
 
+// isUnsigned :: String -> bool
 const isUnsigned = compose(contains('unsigned'), toLower);
 
 /**
@@ -46,6 +51,7 @@ ColumnInfo.prototype.isPrimaryKey = function () {
     return this.field['Key'] === 'PRI';
 }
 
+// isPrimaryKey :: Object -> bool
 const isPrimaryKey = compose(equals('PRI'), toUpper, propOr('', 'Key'));
 
 ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
@@ -67,6 +73,7 @@ const normalizeLength =
         [compose(not, isEmpty), identity]
     ]);
 
+// parseIntFromArray :: (int, Array), Array -> int
 const parseIntFromArray = (getter, arr) =>
     compose(parseInt, getter)(arr);
 
@@ -100,7 +107,7 @@ ColumnInfo.prototype.getType = function () {
  * Visszaadja a mező típusát, és a típusra vonatkozó optionöket (precision, scale, length, unsigned)
  * @param {Object} field 
  */
-const getType = (field) => {
+const getType = (field, mapTypeOptionsFn) => {
     const type = prop('Type', field);
     const parts = split('(', type);
     
@@ -121,7 +128,7 @@ const getType = (field) => {
 
     return {
         name: compose(trim, head)(parts),
-        options: mapTypeOptions(options)
+        options: mapTypeOptionsFn(options)
     };
 }
 
@@ -140,24 +147,27 @@ ColumnInfo.prototype.getOptions = function () {
     return this.mapOptions(options);
 }
 
+// isNull :: Object -> bool
 const isNull = compose(not, propEq('Null', 'NO'));
+
+// isAutoIncrement :: Object -> bool
 const isAutoIncrement = propEq('Extra', 'auto_increment');
 
 /**
  * Visszaadja a mezőre vonatkozó optionöket (null, defualt, auto_increment)
  * @param {Object} field 
  */
-const getOptions = field => {
+const getOptions = (field, getOptionsFn) => {
     let options = {};
 
     options = assoc('null', isNull(field), options);
     options = assoc('default', propOr(undefined, 'Default', field), options); 
 
-    if (field['Extra'] === 'auto_increment') {
-        options.auto_increment = true;
+    if (isAutoIncrement(field)) {
+        options = assoc('auto_increment', true, options);
     }
 
-    return mapOptions(options);
+    return mapOptionsFn(options);
 }
 
 module.exports = {

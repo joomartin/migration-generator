@@ -1,5 +1,5 @@
 const { ColumnInfo } = require('./column-info');
-const ColumnInfoPhinx = require('./column-info-phinx');
+const { ColumnInfoPhinx } = require('./column-info-phinx');
 const assert = require('assert');
 
 const columnInfoFactory = (config, field) => {

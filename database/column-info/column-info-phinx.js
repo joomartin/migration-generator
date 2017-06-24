@@ -59,8 +59,6 @@ const mapOptions = options => {
     if (prop('auto_increment', options)) {
         mapped = assoc('identity', prop('auto_increment', options), mapped);
         mapped = dissoc('auto_increment', mapped);
-        // mapped.identity = options.auto_increment;
-        // delete mapped.auto_increment;
     }
 
     return mapped;

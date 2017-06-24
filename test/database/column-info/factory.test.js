@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 
 const { ColumnInfo } = require('../../../database/column-info/column-info');
-const ColumnInfoPhinx = require('../../../database/column-info/column-info-phinx');
+const { ColumnInfoPhinx } = require('../../../database/column-info/column-info-phinx');
 const columnInfoFactory = require('../../../database/column-info/factory');
 
 describe('ColumnInfo Factory', () => {
