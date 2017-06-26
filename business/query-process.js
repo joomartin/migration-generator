@@ -3,37 +3,23 @@ const { Maybe } = require('ramda-fantasy');
 const { escapeQuotes, toUpperFirst, hasLength, substringFrom } = require('../utils/str');
 const { replace, init, curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten, tail, head, nth } = require('ramda');
 
-/**
- * @param {Object} config - App config
- * @param {Array} tables - List of tables. Raw mysql results
- * @return {Array} - Filtered tables
- */
+// filterExcluededTables :: Object -> ([a]) -> [a]
 const filterExcluededTables = curry((config, tables) =>
     reject(
         contains(__, config.excludedTables)
     )(tables));
 
-/**
- * @param {Object} config  
- * @param {Array} tables 
- * @return {Array}
- */
+// mapTables :: Object -> ([a]) -> [b]
 const mapTables = curry((config, tables) =>
     map(prop(`Tables_in_${config.database}`))(tables));
 
-/**
- * @param {string} database - Database name
- * @param {Array} viewTables - Raw view tables queried from database
- * @return {Array} - Sanitized view tables
- */
+// sanitizeViewTables :: String -> ([a]) -> [a]
 const sanitizeViewTables = curry((database, viewTables) =>
-    viewTables.map(vt => {
-        let viewTable = clone(vt);
-        viewTable.VIEW_DEFINITION = replaceDatabaseInContent(
-            database, escapeQuotes(vt.VIEW_DEFINITION));
-
-        return viewTable;
-    }));
+    map(vt => 
+        assoc('VIEW_DEFINITION', replaceDatabaseInContent(
+            database, escapeQuotes(vt.VIEW_DEFINITION)), clone(vt))
+    )(viewTables)
+);
 
 /**
  * @param {string} database - Database name. Searched value in content to replace
@@ -118,13 +104,13 @@ const getForeignKeys =
         ),
         always([])
     );
-    
+
 /**
  * @param {String} table 
  * @param {String} createTable 
  * @return {Array}
  */
-const parseDependencies = (table, createTable) => 
+const parseDependencies = (table, createTable) =>
     getForeignKeys(createTable).map(fk => {
         const regex = /`[a-z_]*`/g;
         let matches = regex.exec(fk);
@@ -153,5 +139,5 @@ const parseDependencies = (table, createTable) =>
 module.exports = {
     filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
     escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
-    mapTables, getForeignKeys 
+    mapTables, getForeignKeys
 }

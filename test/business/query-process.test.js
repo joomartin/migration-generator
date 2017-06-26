@@ -49,7 +49,7 @@ describe('QueryProcess', () => {
     describe('#sanitizeViewTables()', () => {
         it('should sanitize given view tables', () => {
             const viewTables = [
-                { VIEW_DEFINITION: 'view table #1' }, { VIEW_DEFINITION: 'view table #2' }
+                { VIEW_DEFINITION: '`test-database`.table view table #1' }, { VIEW_DEFINITION: "view table #2 'qoutes here'" }
             ];
             const definitions = viewTables.map(vt => vt.VIEW_DEFINITION);
             const database = 'test-database';
@@ -58,6 +58,8 @@ describe('QueryProcess', () => {
                 database, viewTables);
 
             expect(sanitized.length).to.be.equal(viewTables.length);
+            expect(sanitized[0].VIEW_DEFINITION).to.be.eq('table view table #1');
+            expect(sanitized[1].VIEW_DEFINITION).to.be.eq("view table #2 \\'qoutes here\\'");
         });
     });
 
