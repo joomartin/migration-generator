@@ -14,7 +14,6 @@ const { getViewTables, getProcedures, getTriggers, getTableData } = require('./d
 const { normalizeProcedureDefinition, sanitizeViewTables, mapTriggers } = require('./business/query-process');
 const { generateFile, getViewTablesTemplate, getProcedureTemplate, getTriggersTemplate, getFileNames, getTemplates, generateFiles, getForeignKeyTemplate } = file;
 
-
 logHeader(config, util, console, chalk);
 
 let allTables = [];

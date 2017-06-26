@@ -14,6 +14,5 @@ agenda.define('create new tables', (job, done) => {
 
 agenda.on('ready', function() {
     agenda.every('5 seconds', 'create new tables', { timezone: 'Europe/Budapest' });
- 
     agenda.start();
 });
