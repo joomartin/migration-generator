@@ -4,22 +4,36 @@ const expect = require('chai').expect;
 describe('ColumnInfoPhinx', () => {
     describe('#mapOptions()', () => {
         it('should map auto increment to identity', () => {
-            const options = {
-                auto_increment: true
-            };
-            const mapped = mapOptions(options);
+            const mapped = mapOptions({ auto_increment: true });
 
             expect(mapped.identity).to.be.true;
             expect(mapped.auto_increment).to.be.undefined;
+        });
+
+        it('should return back the given object, when no special mapping needed', () => {
+            const options = { default: '' };
+            const mapped = mapOptions(options);
+
+            expect(mapped).to.be.deep.eq(options);            
         });
     })
 
     describe('#mapTypeOptions()', () => {
         it('should map longtext to longtext with specific length options', () => {
-            const type = 'longtext';
-            const mapped = mapTypeOptions({}, type);
-
+            const mapped = mapTypeOptions({}, 'longtext');
             expect(mapped.length).to.be.equal('MysqlAdapter::TEXT_LONG');
+        });
+
+        it('should map unsigned to signed', () => {
+            const mapped = mapTypeOptions({ unsigned: true }, 'int (11) UNSIGNED');
+            expect(mapped.signed).to.be.false;
+            expect(mapped.unsigned).to.be.undefined;
+        });
+
+        it('should return back the given object, when no special mapping needed', () => {
+            const options = { default: '' };
+            const mapped = mapTypeOptions(options, 'varchar (100)');
+            expect(mapped).to.be.deep.eq(options);
         });
     });
 
