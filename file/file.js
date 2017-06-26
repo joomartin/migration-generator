@@ -1,22 +1,23 @@
-const _ = require('lodash');
 const ejs = require('ejs');
+const { curry, compose, concat, join, map, split, __, inc, addIndex, prop } = require('ramda');
 
-const utils = require('../utils/utils');
+const { getSerial, getDate, mapIndex } = require('../utils/utils');
+const { toUpperFirst, camelCase } = require('../utils/str');
 
-let getFileNames = (date, tables, file, padIndex) => 
-    tables.map((table, index) => file.getFileName(date, table.table, padIndex(index + 1)))
+const getFileNames = 
+    mapIndex((table, index) => getFileName(table.table, compose(getSerial, inc)(index)));
 
-let getFileName = (date, table, index) => 
-    `${utils.getDate()}${index}_create_${table}_table.php`;
+const getFileName = (table, index) =>
+    `${getDate()}${index}_create_${table}_table.php`;
 
-let getTemplates = (tables, config, columnInfoFactory, ejs, file) =>  
-    Promise.all(tables.map(table => file.getTemplate(table, config, columnInfoFactory, ejs)));
+const getTemplates = curry((ejs, config, columnInfoFactory, tables) =>
+    Promise.all(map(getTemplate(ejs, config, columnInfoFactory))(tables)));
 
-let generateFiles = (contents, fileNames, config, fs, file) => 
-    Promise.all(contents.map((content, index) => 
-        file.generateFile(content.html, fileNames[index], config, fs)
-            .then(file => console.log(`${fileNames[index]} was generated successfully`))
-    ));
+const generateFiles = curry((fs, config, fileNames, contents) =>
+    Promise.all(contents.map((content, index) => {
+        generateFile(fs, config, fileNames[index], content.html)
+            .then(file => console.log(`${fileNames[index]} was generated successfully`))
+    })));
 
 /**
  * @param table Object
@@ -24,22 +25,23 @@ let generateFiles = (contents, fileNames, config, fs, file) =>
  * @param columnInfoFactory Function
  * @param ejs Object
  */
-let getTemplate = (table, config, columnInfoFactory, ejs) => {
-    return new Promise((resolve, reject) => {
+const getTemplate = curry((ejs, config, columnInfoFactory, table) => 
+    new Promise((resolve, reject) => {
         const variableName = getVariableName(table.table);
         const migrationClass = getClassName(table.table);
 
         let primaryKey = [];
 
         const fieldsData = table.columns.map(f => {
-            const columnInfo = columnInfoFactory(config, f);
-            const options = columnInfo.getOptions();
+            const field = prop('Field', f);
+            const columnInfo = columnInfoFactory(config);
+            const options = columnInfo.getOptions(f);
 
-            if (columnInfo.isPrimaryKey()) {
-                primaryKey.push(f['Field']);
+            if (columnInfo.isPrimaryKey(field)) {
+                primaryKey.push(field);
             }
-
-            let typeObj = columnInfo.getType();
+            
+            let typeObj = columnInfo.getType(f);
             typeObj.name = columnInfo.mapType(typeObj.name);
 
             return {
@@ -62,65 +64,50 @@ let getTemplate = (table, config, columnInfoFactory, ejs) => {
 
             resolve({ table: table.table, html });
         });
+    }));
+
+const render = (ejs, fileName, data) =>
+    new Promise((resolve, reject) =>
+        ejs.renderFile(fileName, data, null, (err, html) =>
+            err ? reject(err) : resolve(html)));
+
+/**
+ * @param {Array} tables 
+ * @param {Object} config 
+ * @param {Object} ejs 
+ */
+const getForeignKeyTemplate = (ejs, config, tables) => {
+    let variableNames = {};
+    tables.forEach(table => {
+        variableNames[table.table] = camelCase(table.table);
     });
+
+    return render(ejs, `./templates/${config['migrationLib']}-dependencies.ejs`, { tables, variableNames });
 }
 
-let getForeignKeyTemplate = (tables, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        let variableNames = {};
-        tables.forEach(table => {
-            variableNames[table.table] = _.camelCase(table.table);
-        });
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Array} viewTables
+ */
+const getViewTablesTemplate = curry((ejs, config, viewTables) =>
+    render(ejs, `./templates/${config['migrationLib']}-view-tables.ejs`, { viewTables }));
 
-        ejs.renderFile(`./templates/${config['migrationLib']}-dependencies.ejs`, {
-            tables, variableNames,
-            migrationClass: 'AddForeignKeys'
-        }, null, (err, html) => {
-            if (err) return reject(err);
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Array} procedures
+ */
+const getProcedureTemplate = curry((ejs, config, procedures) =>
+    render(ejs, `./templates/${config['migrationLib']}-procedures.ejs`, { procedures }));
 
-            resolve(html);
-        });
-    });
-}
-
-let getViewTablesTemplate = (viewTables, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-view-tables.ejs`, {
-            viewTables,
-            migrationClass: 'CreateViewTables'
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
-    });
-}
-
-let getProcedureTemplate = (procedures, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-procedures.ejs`, {            
-            migrationClass: 'CreateProcedures',
-            procedures,
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
-    });
-}
-
-let getTriggersTemplate = (triggersByTables, config, ejs) => {
-    return new Promise((resolve, reject) => {
-        ejs.renderFile(`./templates/${config['migrationLib']}-triggers.ejs`, {            
-            migrationClass: 'CreateTriggers',
-            triggersByTables,
-        }, null, (err, html) => {
-            if (err) return reject(err);
-
-            resolve(html);
-        });
-    });
-}
+/**
+ * @param {Object} ejs
+ * @param {Object} config
+ * @param {Object} triggersByTables
+ */
+const getTriggersTemplate = curry((ejs, config, triggersByTables) =>
+    render(ejs, `./templates/${config['migrationLib']}-triggers.ejs`, { triggersByTables }));
 
 /**
  * @param content String
@@ -130,36 +117,27 @@ let getTriggersTemplate = (triggersByTables, config, ejs) => {
  * @param timestamp int
  * @return String
  */
-let generateFile = (content, fileName, config, fs) => {
-    return new Promise((resolve, reject) => {
-        let path = `${config.output}/${fileName}`;
+const generateFile = curry((fs, config, fileName, content) =>
+    new Promise((resolve, reject) => {
+        const ws = fs.createWriteStream(`${config.output}/${fileName}`, { highWaterMark: Math.pow(2, 16) });
 
-        let options = { highWaterMark: Math.pow(2, 16) };
-        let ws = fs.createWriteStream(path, options);
         ws.write(content);
         ws.end();
         resolve(fileName);
-    });
-}
+    }));
+
+const getClassName =
+    compose(
+        concat('Create'),
+        compose(concat(__, 'Table'), join(''), map(toUpperFirst), split('_'))
+    )
 
 /**
  * @param tableName String
  * @return String
  */
-let getClassName = (tableName) => {
-    const tablePartsUpper = tableName.split('_')
-        .map(tp => tp.charAt(0).toUpperCase() + tp.slice(1));
+const getVariableName = tableName => camelCase(tableName);
 
-    return `Create${tablePartsUpper.join('')}Table`;
-}
-
-/**
- * @param tableName String
- * @return String
- */
-let getVariableName = (tableName) => {
-    return _.camelCase(tableName);
-}
 
 module.exports = {
     getTemplate,

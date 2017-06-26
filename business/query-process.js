@@ -1,136 +1,90 @@
-/**
- * @param {Array} tables - List of tables. Raw mysql results
- * @param {Object} config - App config
- * @return {Array} - Filtered tables
- */
-const filterExcluededTables = (tables, config) => tables.filter(t => !config.excludedTables.includes(t[`Tables_in_${config.database}`]));
+const _ = require('lodash');
+const { Maybe } = require('ramda-fantasy');
+const { escapeQuotes, toUpperFirst, hasLength, substringFrom } = require('../utils/str');
+const { replace, init, curry, reject, contains, __, map, prop, clone, filter, either, propEq, forEach, is, identity, ifElse, compose, toLower, has, assoc, append, gt, trim, split, always, length, keys, slice, indexOf, useWith, tap, flatten, tail, head, nth } = require('ramda');
 
-/**
- * @param {Object} _ - lodash
- * @param {string} database - Database name
- * @param {Function} replaceDatabaseNameFn - A callback that replaces source database name from view definition
- * @param {Function} escapeQuotesFn - A callback that escape quotes
- * @param {Array} viewTables - Raw view tables queried from database
- * @return {Array} - Sanitized view tables
- */
-const sanitizeViewTables = (_, database, replaceDatabaseNameFn, escapeQuotesFn, viewTables) =>
-    viewTables.map(vt => {
-        let viewTable = _.clone(vt);
-        viewTable.VIEW_DEFINITION = replaceDatabaseNameFn(
-            database, escapeQuotesFn(vt.VIEW_DEFINITION));
+// filterExcluededTables :: Object -> ([a] -> [a])
+const filterExcluededTables = curry((config, tables) =>
+    reject(
+        contains(__, config.excludedTables)
+    )(tables));
 
-        return viewTable;
-    });
+// mapTables :: Object -> ([a] -> [b])
+const mapTables = curry((config, tables) =>
+    map(prop(`Tables_in_${config.database}`))(tables));
 
-/**
- * @param {string} database - Database name. Searched value in content to replace
- * @param {string} content - Content to search value in
- * @return {string}
- */
+// sanitizeViewTables :: String -> ([a]) -> [a]
+const sanitizeViewTables = curry((database, viewTables) =>
+    map(vt => 
+        assoc('VIEW_DEFINITION', replaceDatabaseInContent(
+            database, escapeQuotes(vt.VIEW_DEFINITION)), clone(vt))
+    )(viewTables));
+
+// replaceDatabaseInContent :: String, String -> String
 const replaceDatabaseInContent = (database, content) => content.replace(new RegExp('`' + database + '`.', 'g'), '');
 
-/**
- * @param {Function} filterIndexesFn - A callback that filter out index columns
- * @param {Array} columns - Collection of table column objects
- * @return {Object}
- */
-const seperateColumns = (filterIndexesFn, columns) => ({
-    indexes: filterIndexesFn(columns),
-    columns: columns
-});
+// filterIndexes :: [Object] -> [Object]
+const filterIndexes =
+    filter(either(propEq('Key', 'MUL'), propEq('Key', 'UNI')));
 
-/**
- * @param {Array} columns - Raw mysql columns
- * @return {Array} 
- */
-const filterIndexes = (columns) => columns.filter(c => c.Key === 'MUL' || c.Key === 'UNI');
-
-/**
- * @param {Function} escapeFn - A callback that escapes quotes
- * @param {Array} rows - raw mysql content
- * @return {Array}
- */
-const escapeRows = (escapeFn, rows) => {
-    return rows.map(r => {
-        let escapedRow = [];
-        for (key in r) {
-            escapedRow[key] = (typeof r[key] === 'string')
-                ? escapeFn(r[key]) : r[key];
-        }
+// escapedRows :: [Object] -> [Object]
+const escapeRows = rows =>
+    map(r => {
+        let escapedRow = {};
+        forEach(k =>
+            escapedRow[k] = ifElse(is(String), escapeQuotes, identity)(r[k])
+        )(keys(r));
 
         return escapedRow;
-    });
-}
+    })(rows);
 
-/**
- * @param {Object} _ - lodash
- * @param {Array} dependencies - Foreign keys from a table (raw mysql query result)
- * @return {Array}
- */
-const mapDependencies = (_, dependencies) =>
-    _.uniqBy(dependencies.map(r => {
-        return {
-            sourceTable: r['TABLE_NAME'],
-            sourceColumn: r['COLUMN_NAME'],
-            referencedTable: r['REFERENCED_TABLE_NAME'],
-            referencedColumn: r['REFERENCED_COLUMN_NAME'],
-            updateRule: r['UPDATE_RULE'],
-            deleteRule: r['DELETE_RULE']
-        };
-    }), 'sourceColumn');
+// normalizeProcedureDefinition :: Object -> Object
+const normalizeProcedureDefinition = procedure => ({
+    type: procedure.type,
+    name: procedure.definition[compose(toUpperFirst, toLower)(procedure.type)],
+    definition: escapeQuotes(procedure.definition[`Create ${toUpperFirst(procedure.type.toLowerCase())}`])
+});
 
-/**
- * @param {Object} _ - lodash
- * @param {Function} escapeFn - A callback that escapes quotes
- * @param {string} type - Procedure or function
- * @param {Object} definition - Definition
- * @return {Object}
- */
-const normalizeProcedureDefinition = (_, escapeFn, type, definition) => ({
-    type,
-    name: definition[_.upperFirst(type.toLowerCase())],
-    definition: escapeFn(definition[`Create ${_.upperFirst(type.toLowerCase())}`])
-})
-
-/**
- * @param {Object} _ - lodash
- * @param {Function} escapeFn - Callback that escape quotes
- * @param {string} database - Name of database
- * @param {Array} triggers - List of triggers in raw format
- * @return {Object}
- */
-const mapTriggers = (_, escapeFn, database, triggers) => {
+// mapTriggers :: String -> ([Object])-> [Object])
+const mapTriggers = curry((database, triggers) => {
     let mapped = {};
     triggers.forEach(t => {
-        if (!_.has(mapped, t.Table)) {
-            _.set(mapped, t.Table, []);
+        if (!has(t.Table, mapped)) {
+            mapped = assoc(t.Table, [], mapped);
         }
 
-        mapped[t.Table].push({
+        mapped[t.Table] = append({
             name: t.Trigger,
             event: t.Event,
             timing: t.Timing,
-            statement: escapeFn(t.Statement),
+            statement: escapeQuotes(t.Statement),
             definer: t.Definer,
             table: t.Table,
             database: database
-        });
+        }, mapped[t.Table]);
     });
 
     return mapped;
-}
+});
 
-const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) => {
-    const foreignKeys = _([createTable]
-        .filter(createTable => createTable.includes('CONSTRAINT'))
-        .map(createTable => substringFromFn(createTable, 'CONSTRAINT').split('CONSTRAINT'))
-        .map(constraints => constraints.filter(constraint => constraint.trim().length !== 0)))
-        .flatMap()
-        .map(constraint => substringFromFn(constraint, 'FOREIGN KEY'))
-        .map(fk => _.trimEnd(fk.slice(0, fk.indexOf(') ENGINE'))))
-        .value();
+// getForeignKeys :: String -> Array
+const getForeignKeys =
+    ifElse(
+        contains('CONSTRAINT'),
+        compose(
+            map(trim),
+            map(fk => fk.slice(0, fk.indexOf(') ENGINE'))),
+            map(substringFrom('FOREIGN KEY')),
+            filter(hasLength),
+            split('CONSTRAINT'),
+            substringFrom('CONSTRAINT')
+        ),
+        always([])
+    );
 
-    return foreignKeys.map(fk => {
+// parseDependencies :: String -> String -> Array
+const parseDependencies = (table, createTable) =>
+    getForeignKeys(createTable).map(fk => {
         const regex = /`[a-z_]*`/g;
         let matches = regex.exec(fk);
         let data = [];
@@ -141,7 +95,9 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
         }
 
         const deleteRule = fk.slice(fk.indexOf('ON DELETE'), fk.indexOf('ON UPDATE')).slice(9);
-        const updateRule = fk.slice(fk.indexOf('ON UPDATE')).slice(9);
+        const updateRule = compose(
+            slice(9, Infinity), slice(__, Infinity, fk), indexOf('ON UPDATE')
+        )(fk);
 
         return {
             sourceTable: table,
@@ -152,12 +108,9 @@ const getDependenciesFromCreateTable = (_, substringFromFn, table, createTable) 
             deleteRule: _.trim(deleteRule, ' ,')
         };
     });
-}
-
-const mapTables = (tables, config) => tables.map(t => t[`Tables_in_${config.database}`]);
 
 module.exports = {
-    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, seperateColumns, filterIndexes,
-    escapeRows, mapDependencies, normalizeProcedureDefinition, mapTriggers, getDependenciesFromCreateTable,
-    mapTables
+    filterExcluededTables, sanitizeViewTables, replaceDatabaseInContent, filterIndexes,
+    escapeRows, normalizeProcedureDefinition, mapTriggers, parseDependencies,
+    mapTables, getForeignKeys
 }

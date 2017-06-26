@@ -1,69 +1,63 @@
 const fs = require('fs');
-const ejs = require('ejs');
-const _ = require('lodash');
 const chalk = require('chalk');
+const ejs = require('ejs');
 const util = require('util');
-
-const connection = require('./database/connection');
-const columnInfoFactory = require('./database/column-info/factory');
-const query = require('./database/query');
-const file = require('./file/file');
-const utils = require('./utils/utils');
-const queryProcess = require('./business/query-process');
+const { map, tap, compose, composeP, __, length } = require('ramda');
 
 const config = require('./config.json');
-const queryProcessFactory = require('./business/query-process-factory');
- 
-utils.logHeader(config);
+const connection = require('./database/connection');
+const columnInfoFactory = require('./database/column-info/factory');
 
-let fileNames = [];
+const file = require('./file/file');
+const { getDate , getSerial, logHeader } = require('./utils/utils');
+const { getViewTables, getProcedures, getTriggers, getTableData } = require('./database/query');
+const { normalizeProcedureDefinition, sanitizeViewTables, mapTriggers } = require('./business/query-process');
+const { generateFile, getViewTablesTemplate, getProcedureTemplate, getTriggersTemplate, getFileNames, getTemplates, generateFiles, getForeignKeyTemplate } = file;
+
+
+logHeader(config, util, console, chalk);
+
 let allTables = [];
+let fileNames = [];
 
-const sanitizeFn = queryProcessFactory.sanitizeViewTablesFactory(
-    _, connection.config.database, queryProcess.replaceDatabaseInContent, utils.escapeQuotes);
+const viewTablesPromise = composeP(
+    tap(filename => console.log(`${filename} was generated successfully`)),
+    generateFile(fs, config, `${getDate()}${getSerial(990)}_create_view_tables.php`),
+    getViewTablesTemplate(ejs, config),
+    sanitizeViewTables(config.database),
+    getViewTables,
+)(connection);
 
-const normalizeProcedureDefinitionFn = queryProcessFactory.normalizeProcedureDefinitionFactory(
-    _, utils.escapeQuotes);
+const proceduresPromise = composeP(
+    tap(filename => console.log(`${filename} was generated successfully`)),
+    generateFile(fs, config, `${getDate()}${getSerial(991)}_create_procedures.php`),
+    getProcedureTemplate(ejs, config),
+    map(normalizeProcedureDefinition),
+    getProcedures
+)(connection);
 
-const mapTriggersFn = queryProcessFactory.mapTriggersFactory(_, utils.escapeQuotes);
+const triggersPromise = composeP(
+    tap(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)),
+    generateFile(fs, config, `${getDate()}${getSerial(992)}_create_triggers.php`),
+    getTriggersTemplate(ejs, config),
+    mapTriggers(config.database),
+    getTriggers
+)(connection);
 
-let viewTablesPromise = query.getViewTables(connection, sanitizeFn)
-    .then(viewTables => file.getViewTablesTemplate(viewTables, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(990)}_create_view_tables.php`, config, fs))
-    .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
-    .catch(err => console.log(chalk.bgRed(err)));
+const generateTablesPromise = composeP(
+    tap(filename => console.log(`${filename} was generated successfully`)),    
+    generateFile(fs, config, `${getDate()}${getSerial(993)}_add_foreign_keys.php`),    
+    (_) => getForeignKeyTemplate(ejs, config, allTables),    
+    (templates) => generateFiles(fs, config, fileNames, templates),
+    (_) => getTemplates(ejs, config, columnInfoFactory, allTables),
+    tap(fns => fileNames = fns),
+    getFileNames,
+    tap(tables => allTables = tables),    
+    getTableData(connection)
+)(config);
 
-let proceduresPromise = query.getProcedures(connection, query.getProceduresMeta, query.getProcedureDefinition, normalizeProcedureDefinitionFn)
-    .then(procedures => file.getProcedureTemplate(procedures, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(991)}_create_procedures.php`, config, fs))
-    .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
-    .catch(err => console.log(chalk.bgRed(err)));
-
-let triggersPromise = query.getTriggers(connection, mapTriggersFn)
-    .then(triggers => file.getTriggersTemplate(triggers, config, ejs))
-    .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(992)}_create_triggers.php`, config, fs))
-    .then(utils.sideEffect(filename => console.log(`${filename}_create_view_tables.php was generated successfully`)))
-    .catch(err => console.log(chalk.bgRed(err)));
-
-let tableDataPromise = query.getTableData(connection, query, config, queryProcess, utils)
-    .then(utils.sideEffect(tables => fileNames = file.getFileNames(new Date, tables, file, utils.getSerial)))
-    .then(utils.sideEffect(tables => allTables = tables))
-    .then(tables => file.getTemplates(tables, config, columnInfoFactory, ejs, file))
-    .then(templates => file.generateFiles(templates, fileNames, config, fs, file))
-    .catch(err => console.log(chalk.bgRed(err)));
-
-let foreignKeyTemplate = tableDataPromise
-    .then(res =>
-        file.getForeignKeyTemplate(allTables, config, ejs)
-            .then(template => file.generateFile(template, `${utils.getDate()}${utils.getSerial(993)}_add_foreign_keys.php`, config, fs))
-            .then(utils.sideEffect(filename => console.log(`${filename} was generated successfully`)))
-            .catch(err => console.log(chalk.bgRed(err)))
-    )
-    .catch(console.log);
-
-Promise.all([tableDataPromise, proceduresPromise, viewTablesPromise, triggersPromise, foreignKeyTemplate])
-    .then(res => {
-        connection.end();
-        util.log(chalk.green(`All Done.`));
-    })
+Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
+    .then(_ => console.log(chalk.green(`${allTables.length} tables was generated successfully`)))
+    .then(_ => connection.end())
+    .then(tap(_ => util.log(chalk.green(`All Done.`))))
     .catch(err => console.log(chalk.bgRed(err)));

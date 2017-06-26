@@ -1,100 +1,90 @@
-const _ = require('lodash');
 const utils = require('../../utils/utils');
+const { compose, split, nth, head, isEmpty, prop, equals, or, contains, toUpper, toLower, cond, end, not, identity, and, is, assoc, propOr, useWith, propEq, F, T, ifElse, evolve, always, curry, trim } = require('ramda');
+
+// mapType :: String -> String
+const mapType = identity;
+
+// mapTypeOptions :: Object, String -> Object
+const mapTypeOptions = (options, type) => options;
+
+// mapOptions :: Object, String -> Object
+const mapOptions = (options, type) => options;
+
+// isTypeOf -> String -> (String) -> bool
+const isTypeOf = curry((expected, actual) =>
+    useWith(contains, [toLower, toLower])(expected, actual));
+
+// isUnsigned :: String -> bool
+const isUnsigned = compose(contains('unsigned'), toLower);
+
+// isPrimaryKey :: Object -> bool
+const isPrimaryKey = compose(equals('PRI'), toUpper, propOr('', 'Key'));
+
+const normalizeLength =
+    cond([
+        [and(compose(not, isEmpty), compose(not, isNaN)), parseInt],
+        [compose(not, isEmpty), identity]
+    ]);
+
+// parseIntFromArray :: (int, Array), Array -> int
+const parseIntFromArray = (getter, arr) =>
+    compose(parseInt, getter)(arr);
 
 /**
- * @param field Array
+ * Visszaadja a mező típusát, és a típusra vonatkozó optionöket (precision, scale, length, unsigned)
+ * @param {Object} field 
  */
-function ColumnInfo(field) {
-    this.field = field;
-}
-
-ColumnInfo.prototype.mapType = function (nativeType) {
-    return nativeType;
-}
-
-ColumnInfo.prototype.mapTypeOptions = function (typeOptions, type) {
-    return typeOptions;
-}
-
-ColumnInfo.prototype.mapOptions = function (options) {
-    return options;
-}
-
-ColumnInfo.prototype.isTypeOf = function (actual, expected) {
-    return actual.includes(expected.toUpperCase()) || actual.includes(expected.toLowerCase());
-}
-
-ColumnInfo.prototype.isUnsigned = function (type) {
-    return type.includes('unsigned') || type.includes('UNSIGNED');
-}
-
-/**
- * @return bool
- */
-ColumnInfo.prototype.isPrimaryKey = function () {
-    return this.field['Key'] === 'PRI';
-}
-
-ColumnInfo.prototype.getTypeOptions = function (type, precision, scale, length, unsigned) {
-    let parts = this.field['Type'].split('(');
-    let options = {};
+const getType = curry((mapTypeOptionsFn, field) => {
+    const type = prop('Type', field);
+    const parts = split('(', type);
     
-    if (length && !isNaN(length)) {
-        options.length = parseInt(length);
-    } else if (length) {
-        options.length = length;
-    }
+    let options = {};
 
-    utils.setKey(options, 'precision', precision, parseInt);
-    utils.setKey(options, 'scale', scale, parseInt);
-    utils.setKey(options, 'unsigned', unsigned);
-
-    return options;
-}
-
-/**
- * @return Object
- */
-ColumnInfo.prototype.getType = function () {
-    let type = this.field['Type'];
-
-    let parts = type.split('(');          
-    let length = null;
-    let scale = null;
-    let precision = null;
-    let unsigned = null;
-
-    if (this.isTypeOf(type, 'decimal') || this.isTypeOf(type, 'int')) {
-        unsigned = this.isUnsigned(type);
-    }
-
-    if (this.isTypeOf(type, 'decimal')) {
-        precision = parseInt(parts[1].split(',')[0]);
-        scale = parseInt(parts[1].split(',')[1]);
-    } else if (parts[1]) { 
-        length = parseInt(parts[1]);
+    if (isTypeOf('decimal', type)) {
+        const splitted = compose(split(','), nth(1))(parts);
+        options = assoc('precision', parseIntFromArray(head, splitted), options);
+        options = assoc('scale', parseIntFromArray(nth(1), splitted), options);
     } 
+    
+    if (nth(1, parts)) {
+        options = assoc('length', normalizeLength(parseIntFromArray(nth(1), parts)), options);
+    }
+
+    if (isTypeOf('decimal', type) || isTypeOf('int', type)) {
+        options = assoc('unsigned', isUnsigned(type), options);
+    }
 
     return {
-        name: parts[0].trim(),
-        options: this.mapTypeOptions(
-            this.getTypeOptions(this.field['Type'], precision, scale, length, unsigned), type)
+        name: compose(trim, head)(parts),
+        options: mapTypeOptionsFn(options, type)
     };
-}
+});
+
+// isNull :: Object -> bool
+const isNull = compose(not, propEq('Null', 'NO'));
+
+// isAutoIncrement :: Object -> bool
+const isAutoIncrement = propEq('Extra', 'auto_increment');
 
 /**
- * @return null | Object
+ * Visszaadja a mezőre vonatkozó optionöket (null, defualt, auto_increment)
+ * @param {Object} field 
  */
-ColumnInfo.prototype.getOptions = function () {
-    let options = {
-        'null': true,
-    };
+const getOptions = curry((mapOptionsFn, field) => {
+    let options = {};
 
-    utils.setKey(options, 'null', false, undefined, () => this.field['Null'] === 'NO');
-    utils.setKey(options, 'default', this.field['Default']);
-    utils.setKey(options, 'auto_increment', true, undefined, () => this.field['Extra'] === 'auto_increment');
+    options = assoc('null', isNull(field), options);
+    if (field['Default']) {
+        options = assoc('default', prop('Default', field), options);         
+    }
 
-    return (_.isEmpty(options)) ? null : this.mapOptions(options);
-}
+    if (isAutoIncrement(field)) {
+        options = assoc('auto_increment', true, options);
+    }
 
-module.exports = ColumnInfo;
+    return mapOptionsFn(options);
+});
+
+module.exports = {
+    normalizeLength, parseIntFromArray, isTypeOf, isUnsigned, isPrimaryKey, getOptions, getType, mapOptions, mapTypeOptions, mapType
+};

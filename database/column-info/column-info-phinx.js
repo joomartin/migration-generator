@@ -1,50 +1,42 @@
-const _ = require('lodash');
+const { compose, map, filter, ifElse, head, equals, prop, toLower, clone, always, assoc, dissoc, not } = require('ramda');
 
-const ColumnInfo = require('./column-info');
+const { isTypeOf } = require('./column-info');
 
-function ColumnInfoPhinx(field) {
-    ColumnInfo.call(this, field);
-}
+const mapTypeOptions = (typeOptions, type) => {
+    let mapped = clone(typeOptions);
 
-ColumnInfoPhinx.prototype = Object.create(ColumnInfo.prototype);
-
-ColumnInfoPhinx.prototype.mapTypeOptions = function (typeOptions, type) {
-    let original = _.clone(typeOptions);
-    let mapped = _.clone(typeOptions);
-
-    if (original.unsigned !== undefined) {
-        mapped.signed = !original.unsigned;
-        delete mapped.unsigned;
+    if (isTypeOf('int', type) || isTypeOf('decimal', type)) {
+        mapped = assoc('signed', not(prop('unsigned', typeOptions)), mapped);
+        mapped = dissoc('unsigned', mapped);
     }
 
-    if (this.isTypeOf(type, 'longtext')) {
-        mapped.length = 'MysqlAdapter::TEXT_LONG';
+    if (isTypeOf(type, 'longtext')) {
+        mapped = assoc('length', 'MysqlAdapter::TEXT_LONG', mapped);
     }
 
     return mapped;
 }
 
-ColumnInfoPhinx.prototype.mapOptions = function (options) {
-    let original = _.clone(options);
-    let mapped = _.clone(options);
+const mapOptions = options => {
+    let mapped = clone(options);
 
-    if (original.auto_increment) {
-        mapped.identity = original.auto_increment;
-        delete mapped.auto_increment;
+    if (prop('auto_increment', options)) {
+        mapped = assoc('identity', prop('auto_increment', options), mapped);
+        mapped = dissoc('auto_increment', mapped);
     }
 
     return mapped;
 }
 
-/**
- * @param type String
- */
-ColumnInfoPhinx.prototype.mapType = function (nativeType) {
-    return TYPES
-        .filter(t => t.native === nativeType.toLowerCase())
-        .map(t => t.mapped)
-        .shift() || nativeType.toLowerCase();
-}
+const mapType = nativeType =>
+    compose(
+        ifElse(head, head, always(nativeType.toLowerCase())),
+        map(prop('mapped')),
+        filter(compose(
+            equals(toLower(nativeType)),
+            prop('native')
+        ))
+    )(TYPES);
 
 const TYPES = [
     { native: 'varchar', mapped: 'string' },
@@ -55,4 +47,6 @@ const TYPES = [
     { native: 'longtext', mapped: 'text' }
 ];
 
-module.exports = ColumnInfoPhinx;
+module.exports = {
+    mapTypeOptions, mapOptions, mapType
+};
