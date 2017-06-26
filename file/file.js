@@ -1,5 +1,5 @@
 const ejs = require('ejs');
-const { curry, compose, concat, join, map, split, __, inc, addIndex } = require('ramda');
+const { curry, compose, concat, join, map, split, __, inc, addIndex, prop } = require('ramda');
 
 const { getSerial, getDate, mapIndex } = require('../utils/utils');
 const { toUpperFirst, camelCase } = require('../utils/str');
@@ -33,14 +33,15 @@ const getTemplate = curry((ejs, config, columnInfoFactory, table) =>
         let primaryKey = [];
 
         const fieldsData = table.columns.map(f => {
-            const columnInfo = columnInfoFactory(config, f);
-            const options = columnInfo.getOptions();
+            const field = prop('Field', f);
+            const columnInfo = columnInfoFactory(config);
+            const options = columnInfo.getOptions(f);
 
-            if (columnInfo.isPrimaryKey()) {
-                primaryKey.push(f['Field']);
+            if (columnInfo.isPrimaryKey(field)) {
+                primaryKey.push(field);
             }
-
-            let typeObj = columnInfo.getType();
+            
+            let typeObj = columnInfo.getType(f);
             typeObj.name = columnInfo.mapType(typeObj.name);
 
             return {
