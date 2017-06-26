@@ -11,9 +11,9 @@ const { curry, tap } = require('ramda');
 const url = 'mongodb://localhost:27017/migration-generator';
 
 // queryGenerator :: String -> Object -> String -> Promise
-const queryGenerator = curry((queryType, queryObj, collection) =>
+const queryGenerator = curry((db, queryType, queryObj, collection) =>
     new Promise((resolve, reject) =>
-        db.collection[collection][queryType](queryObj).toArray((err, docs) => 
+        db.collection(collection)[queryType](queryObj).toArray((err, docs) => 
             err ? reject(err) : resolve(docs))));
 
 const run = () =>
@@ -27,7 +27,7 @@ const run = () =>
             getTables(connection)
                 .then(mapTables(config))
                 .then(tap(tables => allTables = tables))
-                .then(getCachedTables(db, config))
+                .then(getCachedTables(db, config.database))
                 .then(cachedTables =>
                     cachedTables.length === 0
                         ? allTables : _.difference(allTables, cachedTables.map(t => t.name))
@@ -38,15 +38,8 @@ const run = () =>
         });
     });
 
-/**
- * @param {Object} db 
- * @param {Object} config 
- */
-const getCachedTables = (db, config) =>
-    new Promise((resolve, reject) =>
-        db.collection('tables').find({ database: config.database }).toArray((err, docs) =>
-            err ? reject(err) : resolve(docs))
-    );
+// getCachedTables :: Object -> String -> Promise
+const getCachedTables = (db, database) => queryGenerator(db, 'find', { database }, 'tables');
 
 /**
  * @param {Object} db 
@@ -65,5 +58,5 @@ const insertTables = curry((db, config, tables) =>
     }));
 
 module.exports = {
-    run
+    run, getCachedTables
 }

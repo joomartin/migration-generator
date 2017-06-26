@@ -6,6 +6,7 @@ const util = require('util');
 const _ = require('lodash');
 const chalk = require('chalk');
 const { Maybe } = require('ramda-fantasy');
+const MongoClient = require('mongodb').MongoClient;
 
 const config = require('./config.json');
 const file = require('./file/file');
@@ -18,6 +19,8 @@ const queryProcess = require('./business/query-process');
 const strUtils = require('./utils/str');
 const R = require('ramda');
 const createTablesJob = require('./jobs/database/tables/create');
+const url = 'mongodb://localhost:27017/migration-generator';
+
 
 const connection = mysql.createConnection({
     host: config.host || 'localhost',
@@ -28,3 +31,9 @@ const connection = mysql.createConnection({
 });
 
 createTablesJob.run().then(console.log);
+
+// MongoClient.connect(url, (err, db) => {
+//     createTablesJob.getCachedTables(db, 'test-project')
+//         .then(console.log)
+//         .catch(console.log);
+// });

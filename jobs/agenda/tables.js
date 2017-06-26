@@ -8,7 +8,7 @@ agenda.define('create new tables', (job, done) => {
     createTablesJob.run()
         .then(res => {
             console.log(`${res.result.n} migration(s) was generated for new table`);        
-            done()
+            done();
         });
 });
 
