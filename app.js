@@ -3,13 +3,15 @@ const chalk = require('chalk');
 const ejs = require('ejs');
 const util = require('util');
 const { map, tap, compose, composeP, __, length } = require('ramda');
+const MongoClient = require('mongodb').MongoClient;
 
 const config = require('./config.json');
 const connection = require('./database/connection');
 const columnInfoFactory = require('./database/column-info/factory');
+const createTablesJob = require('./jobs/database/tables/create');
 
 const file = require('./file/file');
-const { getDate , getSerial, logHeader } = require('./utils/utils');
+const { getDate, getSerial, logHeader } = require('./utils/utils');
 const { getViewTables, getProcedures, getTriggers, getTableData } = require('./database/query');
 const { normalizeProcedureDefinition, sanitizeViewTables, mapTriggers } = require('./business/query-process');
 const { generateFile, getViewTablesTemplate, getProcedureTemplate, getTriggersTemplate, getFileNames, getTemplates, generateFiles, getForeignKeyTemplate } = file;
@@ -43,17 +45,22 @@ const triggersPromise = composeP(
     getTriggers
 )(connection);
 
-const generateTablesPromise = composeP(
-    tap(filename => console.log(`${filename} was generated successfully`)),    
-    generateFile(fs, config, `${getDate()}${getSerial(993)}_add_foreign_keys.php`),    
-    _ => getForeignKeyTemplate(ejs, config, allTables),    
-    templates => generateFiles(fs, config, fileNames, templates),
-    _ => getTemplates(ejs, config, columnInfoFactory, allTables),
-    tap(fns => fileNames = fns),
-    getFileNames,
-    tap(tables => allTables = tables),    
-    getTableData(connection)
-)(config);
+MongoClient.connect(createTablesJob.url, (err, db) => {
+    const generateTablesPromise = composeP(
+        tap(filename => console.log(`${filename} was generated successfully`)),
+        generateFile(fs, config, `${getDate()}${getSerial(993)}_add_foreign_keys.php`),
+        _ => getForeignKeyTemplate(ejs, config, allTables),
+        templates => generateFiles(fs, config, fileNames, templates),
+        _ => getTemplates(ejs, config, columnInfoFactory, allTables),
+        tap(fns => fileNames = fns),
+        getFileNames,
+        tap(tables => {
+
+        }),
+        tap(tables => allTables = tables),
+        getTableData(connection)
+    )(config);
+});
 
 Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
     .then(_ => console.log(chalk.green(`${allTables.length} tables was generated successfully`)))

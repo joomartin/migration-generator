@@ -31,6 +31,7 @@ const connection = mysql.createConnection({
 });
 
 createTablesJob.run().then(console.log);
+// Table.find({ database: 'test-project' }).then(console.log);
 
 // MongoClient.connect(url, (err, db) => {
 //     createTablesJob.getCachedTables(db, 'test-project')
