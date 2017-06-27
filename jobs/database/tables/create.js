@@ -9,12 +9,13 @@ const { mapTables } = require('../../../business/query-process');
 
 const url = 'mongodb://localhost:27017/migration-generator';
 
-// queryGenerator :: String -> Object -> String -> Promise
-const queryGenerator = curry((db, queryType, queryObj, collection) =>
+// queryGenerator :: Object -> String -> String -> Object
+const queryGenerator = curry((db, queryType, collection, queryObj) =>
     new Promise((resolve, reject) =>
         db.collection(collection)[queryType](queryObj).toArray((err, docs) => 
             err ? reject(err) : resolve(docs))));
 
+// run :: void -> Promise
 const run = () =>
     new Promise((resolve, reject) => {
         MongoClient.connect(url, (err, db) => {
@@ -35,13 +36,9 @@ const run = () =>
     });
 
 // getCachedTables :: Object -> String -> Promise
-const getCachedTables = (db, database) => queryGenerator(db, 'find', { database }, 'tables');
+const getCachedTables = (db, database) => queryGenerator(db, 'find', 'tables', { database });
 
-/**
- * @param {Object} db 
- * @param {Object} config 
- * @param {Array} tables 
- */
+// insertTables :: Object -> Object -> Array -> Promise
 const insertTables = curry((db, config, tables) =>
     new Promise((resolve, reject) => {
         if (tables.length === 0)

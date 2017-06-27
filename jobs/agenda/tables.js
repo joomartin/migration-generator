@@ -9,7 +9,8 @@ agenda.define('create new tables', (job, done) => {
         .then(res => {
             console.log(`${res.result.n} migration(s) was generated for new table`);        
             done();
-        });
+        })
+        .catch(console.error);
 });
 
 agenda.on('ready', function() {
