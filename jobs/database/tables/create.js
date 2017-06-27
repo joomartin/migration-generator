@@ -1,12 +1,11 @@
 const MongoClient = require('mongodb').MongoClient;
 const _ = require('lodash');
-const { difference } = require('ramda');
+const { curry, difference, tap, map, prop, __ } = require('ramda');
 
 const connection = require('../../../database/connection');
 const config = require('../../../config.json');
 const { getTables } = require('../../../database/query');
 const { mapTables } = require('../../../business/query-process');
-const { curry, tap } = require('ramda');
 
 const url = 'mongodb://localhost:27017/migration-generator';
 
@@ -22,16 +21,13 @@ const run = () =>
             if (err) return reject(err);
 
             let allTables = [];
-            let allCachedTables = [];
 
             getTables(connection)
                 .then(mapTables(config))
                 .then(tap(tables => allTables = tables))
-                .then(getCachedTables(db, config.database))
-                .then(cachedTables =>
-                    cachedTables.length === 0
-                        ? allTables : _.difference(allTables, cachedTables.map(t => t.name))
-                )
+                .then(_ => getCachedTables(db, config.database))
+                .then(map(prop('name')))
+                .then(cachedTables => difference(allTables, cachedTables))
                 .then(insertTables(db, config))
                 .then(resolve)
                 .catch(reject);
