@@ -46,9 +46,9 @@ const triggersPromise = composeP(
 const generateTablesPromise = composeP(
     tap(filename => console.log(`${filename} was generated successfully`)),    
     generateFile(fs, config, `${getDate()}${getSerial(993)}_add_foreign_keys.php`),    
-    (_) => getForeignKeyTemplate(ejs, config, allTables),    
-    (templates) => generateFiles(fs, config, fileNames, templates),
-    (_) => getTemplates(ejs, config, columnInfoFactory, allTables),
+    _ => getForeignKeyTemplate(ejs, config, allTables),    
+    templates => generateFiles(fs, config, fileNames, templates),
+    _ => getTemplates(ejs, config, columnInfoFactory, allTables),
     tap(fns => fileNames = fns),
     getFileNames,
     tap(tables => allTables = tables),    

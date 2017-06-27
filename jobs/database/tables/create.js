@@ -1,6 +1,5 @@
 const MongoClient = require('mongodb').MongoClient;
-const _ = require('lodash');
-const { curry, difference, tap, map, prop, __ } = require('ramda');
+const { curry, difference, tap, map, prop, __, composeP } = require('ramda');
 
 const connection = require('../../../database/connection');
 const config = require('../../../config.json');
@@ -23,13 +22,17 @@ const run = () =>
 
             let allTables = [];
 
-            getTables(connection)
-                .then(mapTables(config))
-                .then(tap(tables => allTables = tables))
-                .then(_ => getCachedTables(db, config.database))
-                .then(map(prop('name')))
-                .then(cachedTables => difference(allTables, cachedTables))
-                .then(insertTables(db, config))
+            const insertTablesPromise = composeP(
+                insertTables(db, config),
+                cachedTables => difference(allTables, cachedTables),
+                map(prop('name')),
+                _ => getCachedTables(db, config.database),
+                tap(tables => allTables = tables),
+                mapTables(config),
+                getTables
+            )(connection);
+
+            insertTablesPromise
                 .then(resolve)
                 .catch(reject);
         });
