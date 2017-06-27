@@ -1,6 +1,6 @@
-const { curry, difference, tap, map, prop, __, composeP, compose } = require('ramda');
+const { curry, difference, tap, map, prop, __, composeP, compose, objOf } = require('ramda');
 
-const { mongoose } = require('../../../config/mongoose');
+const mongoose = require('../../../config/mongoose');
 const { Table } = require('../../../models/table')
 const connection = require('../../../database/connection');
 const config = require('../../../config.json');
@@ -25,15 +25,15 @@ const run = () => {
 };
 
 // getCachedTables :: String -> Promise
-const getCachedTables = (database) => Table.find({ database });
+const getCachedTables = database => Table.find({ database });
+// const getCachedTables = compose(Table.find, objOf('database'));
 
 // insertTables :: Object -> Array -> Promise
 const insertTables = curry((config, tables) =>
     compose(
         Table.insertMany,
         map(t => ({ name: t, database: config.database }))
-    )(tables)
-);
+    )(tables));
 
 module.exports = {
     run, getCachedTables, insertTables, url

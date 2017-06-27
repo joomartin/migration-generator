@@ -6,7 +6,9 @@ const { map, tap, compose, composeP, __, length } = require('ramda');
 
 const config = require('./config.json');
 const connection = require('./database/connection');
+const mongoose = require('./config/mongoose'); 
 const columnInfoFactory = require('./database/column-info/factory');
+const { insertTables } = require('./jobs/database/tables/create');
 
 const file = require('./file/file');
 const { getDate, getSerial, logHeader } = require('./utils/utils');
@@ -51,6 +53,7 @@ const generateTablesPromise = composeP(
     _ => getTemplates(ejs, config, columnInfoFactory, allTables),
     tap(fns => fileNames = fns),
     getFileNames,
+    tap(tables => insertTables(config, tables.map(t => t.table))),
     tap(tables => allTables = tables),
     getTableData(connection)
 )(config);
@@ -58,5 +61,6 @@ const generateTablesPromise = composeP(
 Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
     .then(_ => console.log(chalk.green(`${allTables.length} tables was generated successfully`)))
     .then(_ => connection.end())
+    .then(_ => mongoose.connection.close())
     .then(tap(_ => util.log(chalk.green(`All Done.`))))
     .catch(err => console.log(chalk.bgRed(err)));
