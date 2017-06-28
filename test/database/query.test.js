@@ -428,7 +428,7 @@ describe('Query', () => {
         });
     });
 
-    describe('#getTableData', () => {
+    describe('#getTablesData', () => {
         it('should run all queries that produces table data', (done) => {
             const tablesMock = [
                 { table: 'table1' }, { table: 'table2' }
@@ -468,7 +468,7 @@ describe('Query', () => {
                 }
             };
 
-            query.getTableData(connection, config)
+            query.getTablesData(connection, config)
                 .then(() => {
                     expect(true).to.be.true;
                     done()
@@ -497,7 +497,7 @@ describe('Query', () => {
                 }
             };
 
-            query.getTableData(connection, config)
+            query.getTablesData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })
@@ -528,7 +528,7 @@ describe('Query', () => {
                 }
             };
 
-            query.getTableData(connection, config)
+            query.getTablesData(connection, config)
                 .then(() => {
                     expect(false).to.be.true;
                 })

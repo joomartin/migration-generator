@@ -6,7 +6,7 @@ const util = require('util');
 const _ = require('lodash');
 const chalk = require('chalk');
 const { Maybe } = require('ramda-fantasy');
-const MongoClient = require('mongodb').MongoClient;
+const { Table } = require('./models/table');
 
 const config = require('./config.json');
 const file = require('./file/file');
@@ -30,11 +30,6 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-createTablesJob.run().then(console.log);
+// createTablesJob.run().then(console.log);
 // Table.find({ database: 'test-project' }).then(console.log);
 
-// MongoClient.connect(url, (err, db) => {
-//     createTablesJob.getCachedTables(db, 'test-project')
-//         .then(console.log)
-//         .catch(console.log);
-// });

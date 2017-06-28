@@ -68,7 +68,7 @@ const getProcedures = (connection) =>
  * @param {Object} connection 
  * @param {Object} config 
  */
-const getTableData = curry((connection, config) =>
+const getTablesData = curry((connection, config) =>
     new Promise((resolve, reject) => {
         let tableData = [];
 
@@ -109,7 +109,7 @@ module.exports = {
     getTables,
     getColumns,
     getCreateTable,
-    getTableData,
+    getTablesData,
     getContent,
     getProcedures,
     getTriggers,

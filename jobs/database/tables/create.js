@@ -7,7 +7,7 @@ const config = require('../../../config.json');
 const { getTables } = require('../../../database/query');
 const { mapTables } = require('../../../business/query-process');
 
-const url = 'mongodb://localhost:27017/migration-generator';
+const MONGO_URL = 'mongodb://localhost:27017/migration-generator';
 
 // run :: void -> Promise
 const run = () => {
@@ -26,7 +26,6 @@ const run = () => {
 
 // getCachedTables :: String -> Promise
 const getCachedTables = database => Table.find({ database });
-// const getCachedTables = compose(Table.find, objOf('database'));
 
 // insertTables :: Object -> Array -> Promise
 const insertTables = curry((config, tables) =>
@@ -36,5 +35,5 @@ const insertTables = curry((config, tables) =>
     )(tables));
 
 module.exports = {
-    run, getCachedTables, insertTables, url
+    run, getCachedTables, insertTables, MONGO_URL
 }

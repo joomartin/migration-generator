@@ -12,7 +12,7 @@ const { insertTables } = require('./jobs/database/tables/create');
 
 const file = require('./file/file');
 const { getDate, getSerial, logHeader } = require('./utils/utils');
-const { getViewTables, getProcedures, getTriggers, getTableData } = require('./database/query');
+const { getViewTables, getProcedures, getTriggers, getTablesData } = require('./database/query');
 const { normalizeProcedureDefinition, sanitizeViewTables, mapTriggers } = require('./business/query-process');
 const { generateFile, getViewTablesTemplate, getProcedureTemplate, getTriggersTemplate, getFileNames, getTemplates, generateFiles, getForeignKeyTemplate } = file;
 
@@ -55,7 +55,7 @@ const generateTablesPromise = composeP(
     getFileNames,
     tap(tables => insertTables(config, tables.map(t => t.table))),
     tap(tables => allTables = tables),
-    getTableData(connection)
+    getTablesData(connection)
 )(config);
 
 Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
