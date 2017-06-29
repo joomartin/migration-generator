@@ -2,7 +2,7 @@ const fs = require('fs');
 const chalk = require('chalk');
 const ejs = require('ejs');
 const util = require('util');
-const { map, tap, compose, composeP, __, length } = require('ramda');
+const { map, tap, compose, composeP, __, length, prop } = require('ramda');
 
 const config = require('./config.json');
 const connection = require('./database/connection');
@@ -53,10 +53,12 @@ const generateTablesPromise = composeP(
     _ => getTemplates(ejs, config, columnInfoFactory, allTables),
     tap(fns => fileNames = fns),
     getFileNames,
-    tap(tables => insertTables(config, tables.map(t => t.table))),
+    tap(compose(insertTables(config), map(prop('table')))),
     tap(tables => allTables = tables),
     getTablesData(connection)
 )(config);
+
+generateTablesPromise.catch(console.error);
 
 Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
     .then(_ => console.log(chalk.green(`${allTables.length} tables was generated successfully`)))

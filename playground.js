@@ -30,6 +30,6 @@ const connection = mysql.createConnection({
     database: config.database
 });
 
-// createTablesJob.run().then(console.log);
 // Table.find({ database: 'test-project' }).then(console.log);
 
+createTablesJob.run();
