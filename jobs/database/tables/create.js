@@ -15,6 +15,7 @@ const run = () => {
     let allTables = [];
 
     return composeP(
+        // @todo ne csak beszúrjuk a táblákat db -be, hanem generáljunk fileokat
         insertTables(config),
         cachedTables => difference(allTables, cachedTables),
         map(prop('name')),

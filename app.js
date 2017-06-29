@@ -58,8 +58,6 @@ const generateTablesPromise = composeP(
     getTablesData(connection)
 )(config);
 
-generateTablesPromise.catch(console.error);
-
 Promise.all([proceduresPromise, viewTablesPromise, triggersPromise, generateTablesPromise])
     .then(_ => console.log(chalk.green(`${allTables.length} tables was generated successfully`)))
     .then(_ => connection.end())
