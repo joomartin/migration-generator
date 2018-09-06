@@ -37,7 +37,7 @@ const getTemplate = curry((ejs, config, columnInfoFactory, table) =>
             const columnInfo = columnInfoFactory(config);
             const options = columnInfo.getOptions(f);
 
-            if (columnInfo.isPrimaryKey(field)) {
+            if (columnInfo.isPrimaryKey(f)) {
                 primaryKey.push(field);
             }
             
